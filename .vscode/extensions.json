@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "github.copilot",
+    "esbenp.prettier-vscode",
+    "ms-python.black-formatter",
+    "ms-python.pylint",
+    "yzhang.markdown-all-in-one",
+    "aaron-bond.better-comments",
+    "hediet.vscode-drawio",
+    "bierner.markdown-mermaid"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Open SDD Manifesto",
+      "type": "shell",
+      "command": "code docs/sdd-manifesto.md",
+      "problemMatcher": []
+    },
+    {
+      "label": "Open Agent Catalog",
+      "type": "shell",
+      "command": "code docs/agent-catalog.md",
+      "problemMatcher": []
+    },
+    {
+      "label": "Open ONBOARDING.md",
+      "type": "shell",
+      "command": "code ONBOARDING.md",
+      "problemMatcher": []
+    }
+  ]
+}

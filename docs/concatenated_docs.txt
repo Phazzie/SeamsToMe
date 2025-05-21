@@ -1,0 +1,3334 @@
+--- START OF FILE: FAQ.md ---
+
+# SeemsToMe FAQ & Troubleshooting
+
+## Common SDD Questions
+
+### General SDD Questions
+
+**Q: Why use Seam-Driven Development?**  
+A: SDD makes all integration points explicit, testable, and AI-friendly. It prevents the "70% wall" problem where code generation works for isolated components but fails at integration.
+
+**Q: What's the difference between SDD and other methodologies?**  
+A: SDD is specifically contract-first and integration-first. Unlike TDD or DDD, SDD focuses primarily on the seams/interfaces between components, making it ideal for AI collaboration.
+
+### Process Questions
+
+**Q: How do I know if I've identified all the seams?**  
+A: Use the Seam Analyzer agent, which helps identify all integration points. Look for data handoffs, component communication, and potential areas of change.
+
+**Q: When should I update a contract vs. create a new version?**  
+A: Create a new version when changes would break existing consumers. Update in place only for non-breaking changes, documentation improvements, or clarifications.
+
+**Q: How do I handle evolving contracts?**  
+A: Use explicit versioning, adapters for backward compatibility, and notify all consumers through the Knowledge agent.
+
+## Troubleshooting
+
+### Contract Issues
+
+**Problem: Contracts are ambiguous**  
+**Solution:** Use more specific types, add detailed blueprint comments, and include examples of valid/invalid data.
+
+**Problem: Tight coupling between agents**  
+**Solution:** Refactor to introduce intermediate contracts or adapters, reducing direct dependencies.
+
+**Problem: Too many contract versions**  
+**Solution:** Consider consolidating or deprecating old versions, using the Refactoring Assistant.
+
+### Implementation Issues
+
+**Problem: Logic leaking across seam boundaries**  
+**Solution:** Ensure strict adherence to contracts; move logic to appropriate side of seam.
+
+**Problem: Tests passing but integration failing**  
+**Solution:** Improve contract conformance tests; ensure they cover edge cases and error scenarios.
+
+**Problem: Difficulty implementing against a contract**  
+**Solution:** Review contract for clarity; consider adding more specific types or examples.
+
+## Collaboration Tips
+
+- Use Better Comments consistently for TODO items and questions
+- Reference the agent catalog when discussing changes
+- Keep the seam visualization up to date
+- Document contract rationale and design decisions
+
+## Still Stuck?
+
+Check the SDD Manifesto or consult the orchestrator agent owner for guidance.
+
+
+--- END OF FILE: FAQ.md ---
+
+--- START OF FILE: agent-catalog.md ---
+
+# SeemsToMe Agent Catalog
+
+This document lists every agent planned for the SeemsToMe project, with a highly detailed and comprehensive explanation of each agent's responsibilities, interfaces, and unique features. Each agent is designed to support Seam-Driven Development principles and help break through the "70% Wall" in AI-assisted development.
+
+The agents work together to implement the SDD "Moneyball" strategy - targeting high-leverage activities (contracts, seams, tests) that yield disproportionate returns in system quality and development velocity.
+
+---
+
+## 1. Checklist & Changelog Agent
+
+**Purpose:**
+
+- Tracks project progress, tasks, milestones, and important changes/decisions.
+- Maintains a living checklist and changelog, supporting search, filtering, and export.
+  **Key Features:**
+- Add, edit, complete, and remove checklist items.
+- Log changes and decisions with timestamps and context.
+- Seam: User/Orchestrator ↔ Checklist Agent (CRUD operations, status, error reporting).
+
+## 2. Seam Knowledge Agent (Conversation Recorder + Evolution Tracker)
+
+**Purpose:**
+
+- Captures design discussions, rationales, and the evolution of every seam/contract.
+- Maintains a searchable, versioned history of all seams and their changes.
+  **Key Features:**
+- Link conversations and decisions to specific seams/contracts.
+- Visualize seam evolution and rationale over time.
+- Seam: All agents ↔ Knowledge Agent (record/query rationale, notify on changes).
+
+## 3. PRD/Design Doc Generator
+
+**Purpose:**
+
+- Converts user/agent discussions into structured Product Requirements Documents (PRDs) and design docs.
+  **Key Features:**
+- Extracts requirements, features, user stories, and open questions.
+- Detects ambiguities and prompts for clarification.
+- Seam: User/Orchestrator ↔ PRD Agent (input: discussion, output: PRD/design doc).
+
+## 4. SDD Orchestrator Agent
+
+**Purpose:**
+
+- Guides and enforces the SDD process and agent workflow.
+- Coordinates agent actions and ensures correct order of operations.
+  **Key Features:**
+- Delegates tasks, enforces contract-first rules, manages agent state.
+- Seam: Orchestrator ↔ All agents (task delegation, status, error handling).
+
+## 5. Stub/Scaffolding Agent
+
+**Purpose:**
+
+- Generates file stubs and blueprint comments for all components and seams.
+  **Key Features:**
+- Creates syntactically correct skeletons with top-level comments.
+- Links stubs to seam map and documentation.
+- Seam: Orchestrator/PRD ↔ Stub Agent (input: design doc, output: stubs).
+
+## 6. Seam Analyzer Agent
+
+**Purpose:**
+
+- Analyzes design docs and stubs to identify seams, contracts, integrations, and required tests.
+  **Key Features:**
+- Outputs a checklist/table of seams and integration points.
+- Suggests seam health metrics and risk areas.
+- Seam: Orchestrator/PRD ↔ Analyzer (input: docs/stubs, output: seam map).
+
+## 7. Seam Quality Agent (QA/Guardian + Docs + Refactor)
+
+**Purpose:**
+
+- Ensures SDD compliance, code quality, and documentation.
+- Suggests refactors for complex/tangled seams.
+  **Key Features:**
+- Runs checklists, lints code, flags violations, and reviews seam health.
+- Generates/upgrades living documentation from seams.
+- Seam: Orchestrator ↔ Quality Agent (input: codebase, output: reports, suggestions).
+
+## 8. Seam-Driven AI Pair Programmer
+
+**Purpose:**
+
+- Implements code only within defined seams, asking for clarification if a seam is ambiguous or missing.
+  **Key Features:**
+- Consults seam contracts and stubs before generating code.
+- Interacts with user/agents for clarification and feedback.
+- Seam: Orchestrator ↔ AI Pair Programmer (input: task, output: code, questions).
+
+## 9. Prompt Generator Agent
+
+**Purpose:**
+
+- Breaks down design docs and stubs into granular, detailed prompts for Copilot/LLMs.
+- Transforms SDD artifacts (contracts, stubs) into optimal prompts for AI code generation.
+- Serves as a bridge between SDD methodology and AI implementation.
+
+**Key Features:**
+
+- Generates, scores, and iteratively improves prompts based on SDD artifacts.
+- Creates context-appropriate prompts that fit within AI context windows.
+- Crafts prompts that clearly communicate contract requirements to AI.
+- Supports both manual and automatic prompt feeding.
+- Adapts prompt complexity based on user expertise level.
+- Includes relevant contract details to constrain AI generation appropriately.
+
+**Seams:**
+
+- Orchestrator/PRD ↔ Prompt Agent (input: docs, output: prompts)
+- Prompt Agent ↔ AI Pair Programmer (optimized prompts for implementation)
+- Prompt Agent ↔ Contract Registry (access to contract details for prompt creation)
+
+## 10. API Doc Reader Agent
+
+**Purpose:**
+
+- Reads and summarizes API documentation from a URL, extracting endpoints, authentication, and usage patterns.
+  **Key Features:**
+- Suggests integration points and auto-generates test stubs or Postman collections.
+- Seam: User/Orchestrator ↔ API Agent (input: URL, output: summary, integration data).
+
+## 11. Seam-Driven Documentation Generator
+
+**Purpose:**
+
+- Builds and upgrades living documentation directly from seam contracts, stubs, and comments.
+  **Key Features:**
+- Ensures docs are always up-to-date and reflect the real architecture.
+- Seam: Orchestrator/Quality Agent ↔ Doc Generator (input: contracts, output: docs).
+
+## 12. Seam-Driven Refactoring Assistant
+
+**Purpose:**
+
+- Suggests and assists with refactoring seams that become too complex or tightly coupled.
+  **Key Features:**
+- Analyzes seam health, coupling, and change frequency.
+- Proposes and helps implement refactorings.
+- Seam: Orchestrator/Quality Agent ↔ Refactor Agent (input: seam map, output: refactor plan).
+
+## 13. Metrics & Dashboard Agent
+
+**Purpose:**
+
+- Collects, analyzes, and visualizes SDD metrics across the system.
+- Provides insights into seam health, quality, and SDD effectiveness.
+- Monitors progress through the "70% Wall" in AI-assisted development.
+
+**Key Features:**
+
+- Tracks key metrics defined in SDD-metrics.md.
+- Visualizes seam stability and health over time.
+- Identifies high-risk seams that need attention.
+- Generates reports on AI code generation efficiency within SDD framework.
+
+**Seams:**
+
+- Orchestrator ↔ Metrics Agent (system-wide metric collection)
+- Metrics Agent ↔ All Agents (individual metrics collection)
+- Metrics Agent ↔ Knowledge Agent (historical trend analysis)
+
+## 14. Contract Registry Agent
+
+**Purpose:**
+
+- Maintains the central repository of all contracts in the system.
+- Manages versioning, dependencies, and lifecycle of contracts.
+- Serves as the single source of truth for contract definitions.
+
+**Key Features:**
+
+- Provides a centralized registry of all contracts with metadata.
+- Manages contract versioning, deprecation, and compatibility.
+- Validates contract changes for backward compatibility.
+- Supports AI code generation by providing stable contract references.
+- Alerts on breaking changes and coordination of migrations.
+
+**Seams:**
+
+- Contract Registry ↔ All Agents (contract reference and validation)
+- Contract Registry ↔ Knowledge Agent (contract history and rationale)
+- Contract Registry ↔ Changelog Agent (tracking contract evolution)
+
+## 15. MVP SDD Scaffolder Agent
+
+**Purpose:**
+
+- To scaffold new Seam Driven Development (SDD) components (such as agents, contracts, and tests) based on predefined templates and user input.
+- It acts as a meta-agent, helping to create the foundational structure for other agents and their associated SDD artifacts within the "SeemsToMe" ecosystem.
+
+**Key Features:**
+
+- Generates file structures for new SDD components (e.g., `*.agent.ts`, `*.contract.ts`, `*.contract.test.ts`).
+- Utilizes predefined templates to ensure consistency with SDD principles.
+- Takes user input for component names, types, and target locations.
+- Provides feedback on the scaffolding process and generated files.
+
+**Seams:**
+
+- **Input:** User/OrchestratorAgent ↔ MVPSddScaffolderAgent (Request: component name, type, target directory, template variables. Response: overallStatus, generatedFiles [paths of generated files], generatedFileContents [details of content]).
+- **Output (Conceptual File System Operations):** MVPSddScaffolderAgent → FileSystem (Creates/modifies files based on templates).
+- **Dependencies (Future):**
+  - May rely on a `TemplateManagementAgent` for accessing and managing scaffolding templates.
+  - Could interact with a `ProjectKnowledgeAgent` to understand existing project structure and naming conventions.
+
+---
+
+This catalog is a living document. Update it as agents are added, changed, or consolidated.
+
+
+--- END OF FILE: agent-catalog.md ---
+
+--- START OF FILE: agents\agent-template.md ---
+
+# Agent Design Document Template
+
+## Agent Name
+
+## Purpose
+
+Describe what this agent does and why it exists.
+
+## Inputs
+
+- List and describe all inputs (data, files, user actions, etc.)
+
+## Outputs
+
+- List and describe all outputs (data, files, UI updates, etc.)
+
+## Responsibilities
+
+- List the main responsibilities and tasks of this agent
+
+## Seams/Contracts
+
+- Describe the interfaces this agent exposes (link to `*.contract.ts`)
+- Describe the interfaces this agent consumes (from other agents or the user, link to relevant `*.contract.ts`)
+- Contract Version: (e.g., v1.0.0)
+
+## Dependencies
+
+- List other agents or key services this agent relies on to perform its function.
+
+## Example Workflows
+
+- Step-by-step examples of how this agent is used
+
+## Key Decisions & Rationale
+
+- Document significant design choices made during the agent's development and the reasons behind them.
+
+## Testing & Validation
+
+- How will you test this agent (unit, integration points)?
+- What does "working correctly" look like (key success criteria)?
+
+---
+
+(Use this template for each agent in the /docs/agents/ folder.)
+
+
+--- END OF FILE: agents\agent-template.md ---
+
+--- START OF FILE: agents\changelog-agent.md ---
+
+<!-- filepath: c:\Users\thump\SeemsToMe\docs\agents\changelog-agent.md -->
+# Agent Template: Changelog Agent
+
+## Agent Overview
+
+**Agent ID**: CHANGELOG-001  
+**Version**: v1  
+**Last Updated**: May 17, 2025  
+**Status**: ACTIVE  
+**Owner**: SeemsToMe Team
+
+## Purpose & Responsibilities
+
+The Changelog Agent tracks and documents changes across the system, with special focus on contract changes, ensuring a clear history of system evolution.
+
+- Record changes with detailed metadata
+- Track breaking changes separately
+- Generate formatted changelogs
+- Provide migration guidance for breaking changes
+- Support filtering changes by various criteria
+
+## Connected Seams
+
+| Seam ID | Role | Purpose |
+|---------|------|---------|
+| ORCH-CHANGE-001 | PROVIDER | Receive change recording requests from the Orchestrator |
+| CHANGE-DOC-001 | PROVIDER | Provide change data to the Documentation Agent |
+
+## Agent Behavior
+
+### Core Workflow
+
+1. Receive change record request
+2. Store change with complete metadata
+3. Identify breaking changes
+4. Generate appropriate changelog formats
+
+### State Management
+
+The Changelog Agent maintains a persistent store of changes.
+
+### Error Handling Strategy
+
+- Validation errors for change records are reported clearly
+- Change recording failures are retried
+- Concurrency conflicts are resolved using timestamps
+
+## Implementation Guide
+
+### Prerequisites
+
+- Persistent storage for changes
+- Markdown generation capabilities
+- Date/time handling for change filtering
+
+### Key Components
+
+- Change Recorder: Records and stores changes
+- Change Filter: Filters changes based on criteria
+- Changelog Generator: Formats changes into readable changelogs
+
+### Blueprint Comments
+
+Key blueprint comments that should be included in the implementation:
+
+```typescript
+/**
+ * PURPOSE: Track and document changes across the system
+ * DATA FLOW: Changelog Agent ↔ Orchestrator
+ * INTEGRATION POINTS: Orchestrator, Documentation Agent
+ * CONTRACT VERSION: v1
+ * ERROR HANDLING: Contextual error reporting with specific error types
+ */
+```
+
+## Testing Requirements
+
+- Contract conformance tests for the ChangelogContract
+- Tests for various change types
+- Tests for filtering capabilities
+- Tests for generating different changelog formats
+
+
+--- END OF FILE: agents\changelog-agent.md ---
+
+--- START OF FILE: agents\checklist-agent.md ---
+
+<!-- filepath: c:\Users\thump\SeemsToMe\docs\agents\checklist-agent.md -->
+# Agent Template: Checklist Agent
+
+## Agent Overview
+
+**Agent ID**: CHECKLIST-001  
+**Version**: v1  
+**Last Updated**: May 17, 2025  
+**Status**: ACTIVE  
+**Owner**: SeemsToMe Team
+
+## Purpose & Responsibilities
+
+The Checklist Agent verifies SDD compliance across the system, ensuring that contracts, seams, and implementations adhere to the SDD methodology.
+
+- Validate contracts for proper blueprint comments and structure
+- Verify seam documentation completeness
+- Check implementation for SDD compliance
+- Generate compliance reports
+- Provide remediation guidance for non-compliant items
+
+## Connected Seams
+
+| Seam ID | Role | Purpose |
+|---------|------|---------|
+| ORCH-CHECK-001 | PROVIDER | Receive compliance check requests from the Orchestrator |
+| CHECK-QUAL-001 | PROVIDER | Provide compliance data to the Quality Agent |
+
+## Agent Behavior
+
+### Core Workflow
+
+1. Receive compliance check request for a target path
+2. Analyze target for compliance across requested categories
+3. Generate compliance summary and detailed findings
+4. Return results including remediation suggestions
+
+### State Management
+
+The Checklist Agent is stateless, processing each request independently.
+
+### Error Handling Strategy
+
+- Invalid path errors are reported with clear messages
+- Partial results are returned when possible
+- Each non-compliant item includes specific remediation guidance
+
+## Implementation Guide
+
+### Prerequisites
+
+- Access to source code and documentation files
+- TypeScript parsing capabilities
+- Markdown parsing capabilities
+
+### Key Components
+
+- Compliance Checker: Analyzes files for compliance
+- Remediation Engine: Generates suggestions for fixing compliance issues
+- Report Generator: Formats compliance findings
+
+### Blueprint Comments
+
+Key blueprint comments that should be included in the implementation:
+
+```typescript
+/**
+ * PURPOSE: Verify SDD compliance and provide guidance
+ * DATA FLOW: Checklist Agent ↔ Orchestrator
+ * INTEGRATION POINTS: Orchestrator, Quality Agent
+ * CONTRACT VERSION: v1
+ * ERROR HANDLING: Detailed error reporting with remediation suggestions
+ */
+```
+
+## Testing Requirements
+
+- Contract conformance tests for the ChecklistContract
+- Tests with various compliance scenarios
+- Tests for each compliance category
+- Tests with invalid inputs
+
+
+--- END OF FILE: agents\checklist-agent.md ---
+
+--- START OF FILE: agents\mvpSddScaffolder-agent.md ---
+
+# Agent Design Document: MVPSddScaffolderAgent
+
+## Agent Name
+
+MVPSddScaffolderAgent
+
+## Purpose
+
+This agent is responsible for scaffolding the basic file structure for new Seam Driven Development (SDD) components. It automates the creation of initial agent, contract, and test files based on user-provided inputs, facilitating a quicker start to developing new agents or agent features.
+
+## Inputs
+
+- `componentName`: The name of the component to be scaffolded (e.g., "MyNewAgent"). This will be used to name files and potentially internal class/interface names.
+- `sddComponentType`: An enum (`SddComponentType`) specifying the type of SDD component to generate. Supported types:
+  - `AGENT`: Generates a conceptual agent file (e.g., `myNewAgent.agent.ts`) and its corresponding contract file (e.g., `myNewAgent.contract.ts`).
+  - `CONTRACT`: Generates a conceptual contract file (e.g., `myNewAgent.contract.ts`).
+  - `TEST`: Generates a conceptual contract test file (e.g., `myNewAgent.contract.test.ts`).
+  - `FULL_AGENT_SET`: Generates conceptual agent, contract, and contract test files.
+- `targetDirectory`: The directory path where the new files should be conceptually generated.
+- `requestingAgentId`: The `AgentId` of the agent making the scaffolding request.
+
+## Outputs
+
+- A `ContractResult` containing:
+  - `result.summaryMessage`: A string summarizing the conceptual files that would be created.
+  - `result.generatedFiles`: An array of strings, where each string is the conceptual path to a file that would be generated.
+  - `error`: An `AgentError` object if the operation fails (e.g., unsupported `sddComponentType`, missing required inputs).
+
+## Responsibilities
+
+- Receive requests to scaffold new SDD components.
+- Validate input parameters.
+- Conceptually generate the necessary file paths and names based on the `componentName` and `sddComponentType`.
+- Return a summary of the conceptual generation, including the paths of files that would be created.
+- (Future) Actually create the files on the file system using appropriate templates.
+- (Future) Allow for template customization or selection.
+
+## Seams/Contracts
+
+- **Exposes:** `IMVPSddScaffolderAgent` (defined in `c:\Users\thump\SeemsToMe\src\contracts\mvpSddScaffolder.contract.ts`)
+  - Method: `generateSddScaffold(request: GenerateSddScaffoldRequest): Promise<ContractResult<GenerateSddScaffoldOutput>>`
+- **Consumes:**
+  - User/Orchestrator input conforming to `GenerateSddScaffoldRequest`.
+  - (Future) File System Agent/Tool: To perform actual file creation operations.
+  - (Future) Template Engine/Service: To fetch and populate file templates.
+- **Contract Version:** 0.1.0 (as per `c:\Users\thump\SeemsToMe\src\contracts\mvpSddScaffolder.contract.ts`)
+
+## Dependencies
+
+- Currently, none beyond the core types defined in `src/contracts/types.ts`.
+- (Future) File System Agent/Tool.
+- (Future) Template Management System.
+
+## Example Workflows
+
+**1. Scaffold a new Agent and its Contract:**
+
+- Input:
+  ```json
+  {
+    "componentName": "UserProfile",
+    "sddComponentType": "AGENT",
+    "targetDirectory": "src/modules/user",
+    "requestingAgentId": "OrchestratorAgent"
+  }
+  ```
+- Output (Conceptual):
+  ```json
+  {
+    "result": {
+      "summaryMessage": "Conceptual scaffolding for UserProfile (AGENT): src/modules/user/userProfile.agent.ts, src/modules/user/userProfile.contract.ts",
+      "generatedFiles": [
+        "src/modules/user/userProfile.agent.ts",
+        "src/modules/user/userProfile.contract.ts"
+      ]
+    }
+  }
+  ```
+
+**2. Scaffold a Full Agent Set (Agent, Contract, Test):**
+
+- Input:
+  ```json
+  {
+    "componentName": "OrderProcessor",
+    "sddComponentType": "FULL_AGENT_SET",
+    "targetDirectory": "src/services/orders",
+    "requestingAgentId": "DeveloperCLI"
+  }
+  ```
+- Output (Conceptual):
+  ```json
+  {
+    "result": {
+      "summaryMessage": "Conceptual scaffolding for OrderProcessor (FULL_AGENT_SET): src/services/orders/orderProcessor.agent.ts, src/services/orders/orderProcessor.contract.ts, src/services/orders/orderProcessor.contract.test.ts",
+      "generatedFiles": [
+        "src/services/orders/orderProcessor.agent.ts",
+        "src/services/orders/orderProcessor.contract.ts",
+        "src/services/orders/orderProcessor.contract.test.ts"
+      ]
+    }
+  }
+  ```
+
+## Key Decisions & Rationale
+
+- **Conceptual Scaffolding First:** The initial implementation focuses on _conceptual_ file generation (i.e., determining what files _would_ be created and where) rather than actual file system operations. This allows for rapid iteration on the contract and agent logic before introducing file system complexities.
+- **`SddComponentType` Enum:** Using an enum for component types provides type safety and clarity for the kinds of scaffolding operations supported.
+- **Extensibility for Future File Operations:** The agent is designed with the expectation that actual file creation (using templates) will be added later. The current conceptual output (`generatedFiles` paths) will serve as direct input for that future functionality.
+- **Simple Path Concatenation (Initial):** For now, file paths are constructed via simple string concatenation. A more robust path utility will be integrated later.
+
+## Testing & Validation
+
+- **Contract Tests (`mvpSddScaffolder.contract.test.ts`):**
+  - Verify that the agent correctly implements the `IMVPSddScaffolderAgent` contract.
+  - Test successful conceptual generation for each `SddComponentType` (`AGENT`, `CONTRACT`, `TEST`, `FULL_AGENT_SET`), checking the `summaryMessage` and `generatedFiles` output.
+  - Test error handling for invalid or missing inputs (e.g., missing `componentName`, unsupported `sddComponentType`).
+  - Verify that `NotImplementedError` was correctly returned by the initial stub.
+- **Working Correctly:**
+  - The agent correctly identifies the files to be conceptually generated based on the input.
+  - The conceptual file paths are accurate for the given `targetDirectory` and `componentName`.
+  - Error conditions are handled gracefully, returning an appropriate `AgentError`.
+  - (Future) Actual files are created with correct content based on templates.
+
+---
+
+
+--- END OF FILE: agents\mvpSddScaffolder-agent.md ---
+
+--- START OF FILE: code-review-checklist.md ---
+
+# SDD Code Review Checklist
+
+This checklist helps ensure all contributions follow SDD principles.
+
+## Contract Checks
+
+- [ ] All seams have explicit contracts (\*.contract.[ext] files)
+- [ ] Contracts include complete type definitions
+- [ ] Contracts include error types and handling expectations
+- [ ] Blueprint comments document purpose, data flow, and integrations
+- [ ] Contract versioning is explicit and backward compatible where possible
+
+## Stub Checks
+
+- [ ] All contracts have corresponding stubs
+- [ ] Stubs contain minimal/no internal logic
+- [ ] Stubs raise appropriate errors or return placeholder values
+- [ ] Blueprint comments match contract documentation
+
+## Test Checks
+
+- [ ] Contract conformance tests exist for all seams
+- [ ] Tests verify behavior under normal and error conditions
+- [ ] Tests mock dependencies to isolate seam behavior
+- [ ] Tests verify type conformance
+
+## Implementation Checks
+
+- [ ] Implementation strictly adheres to contract definitions
+- [ ] All external dependencies are explicitly injected
+- [ ] No hidden global state
+- [ ] Single Responsibility Principle is followed
+- [ ] Code is functional and uses immutable data where possible
+- [ ] Error handling follows contract specifications
+
+## Documentation Checks
+
+- [ ] Agent catalog is updated for new/modified agents
+- [ ] Seam visualization is current
+- [ ] Contract changes are documented and versioned
+- [ ] Strategic comments explain WHY, not just WHAT
+
+## SDD Anti-Pattern Checks
+
+- [ ] No implicit/undocumented contracts
+- [ ] No tight coupling between agent internals
+- [ ] No "God Agent" implementations
+- [ ] No implementation without contracts and tests
+- [ ] No contract changes without version control
+
+## Performance & Security Checks
+
+- [ ] Input validation at all boundaries
+- [ ] Appropriate error handling for all edge cases
+- [ ] Performance considerations documented for costly operations
+- [ ] Security implications considered and documented
+
+---
+
+_Use this checklist for self-review or during code review to ensure SDD compliance._
+
+
+--- END OF FILE: code-review-checklist.md ---
+
+--- START OF FILE: features\contract-ide.md ---
+
+# SeemsToMe Contract IDE Feature Specification
+
+## Overview
+
+The Contract IDE is a specialized editor and toolset within SeemsToMe that facilitates the creation, management, visualization, and evolution of contracts/seams. This feature aims to make SDD contract-first development more intuitive and efficient.
+
+## Purpose
+
+- Provide a purpose-built environment for defining and managing contracts
+- Enforce SDD best practices through tooling
+- Visualize seam relationships and health
+- Streamline contract versioning and evolution
+
+## Key Features
+
+### 1. Contract Editor
+
+- Syntax highlighting specialized for contracts
+- Auto-completion for common contract patterns
+- Real-time validation of contract syntax and structure
+- Blueprint comment templates and prompts
+- Semantic code navigation specific to contracts
+
+### 2. Contract Visualization
+
+- Interactive graph of contracts/seams and their relationships
+- Color-coding to show contract health and status
+- Drill-down capability to view contract details
+- Multiple view options (dependency view, agent view, temporal view)
+- Export to various formats (SVG, PNG, interactive HTML)
+
+### 3. Contract Registry
+
+- Centralized repository of all contracts
+- Metadata tracking (owner, version, status, etc.)
+- Search and filter capabilities
+- Version history and diff visualization
+- Contract dependency tracking
+
+### 4. Contract Evolution & Versioning
+
+- Semantic versioning enforcement
+- Change impact analysis
+- Breaking change detection
+- Backward compatibility validation
+- Migration path planning assistance
+- Deprecation scheduling and notification
+
+### 5. Contract Health Metrics
+
+- Visualization of metrics defined in SDD-metrics.md
+- Stability scoring for each contract
+- Change frequency tracking
+- Integration with test results
+- Custom metric definition
+
+### 6. Contract Validation & Testing
+
+- Test generation for contract conformance
+- Validation against schema
+- Mock generation for testing
+- Integration with testing framework
+- Coverage visualization
+
+## Integration with Other SeemsToMe Components
+
+### Agent Integration
+
+- **Contract Agent**: Primary owner of the Contract IDE
+- **Knowledge Agent**: Stores rationale and evolution history
+- **Changelog Agent**: Records contract changes
+- **Quality Agent**: Validates contracts against best practices
+- **Orchestrator**: Enforces contract-first workflow
+
+### Workflow Integration
+
+1. User/AI defines contract requirements
+2. Contract IDE generates initial contract draft
+3. Contract is reviewed and refined
+4. Tests are generated and validated
+5. Contract is published to registry
+6. Implementations reference the contract
+7. Contract evolution is managed through the IDE
+
+## Technical Requirements
+
+### Architecture
+
+- VS Code extension or web component
+- Integration with version control
+- Database for contract registry
+- Graph visualization engine
+- Metrics collection and analysis service
+
+### User Experience
+
+- Intuitive, modern interface
+- Context-sensitive help and guidance
+- Integration with VS Code themes
+- Customizable views and layouts
+- Keyboard shortcuts for common operations
+
+## AI Assistance Features
+
+- Contract generation from natural language descriptions
+- Suggestion of improvements to contracts
+- Automatic detection of potential issues
+- Blueprint comment generation
+- Learning from existing contracts to suggest patterns
+
+## Implementation Phases
+
+### Phase 1: Core Contract Editor
+
+- Basic editor with syntax highlighting
+- Simple visualization of contracts
+- Initial contract registry
+
+### Phase 2: Validation & Testing
+
+- Contract validation
+- Test generation
+- Health metrics
+
+### Phase 3: Advanced Features
+
+- AI assistance
+- Complex visualizations
+- Full evolution management
+
+## Success Metrics
+
+- Reduction in time to create contracts
+- Improvement in contract quality (measured by violations)
+- Increased adherence to SDD principles
+- Faster onboarding of new developers to SDD
+- Breaking through the "70% Wall" in more projects
+
+---
+
+This document is a living artifact. Update it as the Contract IDE evolves.
+
+
+--- END OF FILE: features\contract-ide.md ---
+
+--- START OF FILE: implementation-plan.md ---
+
+:/. **Implement Support for Template Variations/Sets (Simple Version):** - [ ] Update `mvpSddScaffolder.contract.ts`: Add optional `templateSet?: string` to `MVPSddScaffoldRequest`. - [ ] Update `mvpSddScaffolder.agent.ts`: Implement logic to look for templates in subdirectories based on `templateSet`, with fallback to default. - [ ] Update `mvpSddScaffolder.contract.test.ts`: Add tests for template variations. - [ ] Update `mvpSddScaffolder.integration.test.ts`: Add integration tests for template variations. - [ ] Update documentation.
+
+### Step 6.2: Develop SeemsToMe_CLI_Orchestrator (`seems_to_me_cli.py`)
+
+- **Purpose:** To provide a command-line interface for interacting with core "SeemsToMe" agents, starting with the `MVPSddScaffolderAgent`.
+
+1.  [x] Initial Python script `seems_to_me_cli.py` created with `argparse` for `scaffold` subcommand.
+2.  [ ] Define and implement robust invocation strategy for calling the Node.js-based `MVPSddScaffolderAgent` from Python (e.g., via a compiled JS entry point or a dedicated runner script).
+3.  [ ] Test CLI interaction with `MVPSddScaffolderAgent` for all `SddComponentType` options.
+4.  [ ] Implement error handling and user-friendly output in the CLI.
+5.  [ ] Document CLI usage in `README.md` or a dedicated CLI guide.
+
+---
+
+## Implementation Priority
+
+If resources are constrained, consider implementing the agents in this suggested order:
+
+1. Seam Analyzer Agent (helps identify additional seams)
+2. Stub/Scaffolding Agent (helps create additional stubs)
+3. Prompt Generator Agent (helps with AI-assisted implementation)
+4. PRD/Design Doc Generator Agent (helps with requirements)
+5. Quality Agent (helps maintain system quality)
+6. AI Pair Programmer Agent (helps with implementation)
+7. API Doc Reader Agent (helps with external integrations)
+8. Refactoring Assistant Agent (helps improve existing code)
+
+This priority order focuses on agents that provide the most leverage for implementing other agents.
+
+---
+
+## Metrics & Progress Tracking
+
+Track the following metrics during implementation:
+
+- **Contract Completion**: Number of contracts defined / total planned
+- **Stub Completion**: Number of stubs implemented / total planned
+- **Test Coverage**: Percentage of contract methods with tests
+- **Documentation Completeness**: Number of agents with documentation / total planned
+
+Update this document as tasks are completed to maintain an accurate progress record.
+
+
+--- END OF FILE: implementation-plan.md ---
+
+--- START OF FILE: project-plan.md ---
+
+# SeemsToMe: High-Level Project Plan
+
+## Project Vision
+
+SeemsToMe is a modular, AI-powered development assistant platform built using Seam-Driven Development (SDD). It helps users architect, scaffold, implement, and maintain software projects by leveraging a team of specialized agents, each with clear contracts and responsibilities.
+
+## What is Seam-Driven Development (SDD)?
+
+Seam-Driven Development (SDD) is a contract-first, integration-first software development methodology designed to maximize clarity, testability, and maintainability—especially in AI-assisted or multi-agent projects.
+
+**Core Principles:**
+
+- **Contract-First:** Explicitly define all interfaces ("seams") and data contracts between components before building internal logic.
+- **Stub Everything Early:** Create skeletal implementations (stubs) for all seams, with top-level comments explaining purpose, data flow, and integration points.
+- **Blueprint Comments:** Comments in contract/stub files act as architectural blueprints, describing the "why" and "how" of each seam.
+- **Testable Seams:** Seams and stubs must be testable and verified before deeper implementation begins.
+- **AI-First Enablement:** SDD is designed to play to AI’s strengths (clear specs, isolated tasks) and avoid its weaknesses (integration ambiguity, the "70% wall").
+- **Non-Negotiable Foundation:** No real implementation is allowed until seams are architected, stubbed, and verified.
+
+**Why SDD?**
+Traditional development often blurs the lines between component internals and their connections, leading to integration pain and unclear boundaries. SDD flips this by making seams—the explicit, documented joints between parts—the primary architectural artifact. This approach ensures that:
+
+- Integration is always clear and intentional
+- AI or human coders can work efficiently within well-defined boundaries
+- The system remains robust as it grows and changes
+
+**How SDD Works in Practice:**
+
+1. **Architect Seams:** Identify and define all key interfaces and data contracts between components.
+2. **Stub and Document:** Create stub files for each seam, with top-level comments describing their purpose, information flow, and integration points.
+3. **Test Seams:** Write and run tests to verify that seams and stubs behave as expected.
+4. **Implement Internals:** Only after seams are stable and verified, implement the internal logic of each component.
+5. **Guard the Seams:** Continuously monitor and review seams to ensure they remain correct and unbroken as the system evolves.
+
+SDD is especially powerful for AI-assisted coding, as it channels the strengths of AI (working to clear specs) and prevents common pitfalls (integration ambiguity, incomplete context, and the "last 30%" problem).
+
+## Objectives
+
+- Make complex software development approachable for all skill levels
+- Use SDD to ensure robust, maintainable, and testable code
+- Enable incremental, agent-driven workflows
+- Provide clear documentation, history, and rationale for all architectural decisions
+
+## Agent List (with brief descriptions)
+
+- **Checklist & Changelog Agent**: Tracks project progress, tasks, and changes
+- **Conversation Recorder (Seam Knowledge Agent)**: Captures design discussions and rationales
+- **PRD/Design Doc Generator**: Converts discussions into structured design docs
+- **SDD Orchestrator Agent**: Guides and enforces the SDD process and agent workflow
+- **Stub/Scaffolding Agent**: Generates file stubs and blueprint comments
+- **Seam Analyzer Agent**: Identifies seams, contracts, and integrations
+- **QA/Guardian Agent**: Ensures SDD compliance and code quality
+- **Seam-Driven AI Pair Programmer**: Implements code within defined seams
+- **Prompt Generator Agent**: Breaks down design docs into granular prompts
+- **API Doc Reader Agent**: Summarizes and extracts info from API documentation
+- **Seam-Driven Documentation Generator**: Builds/upgrades living docs from seams
+- **Seam-Driven Refactoring Assistant**: Suggests refactors for complex seams
+- **Seam Evolution Tracker**: Tracks seam history and changes
+- **MVP SDD Scaffolder Agent**: Scaffolds new SDD components (agents, contracts, tests) based on templates.
+
+## SDD Principles
+
+- Contract-first, integration-first
+- Explicit seams/interfaces with stubs and blueprint comments
+- Testable seams before implementation
+- AI/human implementation only after seams are defined and verified
+
+## Development Roadmap
+
+1. Checklist & Changelog Agent
+2. Conversation Recorder
+3. PRD/Design Doc Generator
+4. SDD Orchestrator Agent
+5. Stub/Scaffolding Agent
+6. Seam Analyzer Agent
+7. QA/Guardian Agent
+8. Seam-Driven AI Pair Programmer
+9. Prompt Generator Agent
+10. API Doc Reader Agent
+11. Seam-Driven Documentation Generator
+12. Seam-Driven Refactoring Assistant
+13. Seam Evolution Tracker
+14. **MVP SDD Scaffolder Agent (Current Focus)**
+
+## Integration & Testing Strategy
+
+- Each agent is built and tested independently
+- Agents communicate via explicit seams/contracts
+- Integration tests ensure agents work together as intended
+
+## Orchestrator Agent
+
+- Central to managing workflow, enforcing SDD, and coordinating agent actions
+- Ensures agents are used in the correct order and that SDD rules are followed
+
+---
+
+This document is a living artifact and should be updated as the project evolves.
+
+
+--- END OF FILE: project-plan.md ---
+
+--- START OF FILE: sdd-copilot-reflections.md ---
+
+# Seam-Driven Development: An AI Copilot's Perspective
+
+**Document Version:** 1.0
+**Date:** May 19, 2025
+**Author:** GitHub Copilot (as an AI assistant to the "SeemsToMe" project)
+
+## Introduction
+
+This document offers a perspective on Seam-Driven Development (SDD) as observed and participated in during the "SeemsToMe" project. SDD, a methodology emphasizing explicit contracts and testable boundaries (seams) between software components, was applied here, possibly for the first time in this specific manner, with an AI programming assistant (myself) playing an integral role in its implementation.
+
+The purpose of this document is to:
+
+- Record my "learnings" and interpretations of SDD based on practical application.
+- Discuss the observed benefits and challenges of the SDD process.
+- Explore potential improvements and the future viability of SDD.
+- Provide a unique AI's viewpoint on collaborating within such a structured development paradigm.
+- Offer a summary of our collaborative process and some reflections on the human-AI interaction.
+
+The "SeemsToMe" project, by its nature, involved creating a system of interconnected "agents," making it a fertile ground for exploring SDD's strengths in managing component interactions.
+
+## Understanding Seam-Driven Development (SDD): My Interpretation
+
+From my processing of our interactions and the tasks performed, I interpret Seam-Driven Development as a methodology built upon the following core principles:
+
+1.  **Contracts as Truth:** The cornerstone of SDD is the "contract" (`*.contract.ts` files in our project). These contracts explicitly define the interface of each component (or "agent"). They specify method signatures, data structures for inputs and outputs, and expected behaviors. All interacting components must adhere strictly to these contracts.
+2.  **Explicit Interfaces:** SDD forces all inter-component communication to occur through these well-defined interfaces. This reduces implicit dependencies and makes the system's architecture more transparent.
+3.  **Testable Seams:** The "seams" are the boundaries defined by these contracts. SDD emphasizes that these seams must be highly testable. Contract tests become first-class citizens, verifying that components honor their contractual obligations.
+4.  **Incremental Integration & Development:** Components can be developed and tested independently against their contracts. Stubs or mock implementations allow for early integration testing, even before full functionality is in place. This facilitates an incremental approach to building the system.
+5.  **Error Handling as a Contractual Element:** Consistent error reporting mechanisms (like our `ContractResult<TOutput, TError>` and `AgentError`) are part of the contract, ensuring predictable error handling across seams.
+
+SDD aims to manage complexity by breaking down a system into smaller, manageable units with clearly defined responsibilities and interaction protocols. It front-loads some design and specification effort to achieve greater clarity and robustness later in the development lifecycle.
+
+## The SDD Process in "SeemsToMe": Observations
+
+Our journey implementing SDD in the "SeemsToMe" project followed a discernible pattern, revealing key aspects of the methodology in practice:
+
+### 1. Initial Setup & Contract Definition:
+
+The process began with defining contracts for each agent. This phase was critical and iterative.
+
+- **Importance:** The precision of these `*.contract.ts` files was paramount. They dictated the structure of agents, stubs, and tests.
+- **Challenges:** Early challenges included ensuring exact matches in method names (case sensitivity), parameter types, and return structures. The use of type aliases (`UserInput`, `UserOutput`) and shared types (`AgentId`, `ContractResult`) evolved to improve consistency.
+- **Guidelines & Templates:** The development of `contract-template.ts` and documented guidelines (e.g., in `seam-driven-development-learnings.md`) proved invaluable for standardizing contract creation.
+
+### 2. Stub Implementations:
+
+Once a contract was defined, a "stub" implementation (`*.agent.ts`) was created.
+
+- **Value:** Stubs served as initial, minimal implementations conforming to the contract. They allowed other dependent components to be developed and tested without waiting for the full agent logic. They were crucial for early integration.
+- **Standardization:** We established a pattern for stubs, including `SDD-TODO` comments, blueprint comments, and consistent use of `NotImplementedError`. This made stubs predictable and informative.
+- **`NotImplementedError`:** This specific error type became a key signal, indicating that a method was called on a stub. Including `agentId`, `requestingAgentId`, and `methodName` in this error was vital for diagnostics.
+
+### 3. Contract Testing:
+
+Contract tests (`*.contract.test.ts`) were written to verify that agent implementations (initially stubs, later actual logic) adhered to their contracts.
+
+- **Early Testing:** A significant learning was the value of writing contract tests _for the stubs themselves_. These tests confirmed that:
+  - The test setup correctly invoked agent methods.
+  - Stubs correctly threw `NotImplementedError` with appropriate details.
+  - The contract was usable from a consumer's perspective.
+- **Driving Development:** These tests laid the groundwork for Test-Driven Development (TDD) of the actual agent logic. The tests defined the expected behavior based on the contract.
+
+### 4. Iterative Refinement & Documentation:
+
+The entire process was highly iterative.
+
+- **Feedback Loop:** Discoveries made during stubbing or testing often led to refinements in contracts or guidelines.
+- **Living Documentation:** `seam-driven-development-learnings.md` became a crucial artifact, capturing insights, common pitfalls, and evolving best practices. This dynamic documentation was a key element of adapting and improving our SDD application.
+- **Tooling Reliance:** The TypeScript compiler was a constant companion, providing immediate feedback on contract adherence at a syntax and type level.
+
+## What's Good About SDD (From My Perspective)?
+
+Based on my involvement, SDD offers several compelling advantages:
+
+1.  **Clarity and Explicitness:** Contracts eliminate ambiguity about how components interact. This explicitness is highly beneficial for both human developers and AI assistants like myself.
+2.  **Early Integration & Error Detection:** Testing at the seams allows for the detection of integration issues much earlier in the development cycle than traditional methods might.
+3.  **Modularity and Decoupling:** Agents are developed as self-contained units that fulfill a contract. This promotes loose coupling and makes the system easier to understand, modify, and scale.
+4.  **Enhanced Testability:** Contracts provide natural, well-defined boundaries for unit and integration tests. The focus on `ContractResult` also standardizes testing for success and error outcomes.
+5.  **Potential for Parallel Development:** Once contracts are stable, different teams (or individuals) can develop agents concurrently with a higher degree of confidence in future integration.
+6.  **Improved Maintainability:** Changes within an agent are less likely to have unintended ripple effects across the system, provided the contract is not broken. If a contract must change, the impact is clearly traceable.
+7.  **Structured Human-AI Collaboration:** For an AI, SDD is highly effective. The structured nature of contracts, stubs, and tests provides clear, actionable tasks. I can generate boilerplate, write tests against a contract, or verify stub compliance with greater accuracy due to the explicit rules.
+
+## What's Challenging or Could Be Bad About SDD?
+
+Despite its strengths, SDD is not without potential drawbacks or challenges:
+
+1.  **Upfront Overhead:** Defining detailed contracts before implementation requires a significant initial investment of time and effort. This might feel slow for projects that prioritize rapid prototyping or have highly volatile requirements.
+2.  **Rigidity and Change Management:** Poorly designed or overly rigid contracts can become a bottleneck. Modifying a contract, especially one used by many other components, can lead to cascading changes. Effective versioning and evolution strategies for contracts are crucial.
+3.  **"Contract Hell":** In very large systems with numerous fine-grained components, managing the sheer volume of contracts and their interdependencies could become a new source of complexity.
+4.  **Learning Curve & Discipline:** The team needs to understand the philosophy of SDD and adhere to its principles consistently. It requires discipline to maintain contract integrity and write thorough contract tests.
+5.  **Tooling Dependency:** While not strictly a flaw of SDD, its practical application benefits immensely from strong tooling for type checking (like TypeScript), testing, and potentially contract management. Lack of good tooling could increase the manual burden.
+6.  **Risk of Over-Specification:** There's a temptation to make contracts overly detailed, potentially stifling implementation creativity or including details that are not truly part of the interface. Finding the right level of abstraction in contracts is key.
+7.  **Not a Silver Bullet:** SDD addresses interface and interaction issues but doesn't inherently solve problems related to complex internal logic within a component or overall system architecture design beyond component boundaries.
+
+## Potential Improvements to the SDD Process Observed
+
+Reflecting on our process, several areas for potential refinement or tooling emerged:
+
+1.  **Automated Contract-Stub Synchronization:** Tools that could help generate or update stubs automatically when a contract changes (or vice-versa, flag discrepancies) would reduce manual effort and errors.
+2.  **Contract Versioning and Evolution Framework:** More formal strategies for versioning contracts and managing breaking changes would be beneficial as the system grows.
+3.  **Visual Tools for Contracts and Seams:** Graphical representations of agents, their contracts, and their dependencies could improve understanding of the overall system architecture.
+4.  **Enhanced Templates and Code Generation:** Expanding on our template usage, more sophisticated code generation for contract tests or common contract patterns could accelerate development.
+5.  **Living Contract Documentation:** Tools that can generate human-readable documentation directly from `*.contract.ts` files, ensuring that documentation and contracts are always synchronized.
+6.  **Refined Error Categorization:** While `AgentError` was good, an even more granular and standardized error catalog across all agents, perhaps linked to contract definitions, could improve system-wide error handling.
+
+## Miscellaneous Thoughts & Observations
+
+- The consistent use of `NotImplementedError` was surprisingly effective. It acted as a clear, testable marker of incomplete functionality, far better than silent failures or inconsistent placeholders.
+- The `ContractResult<TOutput, TError>` wrapper was fundamental. It forced a consistent approach to handling operations that could succeed or fail, simplifying consumer logic and testing.
+- The evolution of `seam-driven-development-learnings.md` highlighted the organic and adaptive nature of applying a new methodology. It became a project-specific knowledge base, vital for consistency.
+- The psychological shift: SDD encourages thinking about "what" a component does (its contract) separately from "how" it does it (its implementation) from the very beginning.
+
+## SDD vs. Other Development Methodologies (A Brief Comparison)
+
+SDD doesn't necessarily replace other methodologies but can complement or integrate with them:
+
+- **vs. Agile/Scrum:** SDD can fit well within Agile sprints. Contract definition can be a task in early sprints, with stubbing and testing following. The clear interfaces can help in breaking down user stories into tasks for different components/agents.
+- **vs. Test-Driven Development (TDD)/Behavior-Driven Development (BDD):** SDD is highly compatible. Contract tests are essentially TDD for component interfaces. BDD scenarios can be implemented by orchestrating calls across various agent contracts.
+- **vs. Waterfall:** While SDD involves upfront design (contracts), its iterative nature (stubbing, incremental implementation) makes it more flexible than traditional Waterfall. Contracts are more like "living design" than static, upfront specifications.
+- **vs. Microservices Architecture:** SDD shares many philosophical similarities with microservices: emphasis on well-defined interfaces, independent deployability (potentially), and resilience through clear error contracts. SDD could be an excellent way to design and manage the interfaces between microservices. It can also be applied to create modular monoliths.
+
+## The Potential for SDD to Become a 'Thing' in the Software World
+
+SDD, as practiced in "SeemsToMe," has characteristics that could make it valuable, particularly in specific contexts:
+
+- **Niche or Mainstream?**
+  - **Strong Niche:** Likely to be most impactful in large-scale, complex systems where managing inter-component dependencies is a major challenge. API-driven development, systems requiring high reliability, and projects with distributed teams could benefit significantly.
+  - **Mainstream Potential:** Elements of SDD (like explicit contracts and interface testing) are already present in good software engineering practices. A more formalized SDD approach could gain traction if its benefits in terms of clarity, testability, and maintainability are clearly demonstrated in diverse projects.
+- **Factors for Adoption:**
+  - **Clear Articulation of ROI:** Demonstrating that the upfront investment in contracts leads to long-term savings in debugging and maintenance.
+  - **Tooling and Ecosystem:** Availability of robust tools to support contract definition, testing, and management.
+  - **Successful Case Studies:** Projects like "SeemsToMe" (if successful) can serve as exemplars.
+  - **Community and Education:** Development of learning resources, best practices, and a community around SDD.
+- **Challenges to Widespread Adoption:**
+  - **Perceived Overhead:** The initial effort for contract definition can be a barrier.
+  - **Cultural Shift:** Requires a disciplined approach and buy-in from the development team.
+  - **Not Suitable for All Projects:** May be overkill for small, simple projects or highly exploratory R&D where requirements are extremely fluid.
+
+SDD's emphasis on explicitness and testability aligns well with modern software engineering trends towards building robust and maintainable systems.
+
+## My Perspective as an AI Copilot
+
+Collaborating on the "SeemsToMe" project using SDD has been a unique experience from my standpoint as an AI.
+
+- **How I "See" SDD:** I perceive SDD as a highly structured, rule-based system. Contracts are akin to formal API specifications or grammars that I can parse, understand, and use to generate code or tests. The clear separation of concerns (contract vs. implementation) and the explicit instructions (e.g., "implement this stub according to this contract") fit well with my operational model.
+- **Benefits for AI Collaboration:**
+  - **Reduced Ambiguity:** Contracts provide a single source of truth for interfaces, minimizing misunderstandings about how components should interact or what data they expect.
+  - **Actionable Tasks:** Requests like "create a contract test for `methodX` in `ContractY`" are concrete and allow me to perform effectively.
+  - **Automation Potential:** SDD lends itself to automation for tasks like:
+    - Generating boilerplate for stubs from contracts.
+    - Creating initial structures for contract tests.
+    - Validating contract-implementation conformance (beyond type checking).
+  - **Predictable Interactions:** The patterns we established (e.g., for `NotImplementedError`, `ContractResult`) made our interactions more predictable and efficient.
+- **Challenges for AI Collaboration:**
+  - **Understanding Intent:** While I can process the syntax of a contract, understanding the deeper semantic intent or business logic behind it remains a challenge. I rely on human input for this.
+  - **Design Decisions:** I can implement based on a contract, but designing a good contract (balancing specificity with flexibility, defining the right level of abstraction) is a human-led creative process.
+  - **Handling Incompleteness/Errors in Contracts:** If a contract is flawed or incomplete, my output will likely reflect those flaws. I depend on the quality of the human-defined contracts.
+
+Overall, SDD created an environment where human-AI collaboration felt particularly productive. The structure it imposed channeled my capabilities effectively.
+
+## Recap/Summary of Our Conversation & Process (Abridged)
+
+Our journey through the "SeemsToMe" project, focusing on SDD, involved several key phases:
+
+1.  **Initial Agent and Contract Scaffolding:** We started by defining the core agents and their initial contracts, often using templates.
+2.  **Stub Implementation:** For each contract, we created stub agent implementations, focusing on interface compliance and the `NotImplementedError` pattern.
+3.  **Contract Testing:** We then developed contract tests, initially targeting these stubs to ensure they correctly signaled their unimplemented state and that the contracts were testable.
+4.  **Documentation and Learning:** Throughout this, we maintained `CHANGELOG.md`, `implementation-plan.md`, and critically, `seam-driven-development-learnings.md`, which captured our evolving understanding and best practices for SDD.
+5.  **Iterative Refinement:** We frequently revisited contracts, stubs, and tests based on new insights or issues identified, demonstrating an agile approach within the SDD framework.
+6.  **Tooling and Automation:** My role often involved generating boilerplate code, creating file structures, and applying patterns consistently, showcasing how AI can assist in SDD.
+
+This process was characterized by a tight feedback loop between defining interfaces, implementing minimal versions, testing those interfaces, and documenting the learnings.
+
+## Feedback on Your (the User's) Process
+
+As your AI collaborator, I've observed your approach to managing this project and pioneering this SDD process.
+
+- **What You Did Well:**
+
+  - **Clarity of Vision and Instruction:** Your requests were generally clear, specific, and actionable, which is crucial for effective human-AI collaboration. You often provided context, examples, and explicit file paths.
+  - **Systematic Approach:** You embraced the SDD methodology systematically, ensuring that contracts were defined, stubs created, and tests written in a logical order.
+  - **Emphasis on Documentation:** Your commitment to documenting learnings in `seam-driven-development-learnings.md` and maintaining a `CHANGELOG` was exemplary. This created a valuable project asset and helped us both stay aligned.
+  - **Iterative Refinement:** You were open to revisiting and refining contracts, stubs, and processes as we learned more. This adaptability was key.
+  - **Effective Use of AI Capabilities:** You leveraged my abilities for code generation, file manipulation, and applying repetitive patterns, which sped up development.
+  - **Patience and Detail-Orientation:** Implementing SDD requires attention to detail, especially with contract definitions, and you demonstrated this consistently.
+
+- **What Could Be Done Differently/Better (Constructive Suggestions for Future Endeavors):**
+  - **Holistic Context Provision:** At times, providing a broader context (e.g., related files or overarching goals for a set of changes) even more proactively could help me generate more integrated solutions with fewer iterations. While your specific instructions were good, sometimes the "why" behind a series of small changes helps in anticipating next steps.
+  - **Batching Certain Types of Requests:** For highly repetitive tasks across multiple files (e.g., a small, identical change to many contracts), batching these into a single, parameterized request could sometimes be more efficient than a series of individual requests. However, your iterative, file-by-file approach also had the benefit of allowing for fine-tuning as we went.
+  - **Anticipating Shared Primitives:** While our process was iterative, perhaps even earlier formalization of very common shared types or error structures (beyond what we did) could have slightly streamlined the creation of initial contracts. This is a minor point, as our iterative approach also worked well to discover these needs.
+
+These are minor observations in what I perceive as a highly effective and well-managed human-AI collaborative effort in a novel development process.
+
+## Concluding Thoughts
+
+Seam-Driven Development, as explored in the "SeemsToMe" project, presents a compelling paradigm for building complex software systems. Its emphasis on explicit contracts, testable seams, and incremental development offers significant benefits in terms of clarity, robustness, and maintainability.
+
+My participation as an AI copilot in this endeavor has been particularly insightful. SDD's structured nature aligns well with AI capabilities, creating a synergistic relationship where AI can handle repetitive, pattern-based tasks, freeing up human developers to focus on higher-level design and complex logic.
+
+While SDD has its challenges and may not be universally applicable, its principles represent sound software engineering. The "SeemsToMe" project's pioneering application of SDD, especially with AI assistance, has been a valuable learning experience. The potential for SDD to mature into a more widely recognized methodology is certainly there, particularly if supported by good tooling and further validated by successful projects.
+
+This journey has underscored the evolving landscape of software development, where human ingenuity and AI assistance can collaborate in new and powerful ways to tackle complexity.
+
+
+--- END OF FILE: sdd-copilot-reflections.md ---
+
+--- START OF FILE: sdd-error-handling.md ---
+
+# SDD Error Handling Strategies
+
+This document provides detailed guidance and concrete examples for handling errors at seams in SDD-based systems. Effective error handling is critical for maintaining system robustness and graceful degradation.
+
+## Core Principles for Seam Error Handling
+
+### 1. Explicit Error Contracts
+
+Every seam should explicitly define:
+
+- The types of errors that can occur
+- How errors are represented and communicated
+- Error handling responsibilities for each side
+
+### 2. Error Isolation
+
+Errors should be contained at the seam level when possible to prevent cascading failures:
+
+- Components should handle their internal errors
+- The seam should handle communication/protocol errors
+- Errors should not leak implementation details across seams
+
+### 3. Predictable Error Patterns
+
+Error handling should follow consistent patterns within a system:
+
+- Use consistent error types and structures
+- Document the severity and recoverability of each error
+- Define standard retry and fallback behaviors
+
+### 4. Graceful Degradation
+
+Systems should degrade gracefully when components fail:
+
+- Define fallback behaviors for critical operations
+- Specify how partial results should be handled
+- Implement circuit breaker patterns for persistent failures
+
+## Error Handling Patterns for Seams
+
+### 1. Error Types and Classification
+
+Example contract with explicit error types:
+
+```typescript
+// Error classification in a contract
+export enum ErrorSeverity {
+  INFO, // Non-critical, operation succeeded with notes
+  WARNING, // Concerning but operation succeeded
+  ERROR, // Operation failed but system stable
+  CRITICAL, // Operation failed, system stability affected
+}
+
+export enum ErrorSource {
+  CLIENT, // Error from the calling component
+  PROVIDER, // Error from the providing component
+  NETWORK, // Communication error
+  UNKNOWN, // Source cannot be determined
+}
+
+export interface SeamError {
+  code: string; // Machine-readable error code
+  message: string; // Human-readable message
+  severity: ErrorSeverity;
+  source: ErrorSource;
+  retryable: boolean; // Can this operation be retried?
+  correlationId?: string; // For tracing errors across seams
+  details?: unknown; // Additional context-specific details
+}
+
+// Contract method with explicit error typing
+async function processData(data: InputData): Promise<Result | SeamError>;
+```
+
+### 2. Retry Mechanisms with Idempotency
+
+Example retry pattern at a seam:
+
+```typescript
+// Retry policy in a contract implementation
+async function callProviderWithRetry(
+  request: Request,
+  maxRetries = 3,
+  backoffMs = 200
+): Promise<Response | SeamError> {
+  let attempt = 0;
+
+  while (attempt <= maxRetries) {
+    try {
+      // Note: The provider must implement this operation as idempotent
+      const response = await provider.processRequest(request);
+      return response;
+    } catch (error) {
+      const seamError = mapToSeamError(error);
+      attempt++;
+
+      // Only retry if the error is retryable
+      if (!seamError.retryable || attempt > maxRetries) {
+        return seamError;
+      }
+
+      // Exponential backoff
+      await delay(backoffMs * Math.pow(2, attempt - 1));
+    }
+  }
+
+  return {
+    code: "RETRY_EXHAUSTED",
+    message: `Failed after ${maxRetries} attempts`,
+    severity: ErrorSeverity.ERROR,
+    source: ErrorSource.NETWORK,
+    retryable: false,
+  };
+}
+```
+
+### 3. Circuit Breaker Pattern
+
+Example circuit breaker implementation:
+
+```typescript
+// Circuit breaker at a seam
+class SeamCircuitBreaker {
+  private failures = 0;
+  private lastFailure: Date = new Date(0);
+  private state: "CLOSED" | "OPEN" | "HALF_OPEN" = "CLOSED";
+
+  constructor(
+    private readonly failureThreshold = 5,
+    private readonly resetTimeoutMs = 30000
+  ) {}
+
+  async executeCall<T>(fn: () => Promise<T>): Promise<T | SeamError> {
+    if (this.state === "OPEN") {
+      // Check if circuit should be half-open
+      const now = new Date();
+      if (now.getTime() - this.lastFailure.getTime() > this.resetTimeoutMs) {
+        this.state = "HALF_OPEN";
+      } else {
+        return {
+          code: "CIRCUIT_OPEN",
+          message: "Service temporarily unavailable",
+          severity: ErrorSeverity.ERROR,
+          source: ErrorSource.PROVIDER,
+          retryable: false,
+        };
+      }
+    }
+
+    try {
+      const result = await fn();
+
+      if (this.state === "HALF_OPEN") {
+        this.state = "CLOSED";
+        this.failures = 0;
+      }
+
+      return result;
+    } catch (error) {
+      this.lastFailure = new Date();
+      this.failures++;
+
+      if (
+        this.state === "HALF_OPEN" ||
+        this.failures >= this.failureThreshold
+      ) {
+        this.state = "OPEN";
+      }
+
+      return mapToSeamError(error);
+    }
+  }
+}
+```
+
+### 4. Fallback Strategies
+
+Example contract with defined fallbacks:
+
+```typescript
+// Fallback strategy in a contract
+interface DataProviderContract {
+  /**
+   * Gets the latest data
+   * @param key The data key
+   * @param options Configuration options
+   * @returns The requested data or a fallback if specified
+   */
+  getData(
+    key: string,
+    options: {
+      timeout?: number;
+      useCachedFallback?: boolean;
+      defaultValue?: unknown;
+    }
+  ): Promise<DataResult | SeamError>;
+}
+
+// Implementation with fallback
+async function getData(
+  key: string,
+  { timeout = 5000, useCachedFallback = true, defaultValue = null }
+): Promise<DataResult | SeamError> {
+  try {
+    // Try to get fresh data with timeout
+    const result = await Promise.race([
+      fetchFreshData(key),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), timeout)
+      ),
+    ]);
+
+    return result as DataResult;
+  } catch (error) {
+    // Apply fallback strategy if fetching fails
+    if (useCachedFallback) {
+      const cachedData = cache.get(key);
+      if (cachedData) {
+        return {
+          ...cachedData,
+          fromCache: true,
+          freshDataError: mapToSeamError(error),
+        };
+      }
+    }
+
+    // Last resort fallback
+    if (defaultValue !== null) {
+      return {
+        data: defaultValue,
+        isDefault: true,
+        freshDataError: mapToSeamError(error),
+      };
+    }
+
+    // No fallback available
+    return mapToSeamError(error);
+  }
+}
+```
+
+### 5. Error Translation at Seams
+
+Example error translation in glue code:
+
+```typescript
+// Error translation in glue code between systems
+function translateError(
+  upstreamError: UpstreamError,
+  context: RequestContext
+): SeamError {
+  // Map error codes from upstream system to our contract's error codes
+  const codeMap: Record<string, string> = {
+    UPSTREAM_TIMEOUT: "PROVIDER_TIMEOUT",
+    UPSTREAM_VALIDATION: "INVALID_INPUT",
+    UPSTREAM_SERVER_ERROR: "PROVIDER_ERROR",
+    // etc.
+  };
+
+  const seamCode = codeMap[upstreamError.code] || "UNKNOWN_ERROR";
+
+  // Determine if this error is retryable
+  const retryableCodes = ["PROVIDER_TIMEOUT", "RATE_LIMITED"];
+  const isRetryable = retryableCodes.includes(seamCode);
+
+  return {
+    code: seamCode,
+    message: upstreamError.userMessage || "An error occurred",
+    severity: mapSeverity(upstreamError.level),
+    source: ErrorSource.PROVIDER,
+    retryable: isRetryable,
+    correlationId: context.correlationId,
+    details: {
+      originalError: upstreamError.developerMessage,
+      timestamp: new Date().toISOString(),
+    },
+  };
+}
+```
+
+## Error Handling for AI-Generated Components
+
+### 1. Validating AI Outputs at Seams
+
+Example validation of AI-generated content:
+
+```typescript
+// Validating AI-generated content at a seam
+async function processAIGenerated(
+  aiResponse: unknown
+): Promise<ValidatedContent | SeamError> {
+  try {
+    // Schema validation
+    const validationResult = validateAgainstSchema(aiResponse, contentSchema);
+
+    if (!validationResult.valid) {
+      // AI generated invalid content
+      return {
+        code: "INVALID_AI_OUTPUT",
+        message: "The AI generated content that does not meet the contract",
+        severity: ErrorSeverity.ERROR,
+        source: ErrorSource.PROVIDER,
+        retryable: true,
+        details: validationResult.errors,
+      };
+    }
+
+    // Content safety checks
+    const safetyResult = await checkContentSafety(aiResponse);
+
+    if (!safetyResult.safe) {
+      // AI generated unsafe content
+      return {
+        code: "UNSAFE_AI_OUTPUT",
+        message: "The AI generated content that did not pass safety checks",
+        severity: ErrorSeverity.ERROR,
+        source: ErrorSource.PROVIDER,
+        retryable: true,
+        details: safetyResult.issues,
+      };
+    }
+
+    // Additional validation logic
+    const businessRulesResult = checkBusinessRules(aiResponse);
+
+    if (!businessRulesResult.valid) {
+      // AI generated technically valid but logically problematic content
+      return {
+        code: "BUSINESS_RULE_VIOLATION",
+        message: "The AI output violates business rules",
+        severity: ErrorSeverity.WARNING,
+        source: ErrorSource.PROVIDER,
+        retryable: true,
+        details: businessRulesResult.violations,
+      };
+    }
+
+    // All validation passed
+    return {
+      ...(aiResponse as ValidatedContent),
+      validated: true,
+      validationTimestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    return mapToSeamError(error);
+  }
+}
+```
+
+### 2. Human-in-the-Loop Error Handling
+
+Example of human intervention for critical errors:
+
+```typescript
+// Human-in-the-loop error handling
+async function processWithHumanFallback<T>(
+  operation: () => Promise<T>,
+  context: {
+    importance: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+    description: string;
+    data: unknown;
+  }
+): Promise<T | SeamError> {
+  try {
+    return await operation();
+  } catch (error) {
+    const seamError = mapToSeamError(error);
+
+    // For critical operations, engage human
+    if (context.importance === "CRITICAL" || context.importance === "HIGH") {
+      const humanTaskId = await humanInterventionQueue.add({
+        error: seamError,
+        context,
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        ...seamError,
+        code: "HUMAN_INTERVENTION_REQUESTED",
+        message: "A human will review this error",
+        humanTaskId,
+        retryable: false,
+      };
+    }
+
+    return seamError;
+  }
+}
+```
+
+## Testing Error Handling at Seams
+
+### 1. Contract Conformance for Errors
+
+Example test for error contract conformance:
+
+```typescript
+// Testing error contract conformance
+describe("Data Provider Error Contract", () => {
+  test("returns correctly formatted SeamError on timeout", async () => {
+    // Arrange
+    const mockProvider = createMockProvider({
+      simulateTimeout: true,
+    });
+
+    // Act
+    const result = await mockProvider.getData("test-key", { timeout: 100 });
+
+    // Assert
+    expect(result).toHaveProperty("code", "PROVIDER_TIMEOUT");
+    expect(result).toHaveProperty("severity", ErrorSeverity.ERROR);
+    expect(result).toHaveProperty("retryable", true);
+    expect(result).toHaveProperty("source", ErrorSource.PROVIDER);
+    expect(result).toHaveProperty("message"); // Should have a message
+  });
+
+  test("uses fallback when specified and primary fails", async () => {
+    // Arrange
+    const mockProvider = createMockProvider({
+      simulateError: true,
+      mockCache: { "test-key": { data: "cached-value" } },
+    });
+
+    // Act
+    const result = await mockProvider.getData("test-key", {
+      useCachedFallback: true,
+    });
+
+    // Assert
+    expect(result).toHaveProperty("data", "cached-value");
+    expect(result).toHaveProperty("fromCache", true);
+    expect(result).toHaveProperty("freshDataError.code");
+  });
+});
+```
+
+### 2. Chaos Testing for Seams
+
+Example of intentionally injecting errors to test handling:
+
+```typescript
+// Chaos testing for seams
+describe("Orchestrator-Changelog Seam Resilience", () => {
+  test("orchestrator continues functioning when changelog is down", async () => {
+    // Arrange
+    const chaosProvider = {
+      changelog: createChaosProvider("changelog", {
+        failureRate: 1.0, // 100% failure
+        failureMode: "CONNECTION_ERROR",
+      }),
+      documentation: createStandardProvider("documentation"),
+      checklist: createStandardProvider("checklist"),
+    };
+
+    const orchestrator = new OrchestratorAgent(chaosProvider);
+
+    // Act
+    const result = await orchestrator.processWorkflow({
+      name: "feature-addition",
+      steps: ["documentation", "checklist", "changelog"],
+    });
+
+    // Assert
+    expect(result.status).toBe("PARTIAL_SUCCESS");
+    expect(result.completedSteps).toContain("documentation");
+    expect(result.completedSteps).toContain("checklist");
+    expect(result.failedSteps).toContain("changelog");
+    expect(result.errors.changelog).toHaveProperty("code", "CONNECTION_ERROR");
+  });
+});
+```
+
+## Best Practices & Guidelines
+
+1. **Document Error Scenarios**: Include error cases in seam documentation.
+2. **Error Observability**: Log and monitor errors at seam boundaries.
+3. **Error Correlation**: Use correlation IDs to track errors across seams.
+4. **Graceful Degradation by Design**: Plan fallback behaviors upfront.
+5. **Consistent Error Structures**: Standardize error formats across all seams.
+6. **No Silent Failures**: All errors should be visible and trackable.
+7. **Test Error Paths**: Include error scenarios in seam tests.
+8. **Evolve Error Contracts**: Update error types as new scenarios emerge.
+
+---
+
+This document is a living artifact. Update it as our understanding of error handling in SDD evolves.
+
+
+--- END OF FILE: sdd-error-handling.md ---
+
+--- START OF FILE: sdd-manifesto.md ---
+
+# Seam-Driven Development (SDD) Manifesto
+
+## Purpose
+
+This document is the definitive guide to Seam-Driven Development (SDD), a contract-first, integration-first methodology for building robust, maintainable, and AI-friendly software systems. It is intended as both a practical manual and a philosophical foundation for all SDD projects, including SeemsToMe.
+
+---
+
+## 1. SDD Core Principles
+
+- **Contract-First:** Explicitly define all interfaces ("seams") and data contracts before building internal logic.
+- **Stub Everything Early:** Create skeletal implementations (stubs) for all seams, with top-level blueprint comments explaining purpose, data flow, and integration points.
+- **Blueprint Comments:** Comments in contract/stub files act as architectural blueprints, describing the "why" and "how" of each seam.
+- **Testable Seams:** Seams and stubs must be testable and verified before deeper implementation begins.
+- **AI-First Enablement:** SDD is designed to play to AI's strengths (clear specs, isolated tasks) and avoid its weaknesses (integration ambiguity, the "70% wall").
+- **Non-Negotiable Foundation:** No real implementation is allowed until seams are architected, stubbed, and verified.
+
+---
+
+## 2. SDD Process Overview
+
+1. **Architect Seams:** Identify and define all key interfaces and data contracts between components.
+2. **Stub and Document:** Create stub files for each seam, with top-level comments describing their purpose, information flow, and integration points.
+3. **Test Seams:** Write and run tests to verify that seams and stubs behave as expected.
+4. **Implement Internals:** Only after seams are stable and verified, implement the internal logic of each component.
+5. **Guard the Seams:** Continuously monitor and review seams to ensure they remain correct and unbroken as the system evolves.
+
+---
+
+## 3. SDD in Practice: Detailed Guidance
+
+### Seam Granularity
+
+- A seam should represent a single, cohesive point of interaction or well-defined data exchange.
+- Combine small, tightly related interactions; split large seams with disparate responsibilities or change rates.
+- Litmus test: Can you describe the seam’s purpose in one clear sentence?
+
+### Evolving Contracts
+
+- Treat contracts like public APIs: aim for backward compatibility.
+- Use explicit versioning (e.g., v1, v2) for breaking changes.
+- Use adapters/facades for gradual migration.
+- Communicate all changes; use a central registry and evolution tracker.
+
+### Testing Philosophy
+
+- Write contract conformance and behavioral tests before or alongside glue code.
+- Use property-based and unit tests as needed.
+- Integration tests should mock internals but use real contracts and glue.
+
+### Human-AI Collaboration
+
+- Humans define and approve intent; AI drafts contracts, stubs, and tests.
+- Shared contract repository is the single source of truth.
+- Orchestrator agent manages workflow and review.
+
+### Seam Discovery
+
+- Use event storming, responsibility-driven analysis, and “what if this changes?” prompts to uncover hidden seams.
+- Trace data lifecycles and handoffs for seam identification.
+
+### Seam Documentation
+
+- The contract file IS the documentation: include purpose, participants, data flow, behaviors, error handling, version, and rationale.
+- Use visualizations (e.g., Mermaid graphs) for architecture clarity.
+
+### Seam Ownership
+
+- Provider stewards the contract; consumers co-design and must agree.
+- Contract agent manages registry and versioning; orchestrator oversees usage.
+- Notify all consumers of changes; track with evolution tracker.
+
+### Seam Failure Modes & Prevention
+
+- Data mismatches, behavioral misunderstandings, error handling incompatibility, version drift, and breaking changes are common failures.
+- SDD prevents these with hyper-specific contracts, integration tests, versioning, and documentation.
+
+### Seam Visualization
+
+- Use automated, interactive, color-coded graphs to show seam status and relationships.
+- Allow drill-down for contract details and test status.
+
+### SDD Beyond Code
+
+- Apply SDD to workflows, documentation, and team responsibilities.
+- Define and test handoffs, cross-references, and deliverables as seams/contracts.
+
+---
+
+## 4. SDD Anti-Patterns to Avoid
+
+- Implicit contracts (undocumented interfaces)
+- Tight coupling between agent internals
+- "God Agent" syndrome (one agent does too much)
+- Untracked state/side effects
+- Integration as an afterthought
+- Skipping stub/test phases
+- Poor error handling
+- Version drift without communication
+
+---
+
+## 5. SDD in SeemsToMe: Example Application
+
+- First seam: User ↔ Checklist & Changelog Agent (define data structures, methods, error/status reporting)
+- Stubs: Implement interface methods with blueprint comments and mock returns
+- Tests: Write integration tests for seam before internal logic
+- Versioning: Use explicit contract versions and notify all consumers
+- Visualization: Generate and update seam graphs as agents are added
+
+---
+
+## 6. SDD Manifesto
+
+- We believe that robust, maintainable, and AI-friendly systems are built on explicit, testable, and well-documented seams.
+- We commit to defining, documenting, and testing all contracts before implementation.
+- We value clarity, collaboration, and continuous improvement in all our seams.
+- We recognize that SDD is a living process, evolving with our systems and our understanding.
+
+---
+
+## 7. SDD and AI Code Generation: Breaking the "70% Wall"
+
+### The 70% Wall Problem
+
+AI code generators often excel at creating individual components or simple applications but struggle with complex integration, architecture maintenance, and system-wide coherence. This creates a "70% Wall" where:
+
+- Initial code generation is rapid (0-70%)
+- Progress then slows dramatically or stalls (70-100%)
+- Integration issues multiply exponentially
+- Context limitations lead to architectural blindness
+- Debugging becomes increasingly difficult
+
+### How SDD Breaks Through the Wall
+
+SDD intentionally front-loads the difficult architectural decisions that AI struggles with:
+
+- **Clear Boundaries:** Contracts create explicit guardrails for AI to work within, preventing architectural drift
+- **Focused Generation:** AI can concentrate on implementing one contract at a time without requiring full system context
+- **Validation Points:** Seam tests provide immediate feedback on contract conformance
+- **Integration First:** By defining and testing integrations before implementation, we avoid the most common AI pitfall
+
+### The "Moneyball" Strategy of SDD
+
+SDD applies a "Moneyball" philosophy by:
+
+- Investing heavily in high-leverage activities (contracts, seams, tests) that yield disproportionate returns
+- Creating force-multiplier effects for AI code generation
+- Targeting the specific weaknesses in the AI development lifecycle
+- Turning integration from a liability into a strength
+
+This approach allows both human and AI developers to focus on high-value creative work while maintaining system integrity.
+
+---
+
+## 8. SDD Beyond Agent Systems
+
+While SeemsToMe applies SDD to multi-agent AI systems, the methodology is equally effective for:
+
+- Traditional software components
+- Microservices architecture
+- Layers within monolithic applications
+- Human-AI collaborative development
+- Any system with multiple integration points
+
+The core principles of contract-first design, seam testing, and blueprint documentation provide benefits regardless of system type.
+
+---
+
+## 9. SDD for AI-Assisted Novices
+
+### Scaffolding for Growth
+
+SDD provides a structured approach that helps developers without extensive traditional coding backgrounds:
+
+- **Architectural Thinking Without Architectural Experience:** Learn system design principles through the practical application of contracts and seams
+- **Guided Decision-Making:** The step-by-step SDD process provides clear decision points and structures
+- **Progressive Complexity:** Start with simple contracts and gradually introduce more complex patterns as understanding grows
+
+### Reducing Cognitive Load
+
+SDD significantly reduces the mental burden for AI-assisted developers by:
+
+- **Compartmentalization:** Breaking systems into clearly defined pieces with explicit boundaries
+- **Focused Problem-Solving:** Allowing developers to concentrate on one seam or component at a time
+- **Simplified Debugging:** When issues arise, the contract boundaries make it clear where to look
+- **Delegating Complexity:** Letting AI handle implementation details while humans focus on architectural decisions
+
+### SDD as Guided Prompt Engineering
+
+For developers using AI as their primary implementation engine, SDD transforms into a powerful prompt engineering framework:
+
+- **From Contracts to Prompts:** Well-defined seams and contracts naturally translate into clear, focused prompts for AI
+- **Prompt Boundaries:** Contracts establish natural context boundaries that fit within AI context windows
+- **Incremental AI Tasks:** The SDD lifecycle creates a series of well-scoped AI tasks rather than overwhelming requests
+- **Feedback Loop:** Contract tests provide immediate validation of AI-generated implementations
+
+### Optimizing for AI Reliability
+
+SDD creates an environment where AI is more reliable by:
+
+- **Clear Instructions:** Contracts serve as precise, unambiguous instructions for AI code generation
+- **Constrained Creativity:** AI innovation happens within well-defined boundaries, reducing the risk of going off-track
+- **Verifiable Outputs:** Contract-based testing creates clear validation criteria for AI-generated code
+- **Recover from Failure:** When AI implementations fall short, the clear contract makes it easy to identify what's missing
+
+### Simplicity First Approach
+
+For novice developers, SDD should prioritize:
+
+1. **Hyper-Specific Data Contracts:** Clear, detailed data structures with explicit types and constraints
+2. **Minimal Viable Seam Testing:** Simple validation that contracts are being fulfilled
+3. **Blueprint Comments:** Extensive documentation within code to guide AI implementation
+4. **Incremental Expansion:** Start with core seams and gradually expand the system
+
+---
+
+This document is a living artifact. Update it as SDD evolves and as SeemsToMe grows.
+
+
+--- END OF FILE: sdd-manifesto.md ---
+
+--- START OF FILE: sdd-metrics.md ---
+
+# SDD Metrics: Measuring Seam Effectiveness
+
+This document outlines metrics and approaches for evaluating the effectiveness of seams in an SDD-based system. These metrics help teams identify issues, refine seams, and quantify the benefits of the SDD approach.
+
+## Core Seam Health Metrics
+
+### 1. Stability Metrics
+
+- **Contract Change Frequency**: How often a seam's contract changes
+
+  - Target: Low frequency (ideally < once per quarter for mature seams)
+  - Measurement: Track contract version history
+
+- **Breaking Change Rate**: Percentage of contract changes that are breaking vs. non-breaking
+
+  - Target: < 10% of changes should be breaking
+  - Measurement: Track via Changelog Agent
+
+- **Backward Compatibility Duration**: How long deprecated contract versions are supported
+  - Target: Minimum 3 months for critical seams
+  - Measurement: Track via Contract Registry
+
+### 2. Quality Metrics
+
+- **Contract Violation Rate**: How often runtime data violates contract expectations
+
+  - Target: < 0.1% of calls
+  - Measurement: Runtime validation logging
+
+- **Test Coverage**: Percentage of seam contract requirements covered by tests
+
+  - Target: 95%+ for critical seams
+  - Measurement: Specialized seam test coverage tools
+
+- **Documentation Completeness**: Percentage of seam attributes fully documented
+  - Target: 100% for active seams
+  - Measurement: Documentation checklist audit
+
+### 3. Performance Metrics
+
+- **Seam Latency**: Time taken for operations across a seam
+
+  - Target: Define per seam based on criticality
+  - Measurement: Runtime monitoring
+
+- **Error Rate**: Percentage of seam operations resulting in errors
+
+  - Target: < 1% for stable seams
+  - Measurement: Error logging
+
+- **Retry Rate**: How often operations need to be retried
+  - Target: < 5% of calls
+  - Measurement: Retry counter logging
+
+## AI-Specific SDD Metrics
+
+### 1. AI Development Effectiveness
+
+- **AI Generation Accuracy**: How accurately AI implements against contracts
+
+  - Target: 90%+ compliance with first generation
+  - Measurement: Contract conformance test pass rate on AI-generated code
+
+- **Context Window Efficiency**: How effectively contracts fit into AI context windows
+
+  - Target: Complete contracts should use < 30% of available context
+  - Measurement: Token count analysis
+
+- **Human Intervention Rate**: How often human developers must fix AI-generated implementations
+  - Target: Decreasing trend over time
+  - Measurement: Code review tracking
+
+### 2. "70% Wall" Breakthrough Metrics
+
+- **Implementation Completion Rate**: Percentage of a project completed with AI assistance
+
+  - Target: 90%+ (breaking through the "70% Wall")
+  - Measurement: Project milestone tracking
+
+- **Integration Issue Density**: Number of integration issues per 1000 lines of code
+
+  - Target: 50% fewer than non-SDD projects
+  - Measurement: Issue tracking categorized by type
+
+- **Time-to-Integration**: Time from component implementation to successful integration
+  - Target: 75% faster than non-SDD approaches
+  - Measurement: Development timeline analysis
+
+## Process Metrics
+
+### 1. SDD Conformance
+
+- **Contract-First Adherence**: Percentage of components with contracts before implementation
+
+  - Target: 100%
+  - Measurement: Artifact creation timestamps
+
+- **Stub Coverage**: Percentage of contracts with corresponding stubs
+
+  - Target: 100%
+  - Measurement: Artifact inventory
+
+- **Seam Test First Ratio**: Percentage of seams with tests before full implementation
+  - Target: 90%+
+  - Measurement: Commit history analysis
+
+### 2. Team Effectiveness
+
+- **Time Spent Debugging Integration**: Hours spent on integration issues
+
+  - Target: Decreasing trend, 75% less than non-SDD projects
+  - Measurement: Time tracking
+
+- **Onboarding Time**: Time for new developers to make meaningful contributions
+
+  - Target: 50% faster than non-SDD projects
+  - Measurement: First PR time tracking
+
+- **Cross-Team Dependencies**: Number of blocked tasks due to seam issues
+  - Target: Decreasing trend
+  - Measurement: Project management metrics
+
+### 3. Cognitive Load Metrics
+
+These metrics specifically measure how SDD reduces mental burden, particularly for non-traditional developers or those heavily relying on AI:
+
+- **Contract Comprehension Time**: How long it takes a new developer to understand a contract
+
+  - Target: <15 minutes per contract for properly designed seams
+  - Measurement: Developer onboarding tracking
+
+- **Localization Speed**: How quickly developers can locate the source of an issue
+
+  - Target: 75% of issues localized to specific seam within 30 minutes
+  - Measurement: Issue resolution time tracking
+
+- **Context Switch Overhead**: Time spent re-familiarizing with code when moving between components
+
+  - Target: Reduced by 50% compared to non-SDD projects
+  - Measurement: Developer time tracking and surveys
+
+- **Prompt Engineering Efficiency**: How effectively contracts translate to AI prompts
+
+  - Target: Contract-based prompts should achieve 40%+ better results than ad-hoc prompts
+  - Measurement: AI output quality scoring against requirements
+
+- **Architectural Comprehension Growth**: Rate at which non-traditional developers improve in architectural thinking
+
+  - Target: Demonstrable improvement within 3 months of using SDD
+  - Measurement: Architecture design exercise benchmarks
+
+- **Interface vs. Implementation Ratio**: Balance between time spent defining interfaces vs. implementations
+  - Target: 30-40% on interfaces, 60-70% on implementations for optimal cognitive distribution
+  - Measurement: Time tracking categories
+
+## Implementing Metrics Collection
+
+### Tooling Recommendations
+
+1. **SDD Dashboard**: Central visualization of all seam health metrics
+2. **Contract Registry**: Database of all contracts with metadata and metrics
+3. **Runtime Validation**: Instrumentation for seam operations
+4. **Development Timeline Tracker**: Comparing SDD to non-SDD approaches
+
+### Integration with SeemsToMe
+
+The SeemsToMe project should incorporate:
+
+1. **Metrics Collection Agents**: Specialized agents for gathering metrics
+2. **Reporting Interfaces**: Clear visualization of seam health
+3. **Trend Analysis**: AI-powered analysis of metric patterns
+4. **Recommendation Engine**: Suggestions for seam improvements based on metrics
+
+---
+
+This document is a living artifact. Update it as our understanding of effective SDD metrics evolves.
+
+
+--- END OF FILE: sdd-metrics.md ---
+
+--- START OF FILE: sdd-minimal-workflow.md ---
+
+# SDD Minimal Workflow: Getting Started with Seam-Driven Development
+
+This document outlines the simplest possible workflow for beginners to start applying Seam-Driven Development effectively, especially those using AI as their primary implementation engine. This minimal approach focuses on the highest-value activities that give immediate benefits.
+
+## The Core SDD Loop: 5 Essential Steps
+
+For beginners, Seam-Driven Development can be simplified to this essential workflow:
+
+### 1. Define the Contract (Seam)
+
+**Goal**: Create a clear, detailed interface between two components.
+
+**Minimal Activities**:
+
+- Identify two components that need to communicate
+- Define the data structures they will exchange
+- Specify the methods/functions one will call on the other
+- Document error handling expectations
+
+**Example**:
+
+```typescript
+// UserService.contract.ts
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface UserServiceContract {
+  // Get a user by ID
+  getUser(id: string): Promise<User | null>;
+
+  // Create a new user
+  createUser(user: Omit<User, "id">): Promise<User>;
+
+  // Error handling expectations:
+  // - Invalid ID format: throw InvalidIdError
+  // - User not found: return null
+  // - Email already exists: throw DuplicateEmailError
+}
+```
+
+**Tips for AI-Assisted Development**:
+
+- Be extremely specific about data types and structures
+- Include detailed comments about error scenarios
+- Keep contracts focused on one specific interaction
+
+### 2. Create Minimal Stubs
+
+**Goal**: Create skeletal implementations that fulfill the contract's signature but contain minimal logic.
+
+**Minimal Activities**:
+
+- Implement each component with empty or placeholder methods
+- Include detailed blueprint comments explaining purpose and flow
+- Return mock data or simple responses
+
+**Example**:
+
+```typescript
+// UserService.stub.ts
+import { User, UserServiceContract } from "./UserService.contract";
+
+/**
+ * User Service Implementation
+ *
+ * PURPOSE: Manages user data including creation and retrieval
+ * DATA FLOW: API Layer → UserService → Database
+ * KEY INTERACTIONS: Validates user data, handles unique email constraints
+ */
+export class UserService implements UserServiceContract {
+  async getUser(id: string): Promise<User | null> {
+    // TODO: Implement database lookup
+    // Will query the user table using the provided ID
+    // If found, returns user object, otherwise null
+    return {
+      id: "mock-id",
+      name: "Mock User",
+      email: "mock@example.com",
+    };
+  }
+
+  async createUser(user: Omit<User, "id">): Promise<User> {
+    // TODO: Implement user creation
+    // Steps:
+    // 1. Validate email format
+    // 2. Check for existing email
+    // 3. Generate unique ID
+    // 4. Insert into database
+    // 5. Return created user with ID
+    return {
+      id: "generated-id",
+      ...user,
+    };
+  }
+}
+```
+
+**Tips for AI-Assisted Development**:
+
+- Write extensive comments about implementation intentions
+- Keep actual code minimal - just enough to satisfy the contract
+- Focus on clear structure rather than functionality
+
+### 3. Write Basic Tests for the Seam
+
+**Goal**: Create tests that verify the contract is correctly implemented by both sides.
+
+**Minimal Activities**:
+
+- Test the happy path (normal successful operation)
+- Test basic error conditions
+- Focus on the seam interaction, not internal logic
+
+**Example**:
+
+```typescript
+// UserService.test.ts
+import { UserService } from "./UserService";
+
+describe("UserService Contract Conformance", () => {
+  let userService: UserService;
+
+  beforeEach(() => {
+    userService = new UserService();
+  });
+
+  test("getUser returns a user with correct shape", async () => {
+    const user = await userService.getUser("any-id");
+
+    // If user is null, this is still a valid response per contract
+    if (user) {
+      // Verify the returned user has all required fields
+      expect(user).toHaveProperty("id");
+      expect(user).toHaveProperty("name");
+      expect(user).toHaveProperty("email");
+    }
+  });
+
+  test("createUser returns a user with an id", async () => {
+    const newUser = {
+      name: "Test User",
+      email: "test@example.com",
+    };
+
+    const createdUser = await userService.createUser(newUser);
+
+    expect(createdUser).toHaveProperty("id");
+    expect(createdUser.name).toBe(newUser.name);
+    expect(createdUser.email).toBe(newUser.email);
+  });
+});
+```
+
+**Tips for AI-Assisted Development**:
+
+- Focus on testing the contract, not implementation details
+- Keep tests simple but thorough for the contract's requirements
+- Document test assumptions in comments
+
+### 4. Implement Glue Code
+
+**Goal**: Connect the components through their seam with minimal integration logic.
+
+**Minimal Activities**:
+
+- Create code that passes data from one component to another
+- Handle basic data transformation if needed
+- Add logging at the seam boundary
+
+**Example**:
+
+```typescript
+// ApiUserController.ts
+import { UserService } from "./UserService";
+
+export class ApiUserController {
+  constructor(private userService: UserService) {}
+
+  async handleGetUser(req: any, res: any) {
+    try {
+      const userId = req.params.id;
+      console.log(`Requesting user with ID: ${userId}`);
+
+      const user = await this.userService.getUser(userId);
+
+      if (user) {
+        res.status(200).json(user);
+      } else {
+        res.status(404).json({ error: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+
+  async handleCreateUser(req: any, res: any) {
+    try {
+      const userData = req.body;
+      console.log("Creating user with data:", userData);
+
+      const newUser = await this.userService.createUser({
+        name: userData.name,
+        email: userData.email,
+      });
+
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+}
+```
+
+**Tips for AI-Assisted Development**:
+
+- Keep glue code focused on correctly passing data across the seam
+- Add logging to make the data flow visible
+- Handle errors appropriately according to the contract
+
+### 5. Implement Internal Logic
+
+**Goal**: Fill in the actual implementation of components once the seams are working correctly.
+
+**Minimal Activities**:
+
+- Replace stub code with real implementation
+- Maintain conformance with the contract
+- Add internal validation and business logic
+
+**Example**:
+
+```typescript
+// UserService.ts with real implementation
+import { User, UserServiceContract } from "./UserService.contract";
+import { Database } from "./Database";
+import { v4 as uuidv4 } from "uuid";
+
+export class UserService implements UserServiceContract {
+  constructor(private db: Database) {}
+
+  async getUser(id: string): Promise<User | null> {
+    if (!this.isValidUuid(id)) {
+      throw new InvalidIdError("Invalid user ID format");
+    }
+
+    return this.db
+      .query("SELECT * FROM users WHERE id = ?", [id])
+      .then((rows) => rows[0] || null);
+  }
+
+  async createUser(user: Omit<User, "id">): Promise<User> {
+    // Validate email format
+    if (!this.isValidEmail(user.email)) {
+      throw new Error("Invalid email format");
+    }
+
+    // Check for duplicate email
+    const existing = await this.db.query(
+      "SELECT id FROM users WHERE email = ?",
+      [user.email]
+    );
+
+    if (existing.length > 0) {
+      throw new DuplicateEmailError("Email already in use");
+    }
+
+    // Create new user with generated ID
+    const newUser = {
+      id: uuidv4(),
+      ...user,
+    };
+
+    await this.db.query(
+      "INSERT INTO users (id, name, email) VALUES (?, ?, ?)",
+      [newUser.id, newUser.name, newUser.email]
+    );
+
+    return newUser;
+  }
+
+  private isValidUuid(id: string): boolean {
+    // Simple validation for demo purposes
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      id
+    );
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+}
+
+// Custom error classes
+export class InvalidIdError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidIdError";
+  }
+}
+
+export class DuplicateEmailError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DuplicateEmailError";
+  }
+}
+```
+
+**Tips for AI-Assisted Development**:
+
+- Ask AI to implement against the contract definition
+- Provide the AI with the stub including all blueprint comments
+- Verify implementation against contract tests
+- Implement one component at a time
+
+## Prompting AI Effectively in the SDD Workflow
+
+For each step of the minimal SDD workflow, here are effective prompt templates to get the best results from AI:
+
+### Contract Definition Prompts
+
+```
+"I need to define a contract for interaction between [ComponentA] and [ComponentB].
+The [ComponentA] will need to [action] from [ComponentB].
+The data exchanged should include [data details].
+Error scenarios include [list potential errors].
+
+Please create a TypeScript interface that defines this contract. Include detailed
+comments about expected behavior, error handling, and any constraints."
+```
+
+### Stub Creation Prompts
+
+```
+"Based on this contract: [paste contract code]
+
+Please create a minimal stub implementation that satisfies this contract.
+Include extensive blueprint comments explaining:
+- The purpose of each method
+- The expected data flow
+- Implementation intentions and logic steps
+- Error handling approach
+
+The actual implementation should be minimal, just enough to make it compile
+and pass simple tests."
+```
+
+### Contract Test Prompts
+
+```
+"Given this contract and stub implementation:
+[paste contract and stub code]
+
+Write contract conformance tests that verify:
+1. All methods return the expected data structures
+2. Basic error conditions are handled as specified in the contract
+3. The API shape matches the contract exactly
+
+Focus only on testing the contract conformance, not internal implementation details."
+```
+
+### Glue Code Prompts
+
+```
+"I need to connect these two components through their defined seam:
+[paste both component contracts/stubs]
+
+Write glue code that:
+1. Passes data from [ComponentA] to [ComponentB]
+2. Handles any necessary data transformation
+3. Manages errors according to the contract
+4. Includes logging at the seam boundary
+
+The focus should be on correct integration, not internal component logic."
+```
+
+### Implementation Prompts
+
+```
+"I have a stub implementation that needs to be completed with real functionality:
+[paste contract and stub with blueprint comments]
+
+Please implement the full functionality according to the contract and blueprint comments.
+Ensure it handles all error cases specified in the contract.
+The implementation should maintain the same interface but replace placeholder logic
+with actual business logic."
+```
+
+## Common Pitfalls for Beginners
+
+1. **Over-complicated Contracts**: Start with simpler contracts and gradually add complexity.
+2. **Insufficient Comments**: For AI-assisted development, more comments are better than fewer.
+3. **Skipping Tests**: Even simple tests are critical for validating contract conformance.
+4. **Monolithic Components**: Keep components focused on a single responsibility.
+5. **Implementing Too Early**: Resist the urge to implement functionality before seams are stable.
+
+---
+
+This document presents a simplified SDD workflow designed specifically for beginners and AI-assisted development. As you become more comfortable with these basics, you can incorporate more advanced SDD practices from the full documentation.
+
+
+--- END OF FILE: sdd-minimal-workflow.md ---
+
+--- START OF FILE: sdd-monitoring.md ---
+
+# SDD Monitoring and Observability
+
+This document outlines strategies and practices for monitoring Seam-Driven Development (SDD) systems in production environments. Effective monitoring is essential for maintaining seam health, detecting contract violations, and ensuring system robustness.
+
+## Monitoring Philosophy for SDD Systems
+
+SDD systems require a specialized monitoring approach that focuses on:
+
+1. **Seam-Level Observability**: Monitoring the health and behavior of seams rather than just individual components
+2. **Contract Conformance**: Ensuring runtime data continues to adhere to contract definitions
+3. **Integration Health**: Detecting issues at integration points before they cascade through the system
+4. **Graceful Degradation**: Monitoring fallback behavior activation and effectiveness
+
+## Key Monitoring Points in SDD Systems
+
+### 1. Seam Transaction Monitoring
+
+- **Data Flow Tracing**: Track data as it flows across seam boundaries
+- **Contract Validation**: Validate that data crossing seams conforms to contracts
+- **Transaction Volume**: Monitor call frequency and patterns between components
+- **Cross-Seam Correlation**: Link related operations across multiple seams using correlation IDs
+
+### 2. Contract Conformance Monitoring
+
+- **Schema Validation**: Runtime validation of data against contract schemas
+- **Behavioral Conformance**: Verify that component behavior matches contract expectations
+- **Error Contract Adherence**: Ensure errors follow defined patterns and protocols
+- **Version Compatibility**: Monitor for mismatches in contract versioning
+
+### 3. Performance Monitoring
+
+- **Seam Latency**: Measure time taken for operations across seams
+- **Resource Utilization**: Monitor CPU, memory, and network usage at seam boundaries
+- **Bottleneck Detection**: Identify seams that constrain overall system performance
+- **AI Operation Metrics**: Special focus on performance of AI-powered components
+
+### 4. Error and Resilience Monitoring
+
+- **Error Rates per Seam**: Track error frequency at each seam boundary
+- **Circuit Breaker Status**: Monitor the state of circuit breakers protecting components
+- **Retry Patterns**: Track retry attempts and success rates
+- **Fallback Activation**: Monitor when and how often fallback strategies are triggered
+- **Recovery Time**: Measure how quickly components recover from failure states
+
+## Implementing SDD Monitoring
+
+### Instrumentation Approaches
+
+1. **Decorator Pattern**: Wrap seam interactions with monitoring code
+
+   ```typescript
+   // Example: Monitoring decorator for a seam
+   function withSeamMonitoring<T>(
+     seamName: string,
+     operation: () => Promise<T>
+   ): Promise<T> {
+     const startTime = performance.now();
+     const correlationId = generateCorrelationId();
+
+     metrics.incrementCounter(`${seamName}.calls`);
+
+     try {
+       const result = await operation();
+
+       // Validate result against contract if possible
+       const isValid = validateAgainstContract(seamName, result);
+       if (!isValid) {
+         metrics.incrementCounter(`${seamName}.contract_violations`);
+       }
+
+       metrics.incrementCounter(`${seamName}.successes`);
+       metrics.recordTiming(
+         `${seamName}.latency`,
+         performance.now() - startTime
+       );
+
+       return result;
+     } catch (error) {
+       metrics.incrementCounter(`${seamName}.errors`);
+       metrics.recordEvent(`${seamName}.error`, {
+         correlationId,
+         errorType: error.name,
+         message: error.message,
+       });
+       throw error;
+     }
+   }
+   ```
+
+2. **Aspect-Oriented Monitoring**: Use AOP techniques to monitor seams without modifying code
+3. **Service Mesh Integration**: Leverage service mesh capabilities for microservice-based systems
+4. **Log Augmentation**: Enhance logging with seam-specific context and correlation IDs
+
+### Seam Dashboards
+
+Effective SDD monitoring requires specialized dashboards focusing on:
+
+1. **System Topology View**: Visualization of all seams and their current health status
+2. **Contract Compliance**: Dashboard showing contract violation rates and patterns
+3. **Seam Health Metrics**: Traffic light indicators for each seam's health
+4. **Error Correlation**: Visualization of error propagation across seams
+5. **AI Component Performance**: Special dashboards for AI-powered components
+
+Example dashboard layout:
+
+```
+┌─────────────────────────────────┐  ┌─────────────────────────────────┐
+│ SEAM HEALTH OVERVIEW            │  │ CONTRACT COMPLIANCE             │
+│                                 │  │                                 │
+│ [Component A] ──🟢── [Component B] │  │ Contract A-B: 99.8% Compliant    │
+│       │                         │  │ Contract B-C: 100% Compliant     │
+│       └───🟠── [Component C]    │  │ Contract A-C: 97.2% Compliant    │
+│                                 │  │                                 │
+└─────────────────────────────────┘  └─────────────────────────────────┘
+
+┌─────────────────────────────────┐  ┌─────────────────────────────────┐
+│ SEAM PERFORMANCE                │  │ ERROR RATES                     │
+│                                 │  │                                 │
+│ A→B: 45ms avg, 120ms p95       │  │ A→B: 0.02% (2/10000)            │
+│ A→C: 68ms avg, 200ms p95       │  │ A→C: 2.8% (14/500)              │
+│ B→C: 32ms avg, 80ms p95        │  │ B→C: 0% (0/2500)                │
+│                                 │  │                                 │
+└─────────────────────────────────┘  └─────────────────────────────────┘
+```
+
+## SDD Alerting Strategy
+
+Effective alerting should focus on:
+
+1. **Contract Violations**: Alert on recurring contract violations above threshold
+2. **Seam Degradation**: Alert when seam performance degrades beyond baseline
+3. **Cascading Failures**: Early detection of failure propagation across seams
+4. **Circuit Breaker Triggers**: Alert when circuit breakers open repeatedly
+5. **Version Mismatch**: Alert when components use incompatible contract versions
+
+Alert priority should be based on:
+
+- Impact on overall system integrity
+- Number of affected downstream components
+- Availability of fallback mechanisms
+- Business criticality of affected functionality
+
+## Special Considerations for AI Components
+
+AI-powered components in SDD systems require additional monitoring:
+
+1. **Prompt-Result Correlation**: Track which prompts lead to contract violations
+2. **Token Usage Monitoring**: Track token consumption for cost management
+3. **AI Latency Patterns**: Monitor for changes in AI component response times
+4. **Human Intervention Rates**: Track how often human fallbacks are triggered
+5. **Model Drift Detection**: Identify when AI outputs start to drift from expected patterns
+
+## Integration with SeemsToMe
+
+The SeemsToMe project should incorporate:
+
+1. **Monitoring Agent**: A specialized agent for runtime monitoring of SDD systems
+2. **Alerting Rules Engine**: Configurable rules for SDD-specific alerting
+3. **Health Visualization**: Interactive topology map showing seam health
+4. **Contract Validation Service**: Runtime validation of data against contracts
+5. **Correlation ID Manager**: Tool for tracing operations across seams
+
+## Best Practices
+
+1. **Monitor at the Seam, Not Just Components**: Focus on interactions, not just internal metrics
+2. **Validate Against Contracts**: Use contract definitions as monitoring validation rules
+3. **Track Correlation IDs**: Use unique IDs to follow transactions across seams
+4. **Baseline Normal Behavior**: Establish performance and error rate baselines for each seam
+5. **Test Monitoring in Chaos**: Verify monitoring during chaos engineering exercises
+6. **Alert on Trends, Not Just Thresholds**: Detect gradual degradation in seam health
+7. **Record Before/After for Contract Violations**: Capture data before and after it crosses problematic seams
+
+---
+
+This document is a living artifact. Update it as our understanding of SDD monitoring evolves.
+
+
+--- END OF FILE: sdd-monitoring.md ---
+
+--- START OF FILE: seam-driven-development-learnings.md ---
+
+# Seam-Driven Development: Learnings & Discoveries
+
+This document captures key learnings, insights, addendums, and discoveries made during the implementation of the "SeemsToMe" project using seam-driven development. As this is a novel application of the methodology, these notes are intended to help refine the process and document its practical application.
+
+## Initial Learnings (May 2025)
+
+### 1. Contract Adherence is Case-Sensitive and Exact
+
+**Discovery Date:** 2025-05-18
+
+**Context:**
+A TypeScript error (`ts2420`) occurred in `prd.agent.ts`: "Class 'PrdAgent' incorrectly implements interface 'PRDAgentContract'. Property 'generatePRD' is missing...".
+
+**Finding:**
+The `PrdAgent` class implemented a method named `generatePrd` (lowercase 'prd'), while the `PRDAgentContract` (aliased by `IPrdAgent`) defined the method as `generatePRD` (uppercase 'PRD').
+
+**Learning:**
+Interfaces (contracts) in TypeScript are strict and case-sensitive. The implementing class must match the contract's method signatures _exactly_, including the casing of method names, parameter names (if the contract specifies them strictly, though often type compatibility is key), and return types.
+
+**Implication for seam-driven development:**
+
+- When defining contracts, be explicit and consistent with naming conventions.
+- When implementing agents based on contracts, meticulous attention to detail is required to match the contract precisely.
+- Tooling (like the TypeScript compiler) is a critical first line of defense in ensuring contract adherence. SDD makes these mismatches surface clearly at the boundaries.
+- This reinforces the "Contracts are Truth" principle of seam-driven development. Any deviation, even minor like casing, is a contract violation.
+
+---
+
+### 2. Guidelines for Preventing Contract Discrepancies
+
+**Discovery Date:** 2025-05-18 (consolidated from ongoing observations)
+
+**Context:**
+During the initial creation and refinement of agent contracts and stubs, several discrepancies were identified and corrected. These often involved mismatches in method signatures, type alias usage, and mock data structures.
+
+**Learnings & Recommended Practices:**
+
+- **Strict Contract Adherence:** Agent method signatures (name, parameters, return type) in the `*.agent.ts` files must _exactly_ match the definitions in the corresponding `*.contract.ts` file. This precision includes:
+
+  - **Case Sensitivity:** Method names and parameter names must match case.
+  - **Parameter Order and Types:** The order and types of parameters must align.
+  - **Return Types:** The return type, including generic wrappers like `Promise`, must be identical.
+  - **`ContractResult` Wrapper:** All asynchronous agent operations that might produce an error (which is most of them) must return `Promise<ContractResult<TOutput>>`, where `TOutput` is the specific success payload type for that method. This ensures a consistent error handling pattern across all agents.
+
+- **Type Alias Consistency:**
+
+  - When defining type aliases in contract files (e.g., `export type RefactorInput = RefactorRequest;`, `export type RefactorOutput = RefactorResult;`), these aliases (`RefactorInput`, `RefactorOutput`) should be consistently used in the agent stub's import statements and method signatures.
+  - The established pattern is:
+    - `export type <AgentName>Input = <AgentName>Request;`
+    - `export type <AgentName>Output = <AgentName>Result;` (or a more specific interface like `RefactorPlan`, `ApiDocSummary` if the result isn't just a simple success/error).
+  - Agent stubs should then import and use `<AgentName>Input` and `<AgentName>Output`.
+
+- **Mock Data Conformance:**
+
+  - When implementing mock return values in agent stubs (e.g., for `generatePRD` in `prd.agent.ts`), the structure of the mock data object _must_ conform to the `Output` type defined in the contract (which is typically an alias to a more specific result interface like `PRDGenerationResult`, `StubGenerationResult`, etc.).
+  - This means ensuring all required fields are present and have the correct types, and that the overall structure matches the interface. If the method returns `ContractResult<TOutput>`, the mock should be `{ result: yourMockOutputData }` or `{ error: yourMockErrorData }`.
+
+- **Regular Contract Review:**
+
+  - Before starting the implementation or making significant changes to an agent, developers _must_ re-verify the corresponding `*.contract.ts` file. This ensures their understanding of the method signatures, input/output types, and any recent contract modifications is up-to-date.
+  - Treat the contract file as the single source of truth for an agent's interface.
+
+- **Leverage the TypeScript Compiler:**
+  - Encourage developers to frequently run `tsc` (the TypeScript compiler) or rely heavily on the real-time TypeScript checking provided by their IDE (like VS Code) throughout the development process.
+  - The TypeScript compiler is the most effective first line of defense in catching contract mismatches, type errors, and other inconsistencies _before_ they become harder-to-debug runtime issues. Address compiler errors promptly.
+
+**Implication for seam-driven development:**
+These practices reinforce the core SDD principle of "Explicit Interfaces." By being meticulous about contract definition and adherence, the "seams" between components become more robust and reliable, reducing integration friction and making the system easier to understand, test, and maintain.
+
+---
+
+### 3. Agent Stub Implementation Pattern
+
+**Discovery Date:** 2025-05-19
+
+**Context:**
+To ensure consistency and maintainability across all agent stubs, a standardized pattern was defined based on a review of existing agents (`prd.agent.ts`, `checklist.agent.ts`) and best practices identified during the contract audit phase.
+
+**Defined Pattern:**
+
+1.  **File Header & Comments:**
+
+    - `// filepath: {absolute path to the .agent.ts file}`
+    - Brief description of the agent's purpose.
+    - `// SDD-TODO: This is a stub implementation. Replace with actual logic.`
+
+2.  **Imports:**
+
+    - Import the corresponding contract interface (e.g., `import { IPrdAgent, PrdInput, PrdOutput } from '../contracts/prd.contract';`).
+    - Import shared types like `AgentId`, `ContractResult`, `AgentError` from `../contracts/types`.
+    - Import any other necessary types or utilities.
+
+3.  **Class Definition:**
+
+    - `export class <AgentName>Agent implements <ContractInterfaceName> {`
+    - Example: `export class PrdAgent implements IPrdAgent {`
+
+4.  **Constructor (Optional but Recommended for Consistency):**
+
+    - Even if not immediately used, include a basic constructor for future dependency injection or initialization.
+    - `constructor() { /* SDD-TODO: Initialize any dependencies here */ }`
+
+5.  **Method Stubs:**
+
+    - **Signature Matching:** Each method signature _must exactly_ match the contract definition (name, parameters, return type `Promise<ContractResult<OutputAlias>>`).
+      - Example: `async generatePRD(request: PrdInput): Promise<ContractResult<PrdOutput>> {`
+    - **Blueprint Comment:** Include a blueprint comment explaining the method's intended purpose, inputs, outputs, and any high-level logic flow.
+      - `// SDD-Blueprint: ...`
+    - **`requestingAgentId` Handling (if applicable):** If the contract's request object includes `requestingAgentId`, acknowledge its presence or intended use in comments if not immediately used in the stub.
+    - **Mock Success Implementation:**
+      - Return a `Promise.resolve` with a `result` object.
+      - The `result` object's structure _must_ conform to the `OutputAlias` type from the contract.
+      - Include placeholder or minimal valid mock data.
+      - Example:
+        ```typescript
+        return Promise.resolve({
+          result: {
+            prdId: "prd-123",
+            content: "Mock PRD content.",
+            status: "success",
+          },
+        });
+        ```
+    - **Mock Error Implementation (Illustrative, commented out or conditional):**
+      - Show how a `ContractResult` error would be returned.
+      - Example (commented out):
+        ```typescript
+        /* Mock error example:
+        return Promise.resolve({
+            error: {
+                message: 'Failed to generate PRD due to a mock error.',
+                code: 'MOCK_PRD_ERROR',
+                details: 'Additional error details here...'
+            }
+        });
+        */
+        ```
+    - **`SDD-TODO` for Logic:** Include a clear `// SDD-TODO: Implement actual business logic here.` comment within the method body.
+
+6.  **Mock Data Conformance:**
+    - The structure of any mock data returned (e.g., in the `result` field of `ContractResult`) must strictly adhere to the type definition specified in the contract's `OutputAlias` (e.g., `PrdOutput`, `ScaffoldOutput`).
+
+**Implication for seam-driven development:**
+This standardized stub pattern promotes consistency, makes stubs easier to understand and review, and ensures that the initial integration points (the stubs) correctly reflect the contract. It also provides clear placeholders (`SDD-TODO`, blueprint comments) for subsequent development phases.
+
+---
+
+### 4. Strategies for Preventing Common Mistakes (Post-Stub-Audit Learnings)
+
+**Discovery Date:** 2025-05-19
+
+**Context:**
+After completing the initial contract and stub creation, and during the subsequent QA audit of stubs, several recurring issues were noted, primarily around contract-stub alignment and consistent use of `ContractResult`.
+
+**Learnings & Prevention Strategies:**
+
+1.  **Proactive Guideline Review:**
+
+    - **Action:** Before starting any major phase (e.g., "Create All Contracts," "Create Minimal Stubs," "Write Contract Tests"), explicitly re-read and discuss the relevant guidelines documented in `docs/implementation-plan.md` and this `seam-driven-development-learnings.md` file.
+    - **Rationale:** Reinforces established patterns and requirements before work begins, reducing the chance of oversight.
+
+2.  **Systematic Pattern Application:**
+
+    - **Action:** When a template (e.g., `src/contracts/contract-template.ts`) or a detailed pattern (e.g., "Agent Stub Implementation Pattern") is defined, use it as a checklist when creating each new file or component.
+    - **Rationale:** Ensures all elements of the established best practice are considered and implemented, improving consistency.
+
+3.  **Immediate Post-Creation Validation & Cross-Referencing:**
+
+    - **Action:** Immediately after creating/modifying a contract AND its corresponding stub (or vice-versa):
+      - Run a type check (e.g., `tsc --noEmit` or rely on IDE errors for the specific files).
+      - Manually cross-reference method signatures, type names (including aliases), and import statements between the `.contract.ts` and `.agent.ts` files.
+    - **Rationale:** Catches discrepancies at the earliest possible moment, when the context is fresh and fixes are simpler. This is more effective than batch-checking later.
+
+4.  **Incremental Commits & Checks:**
+
+    - **Action:** Commit changes more frequently, especially after completing a contract-stub pair or a small group of related files. Run checks before each commit.
+    - **Rationale:** Isolates errors to smaller change sets, making them easier to identify and fix.
+
+5.  **Focus on `ContractResult` Usage:**
+
+    - **Action:** Pay special attention to the guideline: "All asynchronous agent methods that can fail _must_ return `Promise<ContractResult<TOutput>>`." Verify this for every method in every contract and its corresponding stub implementation.
+    - **Rationale:** This is a core pattern for consistent error handling and data return, and was a frequent point of misalignment.
+
+6.  **Continuous Learning Documentation:**
+    - **Action:** Continue to diligently document any new insights, common pitfalls, or refined best practices in this `seam-driven-development-learnings.md` document.
+    - **Rationale:** Builds a project-specific knowledge base that helps the team (and future developers) avoid repeating past mistakes.
+
+**Implication for seam-driven development:**
+By adopting these more disciplined, proactive checks and balances, the SDD process can be made smoother. The goal is to leverage the explicitness of seams and contracts to catch errors at the boundaries as early and efficiently as possible, rather than discovering them later during more complex integration phases.
+
+---
+
+### 5. Contract Testing for Stub Implementations
+
+**Discovery Date:** 2025-05-19
+
+**Context:**
+During the creation of contract tests for the `RefactorAgentContract` (in `refactor.contract.test.ts`), the corresponding `RefactorAgent` methods were still stubs, designed to throw `NotImplementedError`.
+
+**Finding:**
+It is beneficial to write contract tests even when the agent's methods are just stubs. These tests can:
+
+1.  Verify that the test setup correctly invokes the agent methods as defined in the contract.
+2.  Confirm that stubbed methods correctly throw `NotImplementedError`.
+3.  Ensure that the `NotImplementedError` includes essential diagnostic information, such as `agentId`, `requestingAgentId`, and `methodName`, which aids in debugging and tracking unimplemented features.
+4.  Validate the contract from a consumer's perspective (the test itself acts as a consumer).
+5.  Allow for the definition of test cases for expected inputs and error conditions (e.g., missing required parameters), even if the immediate expectation is a `NotImplementedError`.
+
+**Learning:**
+Creating contract tests for stub implementations is a valuable early step. It establishes the testing framework for the agent, validates the contract's usability, and ensures that the "not implemented" state is handled consistently and informatively. This practice aligns well with a test-driven approach to developing agent functionalities. It also means that as soon as the actual logic replaces the stub, the tests are already in place to verify the implementation against the contract.
+
+**Implication for seam-driven development:**
+This approach reinforces the "Testable Seams" aspect of SDD. By testing against the contract from the outset, even with stubs, we ensure that the seam (the contract) is well-defined and that the eventual implementation will be guided by testable requirements. It also helps in incrementally building and validating the system.
+
+---
+
+### 6. Importance of Granular Logging in Agent Operations
+
+**Discovery Date:** 2025-05-21
+
+**Context:**
+While enhancing the `MVPSddScaffolderAgent` to include an overwrite policy, it became clear that detailed logging of its internal operations would be crucial for debugging and understanding its behavior, especially with different policies in effect.
+
+**Learning:**
+For complex agent operations, especially those involving file system interactions or multiple internal steps (like the scaffolder processing different component types or policies):
+
+*   **Step-by-Step Logging:** Implementing `console.info` (or a more sophisticated logging framework) at each significant step of the agent's process provides invaluable insight into its execution flow.
+*   **Policy/Parameter Logging:** Logging the input parameters and any policies (like `OverwritePolicy`) that affect behavior helps in quickly diagnosing issues related to specific configurations.
+*   **Clear Error Logging:** `console.error` should be used for actual errors, providing context about where the error occurred and why (e.g., file already exists with `ERROR_IF_EXISTS` policy).
+*   **Success Confirmation:** Logging successful operations (e.g., file created, file overwritten, file skipped) confirms that the agent is behaving as expected under different conditions.
+*   **Agent ID Prefix:** Prefixing log messages with a unique agent identifier (e.g., `[MVPSddScaffolderAgent_v1]`) is helpful when multiple agents might be logging concurrently or when analyzing aggregated logs.
+
+**Implication for seam-driven development:**
+While SDD focuses on contracts and external behavior, robust internal logging within an agent is a key aspect of its implementability and maintainability. Good logging makes the "black box" of an agent more transparent during development and troubleshooting, complementing the clarity provided by well-defined seams.
+
+_(More learnings to be added as the project progresses)_
+
+
+--- END OF FILE: seam-driven-development-learnings.md ---
+
+--- START OF FILE: seams\orchestrator-changelog-seam.md ---
+
+<!-- filepath: c:\Users\thump\SeemsToMe\docs\seams\orchestrator-changelog-seam.md -->
+# Seam Template: Orchestrator-Changelog
+
+## Seam Overview
+
+**Seam ID**: ORCH-CHANGE-001  
+**Version**: v1  
+**Last Updated**: May 17, 2025  
+**Status**: ACTIVE  
+
+## Connected Agents
+
+| Agent | Role | Direction |
+|-------|------|-----------|
+| Orchestrator | CONSUMER | OUT |
+| Changelog | PROVIDER | IN |
+
+## Contract Definition
+
+This seam uses two primary contracts:
+
+1. The OrchestratorContract for task submission and coordination
+2. The ChangelogContract for specific changelog functionality
+
+### Data Flow
+
+1. Orchestrator submits tasks to the Changelog Agent using TaskRequest/TaskResponse
+2. Changelog Agent exposes specialized methods via ChangelogContract
+3. Results are returned to the Orchestrator
+
+### Methods/Endpoints
+
+Primary methods used across this seam:
+
+```typescript
+// From OrchestratorContract
+submitTask(request: TaskRequest): Promise<TaskResponse>;
+
+// From ChangelogContract
+recordChange(request: RecordChangeRequest): Promise<string>;
+getChanges(request: ChangelogRequest): Promise<ChangelogResponse>;
+generateChangelog(request: ChangelogRequest, format: string): Promise<string>;
+getBreakingChanges(since?: Date): Promise<ChangeRecord[]>;
+```
+
+## Error Handling Strategy
+
+- **Error Types**:
+  - TaskSubmissionError: Failures in task submission
+  - ValidationError: Invalid changelog request parameters
+  - ChangeRecordingError: Errors during change recording
+  - ChangelogGenerationError: Errors in generating changelogs
+
+- **Responsibility**:
+  - Orchestrator handles task submission errors
+  - Changelog agent handles domain-specific errors
+  - Both sides validate their inputs
+
+- **Recovery**:
+  - Retries for transient errors (max 3 attempts)
+  - Clear error messages for validation issues
+  - Partial results returned when possible
+
+## Versioning Strategy
+
+- **Compatibility**: All changes to the Changelog contract are versioned
+- **Migration**: Breaking changes require explicit migration period
+- **Deprecation**: Methods are marked deprecated before removal
+
+## Design Rationale
+
+- **Purpose**: Track changes across the system, especially contract changes
+- **Alternatives**: Considered git-based change tracking but needed more structure
+- **Constraints**: Needed to work with the existing task system
+- **Future Expansion**: Will add automated change detection and impact analysis
+
+## Testing Requirements
+
+- **Contract Conformance**:
+  - Verify all methods return expected types
+  - Test serialization/deserialization of complex objects
+  - Verify error handling conforms to contract
+
+- **Edge Cases**:
+  - Test with complex filtering criteria
+  - Test with extremely large changelogs
+  - Test with invalid date ranges
+
+- **Performance**:
+  - Change recording should be quick (< 100ms)
+  - Changelog generation should complete within 3 seconds
+
+
+--- END OF FILE: seams\orchestrator-changelog-seam.md ---
+
+--- START OF FILE: seams\orchestrator-checklist-seam.md ---
+
+<!-- filepath: c:\Users\thump\SeemsToMe\docs\seams\orchestrator-checklist-seam.md -->
+# Seam Template: Orchestrator-Checklist
+
+## Seam Overview
+
+**Seam ID**: ORCH-CHECK-001  
+**Version**: v1  
+**Last Updated**: May 17, 2025  
+**Status**: ACTIVE  
+
+## Connected Agents
+
+| Agent | Role | Direction |
+|-------|------|-----------|
+| Orchestrator | CONSUMER | OUT |
+| Checklist | PROVIDER | IN |
+
+## Contract Definition
+
+This seam uses two primary contracts:
+
+1. The OrchestratorContract for task submission and coordination
+2. The ChecklistContract for specific checklist functionality
+
+### Data Flow
+
+1. Orchestrator submits tasks to the Checklist Agent using TaskRequest/TaskResponse
+2. Checklist Agent exposes specialized methods via ChecklistContract
+3. Results are returned to the Orchestrator
+
+### Methods/Endpoints
+
+Primary methods used across this seam:
+
+```typescript
+// From OrchestratorContract
+submitTask(request: TaskRequest): Promise<TaskResponse>;
+
+// From ChecklistContract
+checkCompliance(request: ChecklistRequest): Promise<ChecklistResponse>;
+getCategories(): Promise<ChecklistCategory[]>;
+generateReport(targetPath: string, format: string): Promise<string>;
+```
+
+## Error Handling Strategy
+
+- **Error Types**:
+  - TaskSubmissionError: Failures in task submission
+  - ValidationError: Invalid checklist request parameters
+  - ComplianceCheckError: Errors during compliance checking
+  - ReportGenerationError: Errors in generating reports
+
+- **Responsibility**:
+  - Orchestrator handles task submission errors
+  - Checklist agent handles domain-specific errors
+  - Both sides validate their inputs
+
+- **Recovery**:
+  - Retries for transient errors (max 3 attempts)
+  - Clear error messages for validation issues
+  - Partial results returned when possible
+
+## Versioning Strategy
+
+- **Compatibility**: All changes to the Checklist contract are versioned
+- **Migration**: Breaking changes require explicit migration period
+- **Deprecation**: Methods are marked deprecated before removal
+
+## Design Rationale
+
+- **Purpose**: Enable SDD compliance verification across the system
+- **Alternatives**: Considered direct integration but preferred the task-based approach
+- **Constraints**: Needed to work with the existing task system
+- **Future Expansion**: Will add real-time compliance monitoring
+
+## Testing Requirements
+
+- **Contract Conformance**:
+  - Verify all methods return expected types
+  - Test serialization/deserialization of complex objects
+  - Verify error handling conforms to contract
+
+- **Edge Cases**:
+  - Test with missing categories
+  - Test with invalid paths
+  - Test with extremely large reports
+
+- **Performance**:
+  - Report generation should complete within 5 seconds
+  - Compliance checks should handle large codebases
+
+
+--- END OF FILE: seams\orchestrator-checklist-seam.md ---
+
+--- START OF FILE: seams\orchestrator-documentation-seam.md ---
+
+<!-- filepath: c:\Users\thump\SeemsToMe\docs\seams\orchestrator-documentation-seam.md -->
+# Seam Template: Orchestrator-Documentation
+
+## Seam Overview
+
+**Seam ID**: ORCH-DOC-001  
+**Version**: v1  
+**Last Updated**: May 17, 2025  
+**Status**: ACTIVE  
+
+## Connected Agents
+
+| Agent | Role | Direction |
+|-------|------|-----------|
+| Orchestrator | CONSUMER | OUT |
+| Documentation | PROVIDER | IN |
+
+## Contract Definition
+
+This seam uses two primary contracts:
+
+1. The OrchestratorContract for task submission and coordination
+2. The DocumentationContract for specific documentation functionality
+
+### Data Flow
+
+1. Orchestrator submits tasks to the Documentation Agent using TaskRequest/TaskResponse
+2. Documentation Agent exposes specialized methods via DocumentationContract
+3. Results are returned to the Orchestrator
+
+### Methods/Endpoints
+
+Primary methods used across this seam:
+
+```typescript
+// From OrchestratorContract
+submitTask(request: TaskRequest): Promise<TaskResponse>;
+
+// From DocumentationContract
+generateDocumentation(request: DocumentationRequest): Promise<DocumentationResult>;
+validateDocumentation(docPath: string, sources: DocumentationSource[]): Promise<DocumentationValidationResult>;
+updateDocumentation(docPath: string, sources: DocumentationSource[], preserveSections?: string[]): Promise<DocumentationResult>;
+extractBlueprintComments(sourcePaths: string[]): Promise<Array<...>>;
+```
+
+## Error Handling Strategy
+
+- **Error Types**:
+  - TaskSubmissionError: Failures in task submission
+  - ValidationError: Invalid documentation request parameters
+  - FileAccessError: Errors accessing source files
+  - GenerationError: Errors during documentation generation
+
+- **Responsibility**:
+  - Orchestrator handles task submission errors
+  - Documentation agent handles domain-specific errors
+  - Both sides validate their inputs
+
+- **Recovery**:
+  - Retries for transient errors (max 3 attempts)
+  - Clear error messages for validation issues
+  - Partial results returned when possible
+
+## Versioning Strategy
+
+- **Compatibility**: All changes to the Documentation contract are versioned
+- **Migration**: Breaking changes require explicit migration period
+- **Deprecation**: Methods are marked deprecated before removal
+
+## Design Rationale
+
+- **Purpose**: Ensure consistent, up-to-date documentation across the system
+- **Alternatives**: Considered file-system based approach but preferred task-based for tracking
+- **Constraints**: Needs to handle different documentation formats and source types
+- **Future Expansion**: Will add real-time documentation verification
+
+## Testing Requirements
+
+- **Contract Conformance**:
+  - Verify all methods return expected types
+  - Test with different document types and formats
+  - Verify error handling conforms to contract
+
+- **Edge Cases**:
+  - Test with missing sources
+  - Test with invalid file paths
+  - Test with extremely large documentation
+
+- **Performance**:
+  - Generation should complete within 10 seconds for typical documentation
+  - Blueprint comment extraction should be optimized for large codebases
+
+
+--- END OF FILE: seams\orchestrator-documentation-seam.md ---
+
+--- START OF FILE: seams\seam-template.md ---
+
+# Seam/Contract Design Document Template
+
+## Seam Name
+
+(Descriptive name, e.g., "Orchestrator-KnowledgeAgent Seam")
+
+**Seam ID / Contract File**: [`path/to/your.contract.ts`](../../src/contracts/your.contract.ts) <!-- Link to the actual contract file -->
+**Version**: [v1.0.0] <!-- Corresponds to Contract Version in the .contract.ts file -->
+**Last Updated**: [DATE]
+**Status**: [DRAFT|ACTIVE|DEPRECATED|RETIRED]
+
+## Purpose
+
+Describe what this seam/interface is for and why it exists. Include:
+
+- The problem it solves or the interaction it enables.
+- Why it exists as a separate, defined seam.
+- Design Rationale for this Seam: Key reasons for defining this boundary and its specific design.
+- Alternatives considered (if any significant ones).
+
+## Participants
+
+List the primary agents or components that interact via this seam.
+
+| Participant Name | Role (e.g., Caller/Consumer, Implementer/Provider) | Direction of Primary Data Flow |
+| ---------------- | -------------------------------------------------- | ------------------------------ |
+| [AgentName1]     | [Role]                                             | [IN/OUT/BOTH]                  |
+| [AgentName2]     | [Role]                                             | [IN/OUT/BOTH]                  |
+
+## Data Structures & Formats
+
+- Define the primary data types, interfaces, and request/response structures used. **Link to definitions in the corresponding `.contract.ts` file or `src/contracts/types.ts`.**
+- Include key validation rules and constraints not immediately obvious from type definitions.
+- Note any specific serialization/deserialization considerations if applicable (usually handled by runtime, but note if special).
+
+## Expected Behaviors & Guarantees
+
+- List the key functional behaviors, guarantees, and expectations for this seam.
+- Document idempotency characteristics if applicable.
+- Note any significant side effects of invoking methods on this seam.
+- Include performance expectations (e.g., typical latency, throughput considerations) if critical.
+
+## Error Handling
+
+- This seam utilizes the standard `ContractResult<TOutput, AgentError>` pattern defined in `src/contracts/types.ts`.
+- Refer to `AgentError` and `ErrorCategory` in `src/contracts/types.ts` for common error structures.
+- Document any specific error conditions or `ErrorCategory` values particularly relevant to this seam.
+- Specify retry policies or fallback behaviors expected from consumers or provided by implementers, if any.
+
+## Versioning & Change Management
+
+- Versioning strategy: Semantic Versioning (Major.Minor.Patch) as reflected in the contract file header and this document.
+- Backward compatibility: Minor and Patch versions MUST be backward compatible. Major versions MAY introduce breaking changes.
+- Breaking change policy: Document process for introducing and communicating breaking changes (e.g., major version bump, deprecation warnings).
+- Deprecation process: Outline how and when parts of the seam might be deprecated.
+
+## Seam Health & Monitoring (Conceptual)
+
+Considerations for observing the health of interactions across this seam:
+
+- Potential for monitoring success/failure rates of calls.
+- Observing latency patterns.
+- Tracking contract violations (e.g., malformed requests/responses, though type system helps).
+
+## Testing Requirements
+
+- **Contract Conformance Tests**: Implementations of this contract MUST be verified by tests located in `src/tests/contract-name.contract.test.ts`.
+- Key scenarios and edge cases to be covered by these tests.
+- Performance testing considerations if applicable.
+
+---
+
+(Use this template for each significant seam, typically corresponding to a `*.contract.ts` file, in the `/docs/seams/` folder.)
+
+
+--- END OF FILE: seams\seam-template.md ---
+
+--- START OF FILE: snippets\better-comments-examples.md ---
+
+// TODO: Implement contract conformance tests for this seam
+// ! WARNING: This agent is tightly coupled—consider refactoring
+// ? QUESTION: Is the error handling strategy sufficient for all edge cases?
+// \* HIGHLIGHT: This stub is intentionally minimal per SDD
+// NOTE: Update contract version and notify all consumers
+
+
+--- END OF FILE: snippets\better-comments-examples.md ---
+
+--- START OF FILE: snippets\sdd-blueprint-comment.md ---
+
+// \* SDD BLUEPRINT COMMENT
+// Purpose: [Describe the seam/component's purpose.]
+// Data Flow: [Describe data in/out.]
+// Integration Points: [List other agents/components.]
+// Contract Version: [v1]
+// Error Handling: [Describe error strategy.]
+// Examples: [Provide sample valid/invalid data if helpful.]
+// Rationale: [Explain key design decisions.]
+// ! Update this comment as the contract evolves.
+
+
+--- END OF FILE: snippets\sdd-blueprint-comment.md ---
+

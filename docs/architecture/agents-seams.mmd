@@ -1,0 +1,39 @@
+%% Mermaid diagram for SeemsToMe agent/seam architecture
+flowchart TD
+  User((User))
+  Checklist[Checklist & Changelog Agent]
+  Knowledge[Seam Knowledge Agent]
+  PRD[PRD/Design Doc Generator]
+  Orchestrator[SDD Orchestrator Agent]
+  Stub[Stub/Scaffolding Agent]
+  Analyzer[Seam Analyzer Agent]
+  Quality[Seam Quality Agent]
+  Pair[AI Pair Programmer]
+  Prompt[Prompt Generator Agent]
+  API[API Doc Reader Agent]
+  DocGen[Seam-Driven Documentation Generator]
+  Refactor[Seam-Driven Refactoring Assistant]
+
+  User-->|"task, feedback"|Orchestrator
+  Orchestrator-->|"delegate"|Checklist
+  Orchestrator-->|"delegate"|Knowledge
+  Orchestrator-->|"delegate"|PRD
+  Orchestrator-->|"delegate"|Stub
+  Orchestrator-->|"delegate"|Analyzer
+  Orchestrator-->|"delegate"|Quality
+  Orchestrator-->|"delegate"|Pair
+  Orchestrator-->|"delegate"|Prompt
+  Orchestrator-->|"delegate"|API
+  Orchestrator-->|"delegate"|DocGen
+  Orchestrator-->|"delegate"|Refactor
+  Checklist-->|"status, changelog"|User
+  Knowledge-->|"seam history"|Orchestrator
+  PRD-->|"design doc"|Orchestrator
+  Stub-->|"stubs"|Orchestrator
+  Analyzer-->|"seam map"|Orchestrator
+  Quality-->|"QA report"|Orchestrator
+  Pair-->|"code"|Orchestrator
+  Prompt-->|"prompts"|Orchestrator
+  API-->|"API summary"|Orchestrator
+  DocGen-->|"docs"|Orchestrator
+  Refactor-->|"refactor plan"|Orchestrator
