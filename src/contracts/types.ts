@@ -39,6 +39,8 @@ export enum ErrorCategory {
   UNEXPECTED_ERROR = "UNEXPECTED_ERROR",
   INVALID_REQUEST = "INVALID_REQUEST", // Added INVALID_REQUEST
   FILE_SYSTEM_ERROR = "FILE_SYSTEM_ERROR", // Added for file system related errors
+  OPERATION_FAILED = "OPERATION_FAILED", // Added
+  INTERNAL_ERROR = "INTERNAL_ERROR", // Added
 }
 export interface AgentError {
   name: string;
@@ -46,9 +48,10 @@ export interface AgentError {
   category: ErrorCategory;
   agentId: AgentId;
   taskId?: TaskId;
-  details?: Record<string, any>;
+  details?: any; // Changed from Record<string, any> to any
   requestingAgentId?: AgentId; // Added: To track who made the request
   data?: any; // Added: For arbitrary data related to the error, like the original request
+  methodName?: string; // Added
 }
 
 // Helper function to create an AgentError object
@@ -58,7 +61,7 @@ export function createAgentError(
   category: ErrorCategory,
   name: string = "AgentError", // Default name
   requestingAgentId?: AgentId,
-  details?: Record<string, any>, // Changed from 'data' to 'details' to match interface
+  details?: any, // Changed from 'data' to 'details' to match interface
   taskId?: TaskId
 ): AgentError {
   return {
@@ -105,8 +108,3 @@ export function isAgentError(obj: any): obj is AgentError {
     Object.values(ErrorCategory).includes(obj.category)
   );
 }
-
-// Generic contract result type for agent responses
-export type ContractResult<T, E = AgentError> =
-  | { success: true; result: T; error?: undefined }
-  | { success: false; error: E; result?: undefined };

@@ -72,9 +72,13 @@ export interface GeneratedFileDetail {
 export interface MVPSddScaffoldOutput {
   scaffolderAgentId: AgentId;
   generatedFiles: string[]; // Paths of files that would be/were conceptually generated
+  skippedFiles?: string[]; // Added to include skipped files
   overallStatus: "success" | "partial_success" | "failure";
   summaryMessage?: string;
-  generatedFileContents?: GeneratedFileDetail[]; // Content of conceptually generated files
+  generatedFileContents?: Array<{ filePath: string; content: string; }>; // Content of conceptually generated files
+  targetDirectory: string; // Added from agent implementation
+  componentName: string; // Added from agent implementation
+  sddComponentType: SddComponentType; // Added from agent implementation
 }
 
 /**

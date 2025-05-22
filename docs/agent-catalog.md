@@ -48,15 +48,27 @@ The agents work together to implement the SDD "Moneyball" strategy - targeting h
 - Delegates tasks, enforces contract-first rules, manages agent state.
 - Seam: Orchestrator ↔ All agents (task delegation, status, error handling).
 
-## 5. Stub/Scaffolding Agent
+## 5. Stub/Scaffolding Agent (MVPSddScaffolderAgent)
 
 **Purpose:**
 
 - Generates file stubs and blueprint comments for all components and seams.
-  **Key Features:**
+- Automates the creation of initial agent, contract, and test files based on user-provided inputs.
+
+**Key Features:**
+
 - Creates syntactically correct skeletons with top-level comments.
 - Links stubs to seam map and documentation.
-- Seam: Orchestrator/PRD ↔ Stub Agent (input: design doc, output: stubs).
+- Supports different SDD component types (Agent, Contract, Test, Full Set).
+- Handles file overwrite policies (Overwrite, Skip, Error).
+- Outputs the paths and content of generated files.
+
+**Contract:** `IMVPSddScaffolderAgent`
+  - Method: `generateSddScaffold(request: MVPSddScaffoldRequest): Promise<ContractResult<MVPSddScaffoldOutput, AgentError>>`
+  - Input: `componentName`, `sddComponentType`, `targetDirectory`, `overwritePolicy`, `requestingAgentId`.
+  - Output: `summaryMessage`, `generatedFiles` (paths), `generatedFileContents` (path + content), `skippedFiles`, `targetDirectory`, `componentName`, `sddComponentType`.
+
+- Seam: Orchestrator/PRD ↔ Stub Agent (input: design doc/request, output: stubs/scaffolded files).
 
 ## 6. Seam Analyzer Agent
 
