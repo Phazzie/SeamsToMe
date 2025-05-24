@@ -6,22 +6,8 @@
  * ERROR HANDLING: N/A (utility functions)
  */
 
-import { AgentError } from "./types";
+// ContractResult, success, and failure are now defined in types.ts and should be imported from there.
+// Keeping this file for now in case other contract-related utilities are needed in the future.
+// If no other utilities are added, this file can be deleted.
 
-export interface ContractResult<TSuccess, TError extends AgentError> {
-  success: boolean;
-  result?: TSuccess;
-  error?: TError;
-}
-
-export function success<TSuccess, TError extends AgentError>(
-  result: TSuccess
-): ContractResult<TSuccess, TError> {
-  return { success: true, result };
-}
-
-export function failure<TSuccess, TError extends AgentError>(
-  error: TError
-): ContractResult<TSuccess, TError> {
-  return { success: false, error };
-}
+export {}; // Add an empty export to make this a module if nothing else is exported.

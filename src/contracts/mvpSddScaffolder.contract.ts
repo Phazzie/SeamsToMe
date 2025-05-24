@@ -54,6 +54,7 @@ export interface MVPSddScaffoldRequest {
   targetDirectory: string; // e.g., "./src/newAgents"
   templateVariables?: Record<string, string>; // Optional, for passing values to templates
   overwritePolicy?: OverwritePolicy; // Optional, defaults to 'errorIfExists' in agent logic
+  templateSet?: string; // Optional, for using different template variations (e.g., "basic", "advanced", "minimal")
 }
 
 /**
@@ -75,7 +76,7 @@ export interface MVPSddScaffoldOutput {
   skippedFiles?: string[]; // Added to include skipped files
   overallStatus: "success" | "partial_success" | "failure";
   summaryMessage?: string;
-  generatedFileContents?: Array<{ filePath: string; content: string; }>; // Content of conceptually generated files
+  generatedFileContents?: Array<{ filePath: string; content: string }>; // Content of conceptually generated files
   targetDirectory: string; // Added from agent implementation
   componentName: string; // Added from agent implementation
   sddComponentType: SddComponentType; // Added from agent implementation

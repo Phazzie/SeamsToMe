@@ -7,7 +7,15 @@
  * ERROR HANDLING: Knowledge-specific errors are reported back to calling agents
  */
 
-import { AgentId, TaskId } from './types';
+import { AgentError, AgentId, ContractResult, TaskId } from './types';
+
+// Aliases for Orchestrator and Agent stub compatibility
+export type KnowledgeInput = KnowledgeRequest;
+export type KnowledgeOutput = KnowledgeResponse;
+export type StoreKnowledgeInput = Omit<KnowledgeItem, 'id'>;
+export type StoreKnowledgeOutput = string;
+export type HasKnowledgeInput = { query: string; domain?: KnowledgeDomain };
+export type HasKnowledgeOutput = boolean;
 
 export enum KnowledgeDomain {
   TECHNICAL = 'TECHNICAL',
@@ -58,7 +66,7 @@ export interface KnowledgeContract {
    * @param request The knowledge request
    * @returns A promise that resolves to the knowledge response
    */
-  retrieveKnowledge(request: KnowledgeRequest): Promise<KnowledgeResponse>;
+  retrieveKnowledge(request: KnowledgeInput): Promise<ContractResult<KnowledgeOutput, AgentError>>;
   
   /**
    * Store new knowledge in the system
@@ -66,7 +74,7 @@ export interface KnowledgeContract {
    * @param agentId The ID of the agent storing the knowledge
    * @returns A promise that resolves to the ID of the stored knowledge item
    */
-  storeKnowledge(item: Omit<KnowledgeItem, 'id'>, agentId: AgentId): Promise<string>;
+  storeKnowledge(item: StoreKnowledgeInput, agentId: AgentId): Promise<ContractResult<StoreKnowledgeOutput, AgentError>>;
   
   /**
    * Check if knowledge exists for a specific query
@@ -74,5 +82,5 @@ export interface KnowledgeContract {
    * @param domain Optional domain to restrict the search
    * @returns A promise that resolves to true if knowledge exists
    */
-  hasKnowledge(query: string, domain?: KnowledgeDomain): Promise<boolean>;
+  hasKnowledge(query: string, domain?: KnowledgeDomain): Promise<ContractResult<HasKnowledgeOutput, AgentError>>;
 }

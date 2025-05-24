@@ -12,11 +12,20 @@ import {
   RefactorInput,
   RefactorOutput,
 } from "../contracts/refactor.contract";
-import { ContractResult, ErrorCategory } from "../contracts/types";
+import {
+  AgentId,
+  ContractResult,
+  createAgentError,
+  createNotImplementedError,
+  ErrorCategory,
+  failure,
+} from "../contracts/types";
 
 export class RefactorAgent implements IRefactorAgent {
+  readonly agentId: AgentId = "RefactorAgent";
+
   async refactor(
-    request: RefactorInput // Changed parameter name from input to request
+    request: RefactorInput
   ): Promise<ContractResult<RefactorOutput>> {
     // SDD Blueprint: c:\Users\thump\SeemsToMe\src\agents\refactor.agent.ts
     // Purpose: Stub for generating and applying refactoring plans.
@@ -25,24 +34,30 @@ export class RefactorAgent implements IRefactorAgent {
     // TODO: Add comprehensive error handling for parsing errors, invalid requests.
     // TODO: Replace mock data with actual data structures and calls.
 
+    if (!request) {
+      return failure(
+        createAgentError(
+          this.agentId,
+          "Request is null or undefined.", // Message
+          ErrorCategory.BAD_REQUEST, // Category
+          "RefactorAgentError" // Name
+          // No requestingAgentId here as request is null
+        )
+      );
+    }
+
     // MOCK: Return a NotImplemented error by default
-    return {
-      error: {
-        name: "NotImplementedError",
-        message: "RefactorAgent.refactor is not implemented.",
-        category: ErrorCategory.UNEXPECTED_ERROR,
-        agentId: "RefactorAgent",
-        details: {
-          info: "This is a stub implementation.",
-          requestingAgentId: request.requestingAgentId,
-        },
-      },
-    };
+    return failure(
+      createNotImplementedError(
+        this.agentId,
+        "refactor",
+        request.requestingAgentId
+      )
+    );
 
     /*
     // MOCK: Example of a successful return
-    return {
-      result: {
+    return success({
         summary: "Mock refactor summary: Extracted a method to improve readability.",
         steps: [
           {
@@ -57,8 +72,23 @@ export class RefactorAgent implements IRefactorAgent {
           }
         ],
         transformedCode: "function extractedMethod() {\n  console.log('complex logic 1');\n  console.log('complex logic 2');\n}\nextractedMethod();\n// ... rest of the original code"
-      },
-    };
+    });
+    */
+
+    /*
+    // MOCK: Example of an error return
+    return failure(
+      createAgentError(
+        this.agentId,
+        "Failed to refactor due to a mock error.", // Message
+        ErrorCategory.OPERATION_FAILED, // Category
+        "MockRefactorError", // Name
+        request.requestingAgentId,
+        {
+          info: "This is a stub implementation.",
+        } // Details
+      )
+    );
     */
   }
 }

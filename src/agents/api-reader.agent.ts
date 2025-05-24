@@ -12,9 +12,15 @@ import {
   ApiReaderOutput,
   ApiDocReaderAgentContract as IApiReaderAgent,
 } from "../contracts/api-reader.contract";
-import { ContractResult, ErrorCategory } from "../contracts/types";
+import {
+  ContractResult,
+  createNotImplementedError,
+  failure,
+} from "../contracts/types";
 
 export class ApiReaderAgent implements IApiReaderAgent {
+  readonly agentId: string = "ApiReaderAgent"; // Added agentId property
+
   async readApiDoc(
     request: ApiReaderInput // Changed parameter name from input to request
   ): Promise<ContractResult<ApiReaderOutput>> {
@@ -26,22 +32,17 @@ export class ApiReaderAgent implements IApiReaderAgent {
     // TODO: Replace mock data with actual data structures and calls.
 
     // MOCK: Return a NotImplemented error by default
-    return {
-      error: {
-        name: "NotImplementedError",
-        message: "ApiReaderAgent.readApiDoc is not implemented.",
-        category: ErrorCategory.UNEXPECTED_ERROR,
-        agentId: "ApiReaderAgent",
-        details: {
-          info: "This is a stub implementation.",
-          requestingAgentId: request.requestingAgentId,
-        },
-      },
-    };
+    return failure(
+      createNotImplementedError(
+        this.agentId,
+        "ApiReaderAgent.readApiDoc",
+        request.requestingAgentId
+      )
+    );
 
     /*
     // MOCK: Example of a successful return
-    return {
+    return success({
       result: {
         title: "Mock API Doc",
         description: "This is a mock API documentation summary.",
@@ -67,7 +68,7 @@ export class ApiReaderAgent implements IApiReaderAgent {
           },
         ],
       },
-    };
+    });
     */
   }
 }

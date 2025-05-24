@@ -37,14 +37,16 @@ describe('Documentation Contract Conformance', () => {
         format: DocumentationFormat.MARKDOWN,
         requestingAgentId: 'test-agent'
       };
+        const result = await documentation.generateDocumentation(request);
       
-      const result = await documentation.generateDocumentation(request);
-      
-      expect(result.content).toBeTruthy();
-      expect(result.format).toBe(DocumentationFormat.MARKDOWN);
-      expect(result.metadata).toBeDefined();
-      expect(result.metadata.docType).toBe(DocumentationType.CONTRACT);
-      expect(result.metadata.generatedOn).toBeInstanceOf(Date);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result.content).toBeTruthy();
+        expect(result.result.format).toBe(DocumentationFormat.MARKDOWN);
+        expect(result.result.metadata).toBeDefined();
+        expect(result.result.metadata.docType).toBe(DocumentationType.CONTRACT);
+        expect(result.result.metadata.generatedOn).toBeInstanceOf(Date);
+      }
     });
     
     test('should generate seam documentation', async () => {
@@ -59,11 +61,13 @@ describe('Documentation Contract Conformance', () => {
         format: DocumentationFormat.MARKDOWN,
         requestingAgentId: 'test-agent'
       };
+        const result = await documentation.generateDocumentation(request);
       
-      const result = await documentation.generateDocumentation(request);
-      
-      expect(result.content).toBeTruthy();
-      expect(result.content).toContain('Seam Documentation');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result.content).toBeTruthy();
+        expect(result.result.content).toContain('Seam Documentation');
+      }
     });
     
     test('should generate agent documentation', async () => {
@@ -78,11 +82,13 @@ describe('Documentation Contract Conformance', () => {
         format: DocumentationFormat.MARKDOWN,
         requestingAgentId: 'test-agent'
       };
+        const result = await documentation.generateDocumentation(request);
       
-      const result = await documentation.generateDocumentation(request);
-      
-      expect(result.content).toBeTruthy();
-      expect(result.content).toContain('Agent Documentation');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result.content).toBeTruthy();
+        expect(result.result.content).toContain('Agent Documentation');
+      }
     });
   });
   
@@ -95,11 +101,13 @@ describe('Documentation Contract Conformance', () => {
           type: 'FILE'
         }
       ];
+        const result = await documentation.validateDocumentation(docPath, sources);
       
-      const result = await documentation.validateDocumentation(docPath, sources);
-      
-      expect(result.isValid).toBeDefined();
-      expect(result.issues).toBeInstanceOf(Array);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result.isValid).toBeDefined();
+        expect(result.result.issues).toBeInstanceOf(Array);
+      }
     });
   });
   
@@ -114,34 +122,37 @@ describe('Documentation Contract Conformance', () => {
       ];
       
       const preserveSections = ['Overview', 'Usage Examples'];
+        const result = await documentation.updateDocumentation(docPath, sources, preserveSections);
       
-      const result = await documentation.updateDocumentation(docPath, sources, preserveSections);
-      
-      expect(result.content).toBeTruthy();
-      expect(result.format).toBeDefined();
-      expect(result.metadata).toBeDefined();
-      expect(result.metadata.generatedOn).toBeInstanceOf(Date);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result.content).toBeTruthy();
+        expect(result.result.format).toBeDefined();
+        expect(result.result.metadata).toBeDefined();
+        expect(result.result.metadata.generatedOn).toBeInstanceOf(Date);
+      }
     });
   });
   
   describe('extractBlueprintComments', () => {
     test('should extract blueprint comments from source files', async () => {
       const sourcePaths = ['./src/contracts/test.contract.ts'];
+        const result = await documentation.extractBlueprintComments(sourcePaths);
       
-      const result = await documentation.extractBlueprintComments(sourcePaths);
-      
-      expect(result).toBeInstanceOf(Array);
-      expect(result.length).toBeGreaterThan(0);
-      
-      const firstFile = result[0];
-      expect(firstFile.path).toBe(sourcePaths[0]);
-      expect(firstFile.comments).toBeInstanceOf(Array);
-      expect(firstFile.comments.length).toBeGreaterThan(0);
-      
-      const firstComment = firstFile.comments[0];
-      expect(firstComment.content).toBeTruthy();
-      expect(firstComment.location).toBeTruthy();
-      expect(firstComment.type).toBeDefined();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result).toBeInstanceOf(Array);
+        expect(result.result.length).toBeGreaterThan(0);
+          const firstFile = result.result[0];
+        expect(firstFile.path).toBe(sourcePaths[0]);
+        expect(firstFile.comments).toBeInstanceOf(Array);
+        expect(firstFile.comments.length).toBeGreaterThan(0);
+        
+        const firstComment = firstFile.comments[0];
+        expect(firstComment.content).toBeTruthy();
+        expect(firstComment.location).toBeTruthy();
+        expect(firstComment.type).toBeDefined();
+      }
     });
   });
 });

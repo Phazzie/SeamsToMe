@@ -8,85 +8,144 @@
  */
 
 import {
-  ChecklistContract,
-  ChecklistRequest,
-  ChecklistResponse,
-  ChecklistCategory,
+  CategoriesOutput,
   CheckItem,
-  ComplianceStatus
-} from '../contracts/checklist.contract';
-import { AgentId } from '../contracts/types';
+  ChecklistCategory,
+  ChecklistContract,
+  ChecklistInput, // Added
+  ChecklistOutput,
+  ComplianceStatus, // Added
+  ReportOutput,
+} from "../contracts/checklist.contract";
+import {
+  AgentError,
+  AgentId,
+  ContractResult,
+  createAgentError,
+  ErrorCategory,
+  failure,
+  success,
+} from "../contracts/types"; // Added necessary imports
 
 /**
  * Checklist Agent - Stub Implementation
- * 
+ *
  * This is an intentionally minimal implementation per SDD principles.
  * The focus is on contract conformance rather than full functionality.
  */
 export class ChecklistAgent implements ChecklistContract {
   private categories: ChecklistCategory[] = Object.values(ChecklistCategory);
-  
+  public readonly agentId: AgentId = "checklist-agent" as AgentId;
+
   /**
    * Check compliance for a file or directory
    */
-  async checkCompliance(request: ChecklistRequest): Promise<ChecklistResponse> {
-    // TODO: Implement contract conformance tests for this seam
-    
+  async checkCompliance(
+    request: ChecklistInput
+  ): Promise<ContractResult<ChecklistOutput, AgentError>> {
+    // Validate request
+    if (!request || !request.targetPath || !request.requestingAgentId) {
+      return failure(
+        createAgentError(
+          this.agentId,
+          "Invalid request: targetPath and requestingAgentId are required.",
+          ErrorCategory.INVALID_REQUEST,
+          "checkCompliance",
+          request?.requestingAgentId
+        )
+      );
+    }
+
     // * HIGHLIGHT: This stub is intentionally minimal per SDD
     const items: CheckItem[] = [];
-    
+
     // Generate placeholder items for each requested category
     const categoriesToCheck = request.categories || this.categories;
-    
-    categoriesToCheck.forEach(category => {
+
+    categoriesToCheck.forEach((category) => {
       // Generate a basic check item
       items.push({
         id: `${category}-${Date.now()}`,
         category,
         description: `Check ${category} compliance`,
         status: ComplianceStatus.NEEDS_REVIEW,
-        details: 'This is a stub implementation. Real checks will be implemented later.'
+        details:
+          "This is a stub implementation. Real checks will be implemented later.",
       });
     });
-    
+
     // Calculate summary statistics
     const summary = {
-      compliant: items.filter(i => i.status === ComplianceStatus.COMPLIANT).length,
-      partiallyCompliant: items.filter(i => i.status === ComplianceStatus.PARTIALLY_COMPLIANT).length,
-      notCompliant: items.filter(i => i.status === ComplianceStatus.NOT_COMPLIANT).length,
-      needsReview: items.filter(i => i.status === ComplianceStatus.NEEDS_REVIEW).length,
-      notApplicable: items.filter(i => i.status === ComplianceStatus.NOT_APPLICABLE).length,
-      overallStatus: ComplianceStatus.NEEDS_REVIEW
+      compliant: items.filter((i) => i.status === ComplianceStatus.COMPLIANT)
+        .length,
+      partiallyCompliant: items.filter(
+        (i) => i.status === ComplianceStatus.PARTIALLY_COMPLIANT
+      ).length,
+      notCompliant: items.filter(
+        (i) => i.status === ComplianceStatus.NOT_COMPLIANT
+      ).length,
+      needsReview: items.filter(
+        (i) => i.status === ComplianceStatus.NEEDS_REVIEW
+      ).length,
+      notApplicable: items.filter(
+        (i) => i.status === ComplianceStatus.NOT_APPLICABLE
+      ).length,
+      overallStatus: ComplianceStatus.NEEDS_REVIEW,
     };
-    
-    return {
+
+    return success({
       items,
       summary,
-      targetPath: request.targetPath
-    };
+      targetPath: request.targetPath,
+    });
   }
-  
+
   /**
    * Get available checklist categories
    */
-  async getCategories(): Promise<ChecklistCategory[]> {
+  async getCategories(): Promise<ContractResult<CategoriesOutput, AgentError>> {
     // ? QUESTION: Is the error handling strategy sufficient for all edge cases?
-    return [...this.categories];
+    return success([...this.categories]);
   }
-  
+
   /**
    * Generate a compliance report
    */
-  async generateReport(targetPath: string, format: string): Promise<string> {
-    // ! WARNING: This agent is tightly coupled—consider refactoring
-    
-    // Stub implementation returning a simple markdown report
-    if (format.toLowerCase() !== 'markdown') {
-      throw new Error(`Format ${format} not supported yet`);
+  async generateReport(
+    targetPath: string,
+    format: string,
+    requestingAgentId?: AgentId
+  ): Promise<ContractResult<ReportOutput, AgentError>> {
+    // Validate request
+    if (!targetPath || !format) {
+      return failure(
+        createAgentError(
+          this.agentId,
+          "Invalid request: targetPath and format are required.",
+          ErrorCategory.INVALID_REQUEST,
+          "generateReport",
+          requestingAgentId
+        )
+      );
     }
-    
+
+    // ! WARNING: This agent is tightly coupled—consider refactoring
+
+    // Stub implementation returning a simple markdown report
+    if (format.toLowerCase() !== "markdown") {
+      return failure(
+        createAgentError(
+          this.agentId,
+          `Format ${format} not supported yet`,
+          ErrorCategory.INVALID_REQUEST,
+          "generateReport",
+          requestingAgentId
+        )
+      );
+    }
+
     // Generate a placeholder report
-    return `# SDD Compliance Report
+    const reportContent = `# SDD Compliance Report
 ## Path: ${targetPath}
 ## Date: ${new Date().toISOString()}
 
@@ -100,5 +159,6 @@ export class ChecklistAgent implements ChecklistContract {
 3. Update documentation
 
 NOTE: Update contract version and notify all consumers when the full implementation is ready.`;
+    return success(reportContent);
   }
 }

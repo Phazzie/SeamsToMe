@@ -81,10 +81,12 @@ export interface ChecklistContract {
    * Generate a compliance report
    * @param targetPath The path to generate a report for
    * @param format The format of the report (markdown, html, etc)
+   * @param requestingAgentId Optional requesting agent ID
    * @returns A promise that resolves to the report content
    */
   generateReport(
     targetPath: string,
-    format: string
+    format: string,
+    requestingAgentId?: AgentId // Added requestingAgentId
   ): Promise<ContractResult<ReportOutput, AgentError>>;
 }

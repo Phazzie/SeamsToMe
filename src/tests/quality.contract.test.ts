@@ -20,14 +20,13 @@ import {
 } from "../contracts/types";
 
 const mockRequestingAgentId: AgentId = "test-orchestrator";
-const mockQualityAgentId: AgentId = "quality-agent";
+const mockQualityAgentId: AgentId = "QualityAgent";
 
 describe("QualityAgent Contract Tests", () => {
   let qualityAgent: QualityAgentContract;
-
   beforeEach(() => {
     qualityAgent = new QualityAgent();
-    (qualityAgent as QualityAgent).agentId = mockQualityAgentId;
+    // Note: agentId is readonly, so we don't need to set it
   });
 
   test("should conform to QualityAgentContract", () => {
@@ -70,10 +69,9 @@ describe("QualityAgent Contract Tests", () => {
         await qualityAgent.checkQuality(mockErrorInput);
 
       expect(result.error).toBeDefined();
-      expect(result.result).toBeUndefined();
-      expect(result.error?.agentId).toEqual(mockQualityAgentId);
+      expect(result.result).toBeUndefined();      expect(result.error?.agentId).toEqual(mockQualityAgentId);
       expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId);
-      expect(result.error?.category).toEqual(ErrorCategory.INVALID_INPUT);
+      expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST);
       expect(result.error?.message).toContain("Target path is required");
     });
 
@@ -88,10 +86,9 @@ describe("QualityAgent Contract Tests", () => {
         await qualityAgent.checkQuality(mockErrorInput);
 
       expect(result.error).toBeDefined();
-      expect(result.result).toBeUndefined();
-      expect(result.error?.agentId).toEqual(mockQualityAgentId);
+      expect(result.result).toBeUndefined();      expect(result.error?.agentId).toEqual(mockQualityAgentId);
       expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId);
-      expect(result.error?.category).toEqual(ErrorCategory.INVALID_INPUT);
+      expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST);
       expect(result.error?.message).toContain("Check types are required");
     });
 
@@ -109,8 +106,8 @@ describe("QualityAgent Contract Tests", () => {
         severity: "WARNING",
         location: "./src/problematic-file.ts:10",
         suggestion: "Remove unused variable or use it.",
-      };
-      jest.spyOn(qualityAgent, "checkQuality").mockResolvedValueOnce({
+      };      jest.spyOn(qualityAgent, "checkQuality").mockResolvedValueOnce({
+        success: true,
         result: {
           issues: [mockIssue],
           summary: "Quality check completed with 1 issue.",

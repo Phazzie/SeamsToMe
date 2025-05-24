@@ -64,9 +64,10 @@ The agents work together to implement the SDD "Moneyball" strategy - targeting h
 - Outputs the paths and content of generated files.
 
 **Contract:** `IMVPSddScaffolderAgent`
-  - Method: `generateSddScaffold(request: MVPSddScaffoldRequest): Promise<ContractResult<MVPSddScaffoldOutput, AgentError>>`
-  - Input: `componentName`, `sddComponentType`, `targetDirectory`, `overwritePolicy`, `requestingAgentId`.
-  - Output: `summaryMessage`, `generatedFiles` (paths), `generatedFileContents` (path + content), `skippedFiles`, `targetDirectory`, `componentName`, `sddComponentType`.
+
+- Method: `generateSddScaffold(request: MVPSddScaffoldRequest): Promise<ContractResult<MVPSddScaffoldOutput, AgentError>>`
+- Input: `componentName`, `sddComponentType`, `targetDirectory`, `overwritePolicy`, `requestingAgentId`.
+- Output: `summaryMessage`, `generatedFiles` (paths), `generatedFileContents` (path + content), `skippedFiles`, `targetDirectory`, `componentName`, `sddComponentType`.
 
 - Seam: Orchestrator/PRD ↔ Stub Agent (input: design doc/request, output: stubs/scaffolded files).
 

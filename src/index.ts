@@ -7,43 +7,56 @@
  * ERROR HANDLING: Top-level error handling and logging
  */
 
-import { OrchestratorAgent } from './agents/orchestrator.agent';
-import { KnowledgeAgent } from './agents/knowledge.agent';
-import { TaskPriority } from './contracts/types';
+import { KnowledgeAgent } from "./agents/knowledge.agent";
+import { OrchestratorAgent } from "./agents/orchestrator.agent";
+import { TaskPriority } from "./contracts/types";
 
 /**
  * Bootstrap the SeemsToMe agent ecosystem
  */
 async function bootstrap() {
   try {
-    console.log('Starting SeemsToMe SDD multi-agent system...');
-    
+    console.log("Starting SeemsToMe SDD multi-agent system...");
+
     // Initialize agents
     const orchestrator = new OrchestratorAgent();
     const knowledgeAgent = new KnowledgeAgent();
-    
     // Register agents with orchestrator
-    await orchestrator.registerAgent('knowledge-agent', ['retrieve', 'store']);
-    console.log('Knowledge Agent registered with Orchestrator');
-    
+    const registrationResult = await orchestrator.registerAgent(
+      "knowledge-agent",
+      ["retrieve", "store"]
+    );
+    if (registrationResult.success) {
+      console.log("Knowledge Agent registered with Orchestrator");
+    } else {
+      console.error(
+        "Failed to register Knowledge Agent:",
+        registrationResult.error
+      );
+    }
+
     // Example task submission
     const taskResult = await orchestrator.submitTask({
-      taskId: 'demo-task',
-      agentId: 'knowledge-agent',
-      action: 'retrieveKnowledge',
+      taskId: "demo-task",
+      agentId: "knowledge-agent",
+      action: "retrieveKnowledge",
       parameters: {
-        query: 'What is SDD?',
-        maxResults: 3
+        query: "What is SDD?",
+        maxResults: 3,
       },
-      priority: TaskPriority.NORMAL
+      priority: TaskPriority.NORMAL,
     });
-    
-    console.log('Task submitted:', taskResult);
-    
-    console.log('SeemsToMe system initialized successfully.');
+
+    if (taskResult.success) {
+      console.log("Task submitted successfully:", taskResult.result);
+    } else {
+      console.log("Task submission failed:", taskResult.error);
+    }
+
+    console.log("SeemsToMe system initialized successfully.");
     return { orchestrator, knowledgeAgent };
   } catch (error) {
-    console.error('Failed to bootstrap SeemsToMe system:', error);
+    console.error("Failed to bootstrap SeemsToMe system:", error);
     throw error;
   }
 }
@@ -51,9 +64,9 @@ async function bootstrap() {
 // If this file is run directly, bootstrap the system
 if (require.main === module) {
   bootstrap()
-    .then(() => console.log('System running...'))
-    .catch(error => {
-      console.error('Fatal error:', error);
+    .then(() => console.log("System running..."))
+    .catch((error) => {
+      console.error("Fatal error:", error);
       process.exit(1);
     });
 }

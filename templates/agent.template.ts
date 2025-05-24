@@ -13,6 +13,9 @@ export class {{ComponentNamePascalCase}}Agent implements I{{ComponentNamePascalC
             // 3. Constructing the {{ComponentNamePascalCase}}Response.
             console.log(`{{ComponentNamePascalCase}}Agent received request for {{componentName}}:`, request);
 
+            // SDD-TODO: Implement actual business logic here.
+            // Template variable example: {{var:exampleMessage}}
+
             // Example response - customize this
             const response: {{ComponentNamePascalCase}}Response = {
                 message: `Hello from {{ComponentNamePascalCase}}Agent, you sent: ${request.inputData}`

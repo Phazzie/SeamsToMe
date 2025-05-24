@@ -9,13 +9,23 @@
  */
 import {
   QualityAgentContract,
-  QualityCheckType,
   QualityInput,
   QualityOutput,
 } from "../contracts/quality.contract";
-import { ContractResult } from "../contracts/types"; // Added imports
+import {
+  AgentId,
+  ContractResult,
+  createAgentError,
+  ErrorCategory,
+  failure,
+  success,
+} from "../contracts/types"; // Added AgentId, AgentError, ErrorCategory, success, failure, createAgentError
+
+const AGENT_ID: AgentId = "QualityAgent"; // Define agentId for this agent
 
 export class QualityAgent implements QualityAgentContract {
+  public readonly agentId: AgentId = AGENT_ID; // Expose agentId
+
   constructor() {
     /* SDD-TODO: Initialize any dependencies here */
   }
@@ -25,26 +35,43 @@ export class QualityAgent implements QualityAgentContract {
   async checkQuality(
     request: QualityInput
   ): Promise<ContractResult<QualityOutput>> {
-    // SDD-TODO: Implement actual business logic here.
-    // Consider using request.requestingAgentId for logging or context.
+    if (!request.targetPath || request.targetPath.trim() === "") {
+      return failure(
+        createAgentError(
+          this.agentId,
+          "Target path is required",
+          ErrorCategory.INVALID_REQUEST, // Corrected Category
+          "InvalidQualityCheckRequest",
+          request.requestingAgentId,
+          { request }
+        )
+      );
+    }
 
-    // MOCK: Return a minimal quality report
-    return Promise.resolve({
-      result: {
-        issues: [
-          {
-            type: request.checkTypes[0] || QualityCheckType.OTHER,
-            message: `Mock issue for ${request.targetPath} requested by ${request.requestingAgentId}.`,
-            severity: "INFO",
-            location: request.targetPath,
-          },
-        ],
-        summary: `Mock quality check complete for ${
-          request.targetPath
-        }. Checked types: ${request.checkTypes.join(", ")}.`,
-        checkedOn: new Date(),
-      },
-    });
+    if (!request.checkTypes || request.checkTypes.length === 0) {
+      return failure(
+        createAgentError(
+          this.agentId,
+          "Check types are required",
+          ErrorCategory.INVALID_REQUEST, // Corrected Category
+          "InvalidQualityCheckRequest",
+          request.requestingAgentId,
+          { request }
+        )
+      );
+    }
+
+    // MOCK: Return a successful quality check result
+    // QualityOutput (aliased by QualityCheckResult) does not have qualityAgentId, targetPath, or checkTypes directly.
+    // These are part of the request (QualityInput/QualityCheckRequest).
+    const mockOutput: QualityOutput = {
+      summary: `Quality check completed for ${
+        request.targetPath
+      } covering ${request.checkTypes.join(", ")}`,
+      issues: [], // No issues found in this mock
+      checkedOn: new Date(),
+    };
+    return success(mockOutput);
 
     /* Mock error example:
     return Promise.resolve({

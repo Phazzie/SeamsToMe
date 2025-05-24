@@ -14,13 +14,31 @@ import {
   PromptInput,
   PromptOutput,
 } from "../contracts/prompt.contract";
-import { AgentError, ContractResult, ErrorCategory } from "../contracts/types"; // Added AgentError, AgentId, ErrorCategory
+import {
+  AgentError,
+  AgentId, // Added AgentId import
+  ContractResult,
+  createAgentError,
+  createNotImplementedError,
+  ErrorCategory,
+  failure,
+} from "../contracts/types"; // Added AgentError, AgentId, ErrorCategory
 
 export class PromptAgent implements IPromptAgent {
-  executePrompt(
+  readonly agentId: AgentId = "PromptAgent"; // Added agentId
+
+  async executePrompt(
     request: PromptExecutionInput
   ): Promise<ContractResult<PromptExecutionOutput, AgentError>> {
-    throw new Error("Method not implemented.");
+    // SDD-TODO: Implement actual prompt execution logic.
+    // For now, return NotImplementedError as per contract testing expectations.
+    return failure(
+      createNotImplementedError(
+        this.agentId,
+        "executePrompt",
+        request.requestingAgentId
+      )
+    );
   }
   async generatePrompt(
     request: PromptInput // Changed parameter name from input to request
@@ -32,28 +50,35 @@ export class PromptAgent implements IPromptAgent {
     // TODO: Add comprehensive error handling.
     // TODO: Replace mock data with actual data structures and calls.
 
-    // MOCK: Return a NotImplemented error by default
-    return {
-      error: {
-        name: "NotImplementedError", // Corrected field name from code to name
-        message: "PromptAgent.generatePrompt is not implemented.",
-        category: ErrorCategory.UNEXPECTED_ERROR, // Added category
-        agentId: "PromptAgent", // Added agentId
-        details: {
-          info: "This is a stub implementation.",
-          requestingAgentId: request.requestingAgentId, // Moved requestingAgentId to details
-        },
-      },
-    };
+    if (!request.contract) {
+      return failure(
+        createAgentError(
+          this.agentId,
+          "Contract definition is required to generate a prompt.",
+          ErrorCategory.INVALID_REQUEST,
+          "ValidationError",
+          request.requestingAgentId
+        )
+      );
+    }
+
+    // MOCK: Return a NotImplemented error by default (if not returning validation error above)
+    // For the actual stub, let's assume it would attempt to generate if input is valid.
+    // For now, to match original stub behavior if input was valid:
+    return failure(
+      createNotImplementedError(
+        this.agentId,
+        "generatePrompt",
+        request.requestingAgentId
+      )
+    );
 
     /*
     // MOCK: Example of a successful return
-    return {
-      result: {
+    return success({
         prompt: "This is a mock prompt generated for the task.",
         rationale: "This mock prompt is generated based on the provided input contract and documentation (if any).",
-      },
-    };
+    });
     */
   }
 }

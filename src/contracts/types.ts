@@ -41,6 +41,8 @@ export enum ErrorCategory {
   FILE_SYSTEM_ERROR = "FILE_SYSTEM_ERROR", // Added for file system related errors
   OPERATION_FAILED = "OPERATION_FAILED", // Added
   INTERNAL_ERROR = "INTERNAL_ERROR", // Added
+  NOT_IMPLEMENTED = "NOT_IMPLEMENTED", // Added NOT_IMPLEMENTED
+  BAD_REQUEST = "BAD_REQUEST", // Added BAD_REQUEST (already present, but ensuring it's here for clarity)
 }
 export interface AgentError {
   name: string;
@@ -92,10 +94,31 @@ export function createNotImplementedError(
     name: "NotImplementedError",
     agentId,
     message: message || `Method '${methodName}' is not implemented.`,
-    category: ErrorCategory.UNEXPECTED_ERROR, // Or a more specific category if available
+    category: ErrorCategory.NOT_IMPLEMENTED, // Changed to NOT_IMPLEMENTED
     methodName,
     requestingAgentId,
   };
+}
+
+// Defines the general structure for the result of a contract method call.
+// It can either be a success, in which case 'result' will contain the output,
+// or a failure, in which case 'error' will contain an AgentError.
+export type ContractResult<T, E extends AgentError = AgentError> =
+  | { success: true; result: T; error?: undefined }
+  | { success: false; result?: undefined; error: E };
+
+// Helper function to create a success ContractResult
+export function success<T, E extends AgentError = AgentError>(
+  result: T
+): ContractResult<T, E> {
+  return { success: true, result };
+}
+
+// Helper function to create a failure ContractResult
+export function failure<T, E extends AgentError = AgentError>(
+  error: E
+): ContractResult<T, E> {
+  return { success: false, error };
 }
 
 // Type guard to check if an object is an AgentError

@@ -12,27 +12,45 @@ import {
   ScaffoldInput,
   ScaffoldOutput,
   StubFormat,
-  ValidateStubsInput, // Added import
-  ValidateStubsOutput, // Added import
+  ValidateStubsInput,
+  ValidateStubsOutput,
 } from "../contracts/scaffold.contract";
-import { ContractResult } from "../contracts/types"; // Added imports
+import {
+  AgentId,
+  ContractResult,
+  createAgentError,
+  ErrorCategory,
+  failure,
+  success,
+} from "../contracts/types";
 
 export class ScaffoldAgent implements IScaffoldAgent {
+  readonly agentId: AgentId = "ScaffoldAgent";
+
   constructor() {
     /* SDD-TODO: Initialize any dependencies here */
   }
-
   // SDD-Blueprint: Generates file stubs from a design document, creating a basic structure for new components or modules.
   // It takes a design document and target path, and returns the paths and content of the generated stub files.
   async generateScaffold(
     request: ScaffoldInput
   ): Promise<ContractResult<ScaffoldOutput>> {
+    if (!request) {
+      return failure(
+        createAgentError(
+          this.agentId,
+          "Request is null or undefined.",
+          ErrorCategory.BAD_REQUEST,
+          "BadRequestError"
+        )
+      );
+    }
     // SDD-TODO: Implement actual business logic here.
     // Consider using request.requestingAgentId for logging or context.
 
     // MOCK: Return a minimal scaffold structure
-    return Promise.resolve({
-      result: {
+    return Promise.resolve(
+      success({
         files: [
           {
             path: "mock/file.txt",
@@ -40,17 +58,11 @@ export class ScaffoldAgent implements IScaffoldAgent {
             format: request.format || StubFormat.OTHER,
           },
         ],
-      },
-    });
+      })
+    );
 
     /* Mock error example:
-    return Promise.resolve({
-        error: {
-            message: 'Failed to generate scaffold due to a mock error.',
-            code: 'MOCK_SCAFFOLD_ERROR',
-            details: 'Additional error details here...'
-        }
-    });
+    return Promise.resolve(failure(createAgentError(this.agentId, "MOCK_SCAFFOLD_ERROR", "Failed to generate scaffold due to a mock error.", "Additional error details here...")));
     */
   }
 
@@ -59,25 +71,29 @@ export class ScaffoldAgent implements IScaffoldAgent {
   async validateStubs(
     request: ValidateStubsInput
   ): Promise<ContractResult<ValidateStubsOutput>> {
+    if (!request) {
+      return failure(
+        createAgentError(
+          this.agentId,
+          "Request is null or undefined.",
+          ErrorCategory.BAD_REQUEST,
+          "BadRequestError"
+        )
+      );
+    }
     // SDD-TODO: Implement actual business logic here.
     // Consider using request.requestingAgentId for logging or context.
 
     // MOCK: Return a minimal validation result
-    return Promise.resolve({
-      result: {
+    return Promise.resolve(
+      success({
         isValid: true,
         issues: [],
-      },
-    });
+      })
+    );
 
     /* Mock error example:
-    return Promise.resolve({
-        error: {
-            message: 'Failed to validate stubs due to a mock error.',
-            code: 'MOCK_VALIDATION_ERROR',
-            details: 'Additional error details here...'
-        }
-    });
+    return Promise.resolve(failure(createAgentError(this.agentId, "MOCK_VALIDATION_ERROR", "Failed to validate stubs due to a mock error.", "Additional error details here...")));
     */
   }
 }

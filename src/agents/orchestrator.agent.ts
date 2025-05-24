@@ -29,12 +29,14 @@ import {
   TaskResponse,
 } from "../contracts/orchestrator.contract";
 import {
-  AgentError,
   AgentId,
   ContractResult,
   ErrorCategory,
   TaskId,
   TaskStatus,
+  createAgentError,
+  failure,
+  success,
 } from "../contracts/types";
 
 // Imports for new agents
@@ -127,38 +129,24 @@ export class OrchestratorAgent implements OrchestratorContract {
     }
   }
 
-  private mapAgentErrorToError(agentError: AgentError): Error {
-    const error = new Error(
-      `[${agentError.agentId} | ${agentError.category} | ${agentError.name}] ${
-        agentError.message
-      }${
-        agentError.details
-          ? " Details: " + JSON.stringify(agentError.details)
-          : ""
-      }`
-    );
-    error.name = agentError.name;
-    return error;
-  }
-
   /**
    * Submit a task request to another agent
-   */ async submitTask(request: TaskRequest): Promise<TaskResponse> {
+   */
+  async submitTask(
+    request: TaskRequest
+  ): Promise<ContractResult<TaskResponse>> {
     // Validate the agent is registered
     if (!this.registeredAgents.has(request.agentId)) {
-      return {
-        taskId: request.taskId,
-        status: TaskStatus.FAILED,
-        errors: [
-          this.mapAgentErrorToError({
-            name: "AgentNotRegisteredError",
-            message: `Agent ${request.agentId} is not registered`,
-            category: ErrorCategory.AGENT_UNAVAILABLE,
-            agentId: request.agentId,
-            details: `Agent ID ${request.agentId} not found in registered agents list.`,
-          } as AgentError),
-        ],
-      };
+      return failure(
+        createAgentError(
+          request.agentId,
+          `Agent ${request.agentId} is not registered`,
+          ErrorCategory.AGENT_UNAVAILABLE,
+          "AgentNotRegisteredError",
+          undefined,
+          `Agent ID ${request.agentId} not found in registered agents list.`
+        )
+      );
     }
 
     // Record the task
@@ -316,45 +304,36 @@ export class OrchestratorAgent implements OrchestratorContract {
           ...request,
           status: TaskStatus.FAILED,
         });
-        return {
-          taskId: request.taskId,
-          status: TaskStatus.FAILED,
-          errors: [
-            this.mapAgentErrorToError({
-              name: "ActionNotSupportedError",
-              message: `Action '${request.action}' not supported for agent '${request.agentId}' or agent not available.`,
-              category: ErrorCategory.INVALID_REQUEST,
+        return failure(
+          createAgentError(
+            request.agentId,
+            `Action '${request.action}' not supported for agent '${request.agentId}' or agent not available.`,
+            ErrorCategory.INVALID_REQUEST,
+            "ActionNotSupportedError",
+            undefined,
+            {
+              action: request.action,
               agentId: request.agentId,
-              details: {
-                action: request.action,
-                agentId: request.agentId,
-                parameters: request.parameters,
-              },
-            } as AgentError),
-          ],
-          executionTime: 0,
-        };
+              parameters: request.parameters,
+            }
+          )
+        );
       }
-
       if (!agentContractResult) {
         this.tasks.set(request.taskId, {
           ...request,
           status: TaskStatus.FAILED,
         });
-        return {
-          taskId: request.taskId,
-          status: TaskStatus.FAILED,
-          errors: [
-            this.mapAgentErrorToError({
-              name: "UnhandledActionError",
-              message: `The action '${request.action}' for agent '${request.agentId}' was not handled. Agent might be available but action is unknown or produced no result.`,
-              category: ErrorCategory.INVALID_REQUEST,
-              agentId: request.agentId,
-              details: `Ensure the agent is configured to handle this action and the contract method was called.`,
-            } as AgentError),
-          ],
-          executionTime: 0,
-        };
+        return failure(
+          createAgentError(
+            request.agentId,
+            `The action '${request.action}' for agent '${request.agentId}' was not handled. Agent might be available but action is unknown or produced no result.`,
+            ErrorCategory.INVALID_REQUEST,
+            "UnhandledActionError",
+            undefined,
+            `Ensure the agent is configured to handle this action and the contract method was called.`
+          )
+        );
       }
 
       if (agentContractResult.error) {
@@ -362,12 +341,7 @@ export class OrchestratorAgent implements OrchestratorContract {
           ...request,
           status: TaskStatus.FAILED,
         });
-        return {
-          taskId: request.taskId,
-          status: TaskStatus.FAILED,
-          errors: [this.mapAgentErrorToError(agentContractResult.error)],
-          executionTime: 0, // SDD-TODO: Consider how to get execution time for failed tasks
-        };
+        return failure(agentContractResult.error);
       }
 
       // Success case
@@ -375,64 +349,56 @@ export class OrchestratorAgent implements OrchestratorContract {
         ...request,
         status: TaskStatus.COMPLETED,
       });
-      return {
+      return success({
         taskId: request.taskId,
         status: TaskStatus.COMPLETED,
-        result: agentContractResult.result, // Directly use the result from ContractResult
-        executionTime: 0, // SDD-TODO: Populate actual execution time, possibly from ContractResult metadata if added
-      };
+        result: agentContractResult.result,
+        executionTime: 0, // SDD-TODO: Populate actual execution time
+      });
     } catch (error: any) {
       // Update task status to failed
       this.tasks.set(request.taskId, { ...request, status: TaskStatus.FAILED });
 
-      const agentError: AgentError = {
-        name: error.name || "TaskExecutionError",
-        message: error.message || "Unknown error during task execution",
-        category: ErrorCategory.UNEXPECTED_ERROR,
-        agentId: request.agentId,
-        details: { stack: error.stack, originalError: error.message },
-      };
-      return {
-        taskId: request.taskId,
-        status: TaskStatus.FAILED,
-        errors: [this.mapAgentErrorToError(agentError)],
-        executionTime: 0,
-      };
+      return failure(
+        createAgentError(
+          request.agentId,
+          error.message || "Unknown error during task execution",
+          ErrorCategory.UNEXPECTED_ERROR,
+          error.name || "TaskExecutionError",
+          undefined,
+          { stack: error.stack, originalError: error.message }
+        )
+      );
     }
   }
 
   /**
    * Retrieve the status of a task
-   */
-  async getTaskStatus(taskId: TaskId): Promise<TaskStatus> {
-    // ? QUESTION: Is the error handling strategy sufficient for all edge cases?
+   */ async getTaskStatus(taskId: TaskId): Promise<ContractResult<TaskStatus>> {
     const task = this.tasks.get(taskId);
     if (!task) {
-      // SDD-TODO: Standardize error throwing, perhaps use a custom error type or AgentError directly
-      // For now, let's return a specific status or throw a typed error if defined.
-      // throw new Error(`Task ${taskId} not found`);
-      // Consider returning a TaskResponse with FAILED status and appropriate error.
-      // This method is expected to return Promise<TaskStatus>, so throwing is one option,
-      // or have a specific TaskStatus like NOT_FOUND if that fits the model.
-      // For now, keeping the throw as it was, but this is a point of refinement.
-      throw new Error(`Task ${taskId} not found`);
+      return failure(
+        createAgentError(
+          "orchestrator-agent",
+          `Task ${taskId} not found`,
+          ErrorCategory.INVALID_REQUEST,
+          "TaskNotFoundError"
+        )
+      );
     }
-    return task.status;
+    return success(task.status);
   }
-
   /**
    * Register an agent with the orchestrator
    */
   async registerAgent(
     agentId: AgentId,
     capabilities: string[]
-  ): Promise<boolean> {
-    // ! WARNING: This agent is tightly coupled—consider refactoring
+  ): Promise<ContractResult<boolean>> {
     if (this.registeredAgents.has(agentId)) {
       console.warn(
         `Agent ${agentId} is already registered. Overwriting capabilities.`
       );
-      // return false; // Original behavior: Already registered
     }
 
     this.registeredAgents.set(agentId, capabilities);
@@ -441,14 +407,13 @@ export class OrchestratorAgent implements OrchestratorContract {
         ", "
       )}`
     );
-    return true;
+    return success(true);
   }
-
   /**
    * Deregister an agent from the orchestrator
    */
-  async deregisterAgent(agentId: AgentId): Promise<boolean> {
-    // NOTE: Update contract version and notify all consumers if this behavior changes
-    return this.registeredAgents.delete(agentId);
+  async deregisterAgent(agentId: AgentId): Promise<ContractResult<boolean>> {
+    const wasDeleted = this.registeredAgents.delete(agentId);
+    return success(wasDeleted);
   }
 }

@@ -29,9 +29,11 @@ describe('SeemsToMe System Integration', () => {
       },
       priority: TaskPriority.NORMAL
     });
-    
-    expect(taskResult.taskId).toBe('test-system-task');
-    expect(taskResult.status).toBeDefined();
+      expect(taskResult.success).toBe(true);
+    if (taskResult.success) {
+      expect(taskResult.result.taskId).toBe('test-system-task');
+      expect(taskResult.result.status).toBeDefined();
+    }
   });
   
   test('should retrieve task status', async () => {

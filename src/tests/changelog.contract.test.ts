@@ -55,11 +55,13 @@ describe('Changelog Contract Conformance', () => {
       const changeId = await changelog.recordChange(request);
       expect(typeof changeId).toBe('string');
       expect(changeId).toBeTruthy();
-      
-      // Verify the change was recorded properly by checking breaking changes
+        // Verify the change was recorded properly by checking breaking changes
       const breakingChanges = await changelog.getBreakingChanges();
-      expect(breakingChanges.length).toBeGreaterThan(0);
-      expect(breakingChanges[0].migrationGuidance).toBe(request.migrationGuidance);
+      expect(breakingChanges.success).toBe(true);
+      if (breakingChanges.success) {
+        expect(breakingChanges.result.length).toBeGreaterThan(0);
+        expect(breakingChanges.result[0].migrationGuidance).toBe(request.migrationGuidance);
+      }
     });
   });
   
@@ -94,56 +96,68 @@ describe('Changelog Contract Conformance', () => {
         relatedContracts: ['TestContract']
       });
     });
-    
-    test('should get all changes when no filters are provided', async () => {
+      test('should get all changes when no filters are provided', async () => {
       const response = await changelog.getChanges({});
-      expect(response.totalChanges).toBe(3);
-      expect(response.breakingChanges).toBe(1);
+      expect(response.success).toBe(true);
+      if (response.success) {
+        expect(response.result.totalChanges).toBe(3);
+        expect(response.result.breakingChanges).toBe(1);
+      }
     });
-    
-    test('should filter by change type', async () => {
+      test('should filter by change type', async () => {
       const response = await changelog.getChanges({
         types: [ChangeType.FEATURE]
       });
       
-      expect(response.totalChanges).toBe(1);
-      expect(response.changes[0].type).toBe(ChangeType.FEATURE);
+      expect(response.success).toBe(true);
+      if (response.success) {
+        expect(response.result.totalChanges).toBe(1);
+        expect(response.result.changes[0].type).toBe(ChangeType.FEATURE);
+      }
     });
-    
-    test('should filter by agent ID', async () => {
+      test('should filter by agent ID', async () => {
       const response = await changelog.getChanges({
         agentId: 'contract-agent'
       });
       
-      expect(response.totalChanges).toBe(1);
-      expect(response.changes[0].agentId).toBe('contract-agent');
+      expect(response.success).toBe(true);
+      if (response.success) {
+        expect(response.result.totalChanges).toBe(1);
+        expect(response.result.changes[0].agentId).toBe('contract-agent');
+      }
     });
-    
-    test('should filter by impact level', async () => {
+      test('should filter by impact level', async () => {
       const response = await changelog.getChanges({
         impactLevel: ChangeImpact.BREAKING
       });
       
-      expect(response.totalChanges).toBe(1);
-      expect(response.changes[0].impact).toBe(ChangeImpact.BREAKING);
+      expect(response.success).toBe(true);
+      if (response.success) {
+        expect(response.result.totalChanges).toBe(1);
+        expect(response.result.changes[0].impact).toBe(ChangeImpact.BREAKING);
+      }
     });
-    
-    test('should filter by contract', async () => {
+      test('should filter by contract', async () => {
       const response = await changelog.getChanges({
         contract: 'TestContract'
       });
       
-      expect(response.totalChanges).toBe(1);
-      expect(response.changes[0].relatedContracts).toContain('TestContract');
+      expect(response.success).toBe(true);
+      if (response.success) {
+        expect(response.result.totalChanges).toBe(1);
+        expect(response.result.changes[0].relatedContracts).toContain('TestContract');
+      }
     });
-    
-    test('should filter breaking changes only', async () => {
+      test('should filter breaking changes only', async () => {
       const response = await changelog.getChanges({
         includeBreakingOnly: true
       });
       
-      expect(response.totalChanges).toBe(1);
-      expect(response.changes[0].breaking).toBe(true);
+      expect(response.success).toBe(true);
+      if (response.success) {
+        expect(response.result.totalChanges).toBe(1);
+        expect(response.result.changes[0].breaking).toBe(true);
+      }
     });
   });
   
@@ -210,13 +224,15 @@ describe('Changelog Contract Conformance', () => {
         migrationGuidance: 'Update to v2'
       });
     });
-    
-    test('should return only breaking changes', async () => {
+      test('should return only breaking changes', async () => {
       const breakingChanges = await changelog.getBreakingChanges();
       
-      expect(breakingChanges.length).toBe(1);
-      expect(breakingChanges[0].breaking).toBe(true);
-      expect(breakingChanges[0].description).toContain('Breaking change');
+      expect(breakingChanges.success).toBe(true);
+      if (breakingChanges.success) {
+        expect(breakingChanges.result.length).toBe(1);
+        expect(breakingChanges.result[0].breaking).toBe(true);
+        expect(breakingChanges.result[0].description).toContain('Breaking change');
+      }
     });
   });
 });

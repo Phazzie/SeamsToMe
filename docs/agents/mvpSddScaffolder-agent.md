@@ -83,8 +83,14 @@ This agent is responsible for scaffolding the basic file structure for new Seam 
         "src/modules/user/UserProfile/userProfile.contract.ts"
       ],
       "generatedFileContents": [
-        { "filePath": "src/modules/user/UserProfile/userProfile.agent.ts", "content": "..." },
-        { "filePath": "src/modules/user/UserProfile/userProfile.contract.ts", "content": "..." }
+        {
+          "filePath": "src/modules/user/UserProfile/userProfile.agent.ts",
+          "content": "..."
+        },
+        {
+          "filePath": "src/modules/user/UserProfile/userProfile.contract.ts",
+          "content": "..."
+        }
       ],
       "targetDirectory": "src/modules/user",
       "componentName": "UserProfile",
@@ -117,9 +123,18 @@ This agent is responsible for scaffolding the basic file structure for new Seam 
         "src/services/orders/OrderProcessor/orderProcessor.contract.test.ts"
       ],
       "generatedFileContents": [
-        { "filePath": "src/services/orders/OrderProcessor/orderProcessor.agent.ts", "content": "..." },
-        { "filePath": "src/services/orders/OrderProcessor/orderProcessor.contract.ts", "content": "..." },
-        { "filePath": "src/services/orders/OrderProcessor/orderProcessor.contract.test.ts", "content": "..." }
+        {
+          "filePath": "src/services/orders/OrderProcessor/orderProcessor.agent.ts",
+          "content": "..."
+        },
+        {
+          "filePath": "src/services/orders/OrderProcessor/orderProcessor.contract.ts",
+          "content": "..."
+        },
+        {
+          "filePath": "src/services/orders/OrderProcessor/orderProcessor.contract.test.ts",
+          "content": "..."
+        }
       ],
       "targetDirectory": "src/services/orders",
       "componentName": "OrderProcessor",

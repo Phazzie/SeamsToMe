@@ -5,34 +5,58 @@
 
 import { ApiReaderAgent } from "../agents/api-reader.agent";
 import {
+  ApiDocReaderAgentContract,
   ApiReaderInput,
   ApiReaderOutput,
-  IApiReaderAgent,
 } from "../contracts/api-reader.contract";
 import {
   AgentError,
   AgentId,
   ContractResult,
+  // ContractResult, // ContractResult will be imported from types.ts
   ErrorCategory,
-} from "../contracts/types";
-
-const mockRequestingAgentId: AgentId = "test-orchestrator";
-const mockApiReaderAgentId: AgentId = "api-reader-agent"; // As defined in the stub
+} from "../contracts/types"; // Assuming types.ts is in the same directory as contracts
 
 describe("ApiReaderAgent Contract Tests", () => {
-  let apiReaderAgent: IApiReaderAgent;
+  let agent: ApiDocReaderAgentContract; // Changed from IApiReaderAgent
+  const mockRequestingAgentId = "test-rig-agent" as AgentId;
+  const mockApiReaderAgentId: AgentId = "api-reader-agent"; // As defined in the stub
 
   beforeEach(() => {
-    apiReaderAgent = new ApiReaderAgent();
-    // No explicit agentId setter in the current stub, but it's good practice if it were needed.
-    // (apiReaderAgent as ApiReaderAgent).agentId = mockApiReaderAgentId;
+    // Assuming ApiReaderAgent constructor does not require logger/telemetry for basic contract tests
+    // If it does, mock them here.
+    agent = new ApiReaderAgent(); // Corrected: ApiReaderAgent constructor takes no arguments
   });
 
-  test("should conform to IApiReaderAgent contract", () => {
-    expect(typeof apiReaderAgent.readApiDoc).toBe("function");
+  test("should conform to ApiDocReaderAgentContract contract", () => {
+    expect(typeof agent.readApiDoc).toBe("function");
   });
 
   describe("readApiDoc", () => {
+    it("should return a NotImplementedError for initial stub if method is not implemented", async () => {
+      const input: ApiReaderInput = {
+        requestingAgentId: mockRequestingAgentId,
+        url: "http://example.com/api/docs",
+      };
+      // Check if the method actually exists before calling it
+      if (typeof agent.readApiDoc !== "function") {
+        // This case handles if readApiDoc is not even part of the agent's interface yet
+        // For a contract test, we assume the method exists as per the contract.
+        // So, this block might be less relevant unless the agent is in a very early stub phase.
+        console.warn(
+          "readApiDoc method does not exist on the agent. Test will likely fail or throw."
+        );
+      }
+      const result = await agent.readApiDoc(input);
+
+      expect(result.success).toBe(false);
+      expect(result.result).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error?.name).toEqual("NotImplementedError");
+      expect(result.error?.agentId).toEqual(mockApiReaderAgentId);
+      expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId);
+    });
+
     test("should return a successful ContractResult with API summary on happy path (URL)", async () => {
       const mockInput: ApiReaderInput = {
         requestingAgentId: mockRequestingAgentId,
@@ -40,7 +64,7 @@ describe("ApiReaderAgent Contract Tests", () => {
       };
 
       const result: ContractResult<ApiReaderOutput, AgentError> =
-        await apiReaderAgent.readApiDoc(mockInput);
+        await agent.readApiDoc(mockInput);
 
       // The stub returns a NotImplementedError, so we test for that.
       // When the stub is implemented, these expectations should change.
@@ -67,7 +91,7 @@ describe("ApiReaderAgent Contract Tests", () => {
       };
 
       const result: ContractResult<ApiReaderOutput, AgentError> =
-        await apiReaderAgent.readApiDoc(mockInput);
+        await agent.readApiDoc(mockInput);
 
       // Stub returns NotImplementedError
       expect(result.error).toBeDefined();
@@ -88,7 +112,7 @@ describe("ApiReaderAgent Contract Tests", () => {
       };
 
       const result: ContractResult<ApiReaderOutput, AgentError> =
-        await apiReaderAgent.readApiDoc(mockErrorInput);
+        await agent.readApiDoc(mockErrorInput);
 
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
@@ -106,7 +130,7 @@ describe("ApiReaderAgent Contract Tests", () => {
       };
 
       const result: ContractResult<ApiReaderOutput, AgentError> =
-        await apiReaderAgent.readApiDoc(mockErrorInput);
+        await agent.readApiDoc(mockErrorInput);
 
       // The stub doesn't validate the URL, it just returns NotImplementedError.
       // A full implementation would likely return an INVALID_INPUT error.
@@ -127,7 +151,7 @@ describe("ApiReaderAgent Contract Tests", () => {
       };
 
       const result: ContractResult<ApiReaderOutput, AgentError> =
-        await apiReaderAgent.readApiDoc(mockErrorInput);
+        await agent.readApiDoc(mockErrorInput);
 
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();

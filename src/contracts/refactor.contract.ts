@@ -6,7 +6,7 @@
  * ERROR HANDLING: Typically returns ContractResult which includes an `error` field of type AgentError for failures.
  */
 
-import { AgentError, AgentId, ContractResult } from "./types"; // Added AgentId
+import { AgentError, AgentId, ContractResult } from "./types"; // Added NotImplementedError
 
 // Aliases for agent stub compatibility - THIS IS A KEY CONVENTION
 export type RefactorInput = RefactorRequest;

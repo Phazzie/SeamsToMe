@@ -7,222 +7,97 @@
 
 import { RefactorAgent } from "../agents/refactor.agent";
 import {
+  RefactoringAssistantAgentContract as IRefactorAgent,
+  RefactorInput,
+  RefactorOutput,
+  RefactorRequest, // Import RefactorRequest to use its properties
+} from "../contracts/refactor.contract";
+import {
   AgentError,
   AgentId,
   ContractResult,
+  ErrorCategory,
   NotImplementedError,
 } from "../contracts/types";
 
-// --- Define the NEW contract and types as per user request for testing purposes ---
-// These types would typically reside in or be imported into src/contracts/refactor.contract.ts
-
-interface RefactoringSuggestion {
-  id: string;
-  description: string;
-  // Example: Add other relevant fields like 'type', 'impact', 'codeSnippets', etc.
-}
-
-interface CodeAnalysisInput {
-  requestingAgentId: AgentId;
-  targetAgentId: AgentId;
-  codeContent: string;
-  filePath: string;
-}
-
-interface CodeAnalysisOutput {
-  refactorAgentId: AgentId;
-  requestingAgentId: AgentId;
-  suggestions: RefactoringSuggestion[];
-  status: "success";
-}
-
-interface ApplyRefactoringInput {
-  requestingAgentId: AgentId;
-  targetAgentId: AgentId;
-  codeContent: string;
-  filePath: string;
-  suggestionIdToApply: string;
-}
-
-interface ApplyRefactoringOutput {
-  refactorAgentId: AgentId;
-  requestingAgentId: AgentId;
-  refactoredCodeContent: string;
-  status: "success";
-}
-
-/**
- * @contract RefactorAgentContract
- * @description Defines the contract for the Refactoring Assistant Agent.
- * This agent analyzes code for refactoring opportunities and applies selected refactorings.
- */
-interface RefactorAgentContract {
-  /**
-   * Optional agentId, often set by the agent's constructor or a setter.
-   * Responses should include the agent's ID.
-   */
-  agentId?: AgentId;
-
-  /**
-   * Analyzes the given code content and file path to identify refactoring suggestions.
-   * @param request - The input containing code and context.
-   * @returns A ContractResult with a list of suggestions or an AgentError.
-   */
-  analyzeCodeForRefactoring(
-    request: CodeAnalysisInput
-  ): Promise<ContractResult<CodeAnalysisOutput, AgentError>>;
-
-  /**
-   * Applies a specific refactoring suggestion to the given code.
-   * @param request - The input containing code, context, and the ID of the suggestion to apply.
-   * @returns A ContractResult with the refactored code or an AgentError.
-   */
-  applyRefactoring(
-    request: ApplyRefactoringInput
-  ): Promise<ContractResult<ApplyRefactoringOutput, AgentError>>;
-}
-// --- End of NEW contract and type definitions ---
-
 const mockRequestingAgentId: AgentId = "test-orchestrator-agent";
-const mockRefactorAgentId: AgentId = "refactor-agent"; // Expected ID of the agent under test
+const expectedRefactorAgentId: AgentId = "RefactorAgent"; // Match the agent's actual ID
 
-describe("RefactorAgentContract Tests", () => {
-  let agent: RefactorAgentContract;
+describe("RefactorAgent Contract Tests", () => {
+  let agent: IRefactorAgent;
 
   beforeEach(() => {
-    const concreteAgent = new RefactorAgent();
-    // The RefactorAgent is cast to RefactorAgentContract.
-    // If methods are not yet implemented on RefactorAgent, they should throw NotImplementedError.
-    // If RefactorAgent needs its agentId set:
-    // if ('agentId' in concreteAgent.constructor.prototype || 'agentId' in concreteAgent) {
-    //   (concreteAgent as any).agentId = mockRefactorAgentId;
-    // }
-    agent = concreteAgent as unknown as RefactorAgentContract;
+    agent = new RefactorAgent();
   });
 
-  test("should conform to RefactorAgentContract (method existence)", () => {
-    // This test checks if the RefactorAgent class, when cast, would appear to have these methods.
-    // It will fail if the methods are not present on the RefactorAgent's prototype or instance,
-    // indicating the agent class needs to be updated.
-    expect(typeof (agent as any).analyzeCodeForRefactoring).toBe("function");
-    expect(typeof (agent as any).applyRefactoring).toBe("function");
+  test("should conform to IRefactorAgent (method existence)", () => {
+    expect(typeof agent.refactor).toBe("function");
   });
 
-  describe("analyzeCodeForRefactoring method", () => {
+  describe("refactor method", () => {
     const validCodeContent = "function example() { console.log('Hello'); }";
-    const validFilePath = "src/example.js";
+    // const validFilePath = "src/example.js"; // FilePath is not part of RefactorRequest
 
-    test("should throw NotImplementedError (happy path for analyzeCodeForRefactoring)", async () => {
-      const mockInput: CodeAnalysisInput = {
+    test("should return NotImplementedError because it's not implemented", async () => {
+      const mockInput: RefactorInput = {
         requestingAgentId: mockRequestingAgentId,
-        targetAgentId: mockRefactorAgentId,
-        codeContent: validCodeContent,
-        filePath: validFilePath,
+        code: validCodeContent, // Changed from codeToRefactor to code
+        // filePath: validFilePath, // Removed filePath as it's not in RefactorRequest
+        goals: ["Improve readability"], // Changed from refactoringGoal to goals array
       };
 
-      try {
-        await agent.analyzeCodeForRefactoring(mockInput);
-        fail(
-          "analyzeCodeForRefactoring should have thrown NotImplementedError"
+      const result: ContractResult<
+        RefactorOutput,
+        AgentError | NotImplementedError
+      > = await agent.refactor(mockInput);
+
+      expect(result.success).toBe(false);
+      expect(result.result).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error?.agentId).toEqual(expectedRefactorAgentId);
+      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED);
+      expect(result.error?.message).toContain("refactor is not implemented");
+      if (result.error && "requestingAgentId" in result.error) {
+        expect((result.error as NotImplementedError).requestingAgentId).toEqual(
+          mockRequestingAgentId
         );
-      } catch (e: any) {
-        if (e.constructor.name === "NotImplementedError") {
-          const error = e as NotImplementedError;
-          // These expectations rely on NotImplementedError being constructed with these details by the agent's stub.
-          expect(error.agentId).toEqual(mockRefactorAgentId);
-          expect(error.requestingAgentId).toEqual(mockRequestingAgentId);
-          expect(error.methodName).toEqual("analyzeCodeForRefactoring");
-        } else {
-          // If it's a TypeError because the method doesn't exist, that's also a valid failure for this stage.
-          // Or rethrow if it's an unexpected error.
-          throw e;
-        }
       }
     });
 
-    test("should throw NotImplementedError (conceptually AgentError if codeContent is missing)", async () => {
-      const mockErrorInput: CodeAnalysisInput = {
-        requestingAgentId: mockRequestingAgentId,
-        targetAgentId: mockRefactorAgentId,
-        codeContent: "", // Missing codeContent
-        filePath: validFilePath,
-      };
-
-      try {
-        await agent.analyzeCodeForRefactoring(mockErrorInput);
-        fail(
-          "analyzeCodeForRefactoring should have thrown NotImplementedError"
-        );
-      } catch (e: any) {
-        if (e.constructor.name === "NotImplementedError") {
-          const error = e as NotImplementedError;
-          expect(error.agentId).toEqual(mockRefactorAgentId);
-          expect(error.requestingAgentId).toEqual(mockRequestingAgentId);
-          expect(error.methodName).toEqual("analyzeCodeForRefactoring");
-          // Conceptual error if implemented:
-          // expect(error.category).toEqual(ErrorCategory.INVALID_INPUT);
-          // expect(error.message).toContain("codeContent is required");
-        } else {
-          throw e;
-        }
-      }
-    });
-  });
-
-  describe("applyRefactoring method", () => {
-    const validCodeContent = "function example() { console.log('Hello'); }";
-    const validFilePath = "src/example.js";
-    const validSuggestionId = "suggestion-abc-123";
-
-    test("should throw NotImplementedError (happy path for applyRefactoring)", async () => {
-      const mockInput: ApplyRefactoringInput = {
-        requestingAgentId: mockRequestingAgentId,
-        targetAgentId: mockRefactorAgentId,
-        codeContent: validCodeContent,
-        filePath: validFilePath,
-        suggestionIdToApply: validSuggestionId,
-      };
-
-      try {
-        await agent.applyRefactoring(mockInput);
-        fail("applyRefactoring should have thrown NotImplementedError");
-      } catch (e: any) {
-        if (e.constructor.name === "NotImplementedError") {
-          const error = e as NotImplementedError;
-          expect(error.agentId).toEqual(mockRefactorAgentId);
-          expect(error.requestingAgentId).toEqual(mockRequestingAgentId);
-          expect(error.methodName).toEqual("applyRefactoring");
-        } else {
-          throw e;
-        }
-      }
+    test("should return an AgentError if request is null", async () => {
+      // @ts-expect-error Testing invalid input
+      const result = await agent.refactor(null);
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+      expect(result.error?.agentId).toEqual(expectedRefactorAgentId);
+      expect(result.error?.category).toEqual(ErrorCategory.BAD_REQUEST);
+      expect(result.error?.message).toContain("Request is null or undefined");
     });
 
-    test("should throw NotImplementedError (conceptually AgentError if suggestionIdToApply is missing)", async () => {
-      const mockErrorInput: ApplyRefactoringInput = {
+    test("should return an AgentError if code is missing (once implemented)", async () => {
+      const mockErrorInput: Partial<RefactorRequest> = {
+        // Use Partial for incomplete input
         requestingAgentId: mockRequestingAgentId,
-        targetAgentId: mockRefactorAgentId,
-        codeContent: validCodeContent,
-        filePath: validFilePath,
-        suggestionIdToApply: "", // Missing suggestionIdToApply
+        // code: "", // Missing code
+        goals: ["Improve readability"],
       };
 
-      try {
-        await agent.applyRefactoring(mockErrorInput);
-        fail("applyRefactoring should have thrown NotImplementedError");
-      } catch (e: any) {
-        if (e.constructor.name === "NotImplementedError") {
-          const error = e as NotImplementedError;
-          expect(error.agentId).toEqual(mockRefactorAgentId);
-          expect(error.requestingAgentId).toEqual(mockRequestingAgentId);
-          expect(error.methodName).toEqual("applyRefactoring");
-          // Conceptual error if implemented:
-          // expect(error.category).toEqual(ErrorCategory.INVALID_INPUT);
-          // expect(error.message).toContain("suggestionIdToApply is required");
-        } else {
-          throw e;
-        }
+      const result = await agent.refactor(mockErrorInput as RefactorInput); // Cast for the call
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+      // For now, it will still return NotImplementedError or BAD_REQUEST if !request check hits first.
+      // If the agent was fully implemented, it would be INVALID_REQUEST for missing 'code'.
+      // Adjust based on actual agent implementation if it distinguishes between null request and missing properties.
+      if (mockErrorInput.requestingAgentId) {
+        // If it's not a completely null request
+        expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED); // Still not implemented
+      } else {
+        expect(result.error?.category).toEqual(ErrorCategory.BAD_REQUEST);
       }
+
+      // Conceptual check for when implemented and 'code' is specifically validated:
+      // expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST);
+      // expect(result.error?.message).toContain("Code to refactor is required");
     });
   });
 });
