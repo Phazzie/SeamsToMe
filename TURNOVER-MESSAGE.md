@@ -4,6 +4,20 @@
 
 **Status**: Successfully implemented **ChecklistAgent** and **ScaffoldAgent** from stub to production-ready using the proven MVPSddScaffolder methodology. Both agents are fully functional, tested, and ready for integration.
 
+### **📚 What is Seam-Driven Development (SDD)?**
+
+**SDD** is our core development methodology that treats software components as independent modules connected by well-defined "seams" (contracts). Key principles:
+
+- **Seams First**: Define clear contracts/interfaces before implementation
+- **Independent Development**: Each component (agent) can be developed and tested in isolation
+- **Contract Compliance**: Components must implement their interfaces exactly as specified
+- **Error Boundaries**: Each component handles its own errors using standardized patterns
+- **Incremental Integration**: Components are validated individually then integrated systematically
+
+**In Practice**: Each agent has a contract interface (e.g., `IChecklistAgent`) that defines exactly what methods it must implement and what types it must return. The agent implementation must comply exactly with this contract, enabling seamless integration with the orchestrator system.
+
+**Why It Works**: By enforcing strict contracts and testing each seam independently, we can build complex systems reliably and catch integration issues early.
+
 ---
 
 ## 🎯 IMMEDIATE VERIFICATION (Start Here)
