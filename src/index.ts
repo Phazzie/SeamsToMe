@@ -16,11 +16,11 @@ import { TaskPriority } from "./contracts/types";
  */
 async function bootstrap() {
   try {
-    console.log("Starting SeemsToMe SDD multi-agent system...");
-
-    // Initialize agents
-    const orchestrator = new OrchestratorAgent();
+    console.log("Starting SeemsToMe SDD multi-agent system...");    // Initialize agents
     const knowledgeAgent = new KnowledgeAgent();
+    const orchestrator = new OrchestratorAgent({
+      knowledgeAgent: knowledgeAgent
+    });
     // Register agents with orchestrator
     const registrationResult = await orchestrator.registerAgent(
       "knowledge-agent",

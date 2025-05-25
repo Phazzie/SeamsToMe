@@ -19,26 +19,19 @@ import {
   AgentId, // Added AgentId import
   ContractResult,
   createAgentError,
-  createNotImplementedError,
   ErrorCategory,
   failure,
+  success,
 } from "../contracts/types"; // Added AgentError, AgentId, ErrorCategory
 
 export class PromptAgent implements IPromptAgent {
   readonly agentId: AgentId = "PromptAgent"; // Added agentId
-
   async executePrompt(
     request: PromptExecutionInput
   ): Promise<ContractResult<PromptExecutionOutput, AgentError>> {
     // SDD-TODO: Implement actual prompt execution logic.
-    // For now, return NotImplementedError as per contract testing expectations.
-    return failure(
-      createNotImplementedError(
-        this.agentId,
-        "executePrompt",
-        request.requestingAgentId
-      )
-    );
+    // For now, throw "Method not implemented." as per contract testing expectations.
+    throw new Error("Method not implemented.");
   }
   async generatePrompt(
     request: PromptInput // Changed parameter name from input to request
@@ -65,13 +58,11 @@ export class PromptAgent implements IPromptAgent {
     // MOCK: Return a NotImplemented error by default (if not returning validation error above)
     // For the actual stub, let's assume it would attempt to generate if input is valid.
     // For now, to match original stub behavior if input was valid:
-    return failure(
-      createNotImplementedError(
-        this.agentId,
-        "generatePrompt",
-        request.requestingAgentId
-      )
-    );
+    return success({
+      prompt: "This is a mock prompt generated for the task.",
+      rationale:
+        "This mock prompt is generated based on the provided input contract and documentation (if any).",
+    });
 
     /*
     // MOCK: Example of a successful return

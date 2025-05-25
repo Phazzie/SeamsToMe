@@ -69,7 +69,8 @@ describe("QualityAgent Contract Tests", () => {
         await qualityAgent.checkQuality(mockErrorInput);
 
       expect(result.error).toBeDefined();
-      expect(result.result).toBeUndefined();      expect(result.error?.agentId).toEqual(mockQualityAgentId);
+      expect(result.result).toBeUndefined();
+      expect(result.error?.agentId).toEqual(mockQualityAgentId);
       expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId);
       expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST);
       expect(result.error?.message).toContain("Target path is required");
@@ -86,7 +87,8 @@ describe("QualityAgent Contract Tests", () => {
         await qualityAgent.checkQuality(mockErrorInput);
 
       expect(result.error).toBeDefined();
-      expect(result.result).toBeUndefined();      expect(result.error?.agentId).toEqual(mockQualityAgentId);
+      expect(result.result).toBeUndefined();
+      expect(result.error?.agentId).toEqual(mockQualityAgentId);
       expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId);
       expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST);
       expect(result.error?.message).toContain("Check types are required");
@@ -106,7 +108,8 @@ describe("QualityAgent Contract Tests", () => {
         severity: "WARNING",
         location: "./src/problematic-file.ts:10",
         suggestion: "Remove unused variable or use it.",
-      };      jest.spyOn(qualityAgent, "checkQuality").mockResolvedValueOnce({
+      };
+      jest.spyOn(qualityAgent, "checkQuality").mockResolvedValueOnce({
         success: true,
         result: {
           issues: [mockIssue],

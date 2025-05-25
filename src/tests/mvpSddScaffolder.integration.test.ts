@@ -628,52 +628,65 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
     ) => {
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, content);
-    };
-
-    // Test each OverwritePolicy
+    }; // Test each OverwritePolicy
     Object.values(OverwritePolicy).forEach((policy) => {
       describe(`Policy: ${policy}`, () => {
-        const baseInputSingle: MVPSddScaffoldRequest = {
+        // Use a getter function to access tempTestDir from the outer scope
+        const getBaseInputSingle = (): MVPSddScaffoldRequest => ({
           requestingAgentId: testAgentId,
           sddComponentType: SddComponentType.AGENT,
           componentName,
           targetDirectory: tempTestDir,
           overwritePolicy: policy,
-        };
+        });
 
-        const baseInputFullSet: MVPSddScaffoldRequest = {
+        const getBaseInputFullSet = (): MVPSddScaffoldRequest => ({
           requestingAgentId: testAgentId,
           sddComponentType: SddComponentType.FULL_AGENT_SET,
           componentName,
           targetDirectory: tempTestDir,
           overwritePolicy: policy,
+        }); // Use getter functions for paths that depend on tempTestDir
+        const getPaths = () => {
+          // For SddComponentType.AGENT, files are created in a subdirectory named after the component.
+          const componentSubDir = path.join(tempTestDir, componentName); // For single component
+          const expectedAgentPathSingle = path.join(
+            componentSubDir,
+            agentFileName
+          );
+
+          // For SddComponentType.FULL_AGENT_SET
+          const agentDirFull = path.join(tempTestDir, "agents");
+          const contractDirFull = path.join(tempTestDir, "contracts");
+          const testDirFull = path.join(tempTestDir, "tests");
+          const expectedAgentPathFull = path.join(agentDirFull, agentFileName);
+          const expectedContractPathFull = path.join(
+            contractDirFull,
+            contractFileName
+          );
+          const expectedTestPathFull = path.join(testDirFull, testFileName);
+          const allFullSetPaths = [
+            expectedAgentPathFull,
+            expectedContractPathFull,
+            expectedTestPathFull,
+          ];
+
+          return {
+            componentSubDir,
+            expectedAgentPathSingle,
+            agentDirFull,
+            contractDirFull,
+            testDirFull,
+            expectedAgentPathFull,
+            expectedContractPathFull,
+            expectedTestPathFull,
+            allFullSetPaths,
+          };
         };
-
-        // For SddComponentType.AGENT, files are created in a subdirectory named after the component.
-        const componentSubDir = path.join(tempTestDir, componentName); // For single component
-        const expectedAgentPathSingle = path.join(
-          componentSubDir,
-          agentFileName
-        );
-
-        // For SddComponentType.FULL_AGENT_SET
-        const agentDirFull = path.join(tempTestDir, "agents");
-        const contractDirFull = path.join(tempTestDir, "contracts");
-        const testDirFull = path.join(tempTestDir, "tests");
-        const expectedAgentPathFull = path.join(agentDirFull, agentFileName);
-        const expectedContractPathFull = path.join(
-          contractDirFull,
-          contractFileName
-        );
-        const expectedTestPathFull = path.join(testDirFull, testFileName);
-        const allFullSetPaths = [
-          expectedAgentPathFull,
-          expectedContractPathFull,
-          expectedTestPathFull,
-        ];
-
         it(`[AGENT] should behave correctly when no files exist [${policy}]`, async () => {
-          const result = await agent.generateSddScaffold(baseInputSingle);
+          const baseInput = getBaseInputSingle();
+          const paths = getPaths();
+          const result = await agent.generateSddScaffold(baseInput);
           expect(result.success).toBe(true);
           expect(result.error).toBeUndefined();
           const output = result.result as MVPSddScaffoldOutput;
@@ -683,27 +696,33 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             `Component '${componentName}' of type '${SddComponentType.AGENT}' scaffolded successfully.`
           );
           expect(output.generatedFiles).toHaveLength(1);
-          expect(output.generatedFiles).toContain(expectedAgentPathSingle);
+          expect(output.generatedFiles).toContain(
+            paths.expectedAgentPathSingle
+          );
           expect(output.skippedFiles).toBeUndefined();
 
           expect(output.generatedFileContents).toBeDefined();
           expect(output.generatedFileContents).toHaveLength(1);
           expect(output.generatedFileContents?.[0].filePath).toBe(
-            expectedAgentPathSingle
+            paths.expectedAgentPathSingle
           );
           expect(output.generatedFileContents?.[0].content).toEqual(
             expectedAgentContent(componentName, pascalCaseName)
           );
 
           await expect(
-            fs.access(expectedAgentPathSingle)
+            fs.access(paths.expectedAgentPathSingle)
           ).resolves.toBeUndefined();
         });
-
         it(`[AGENT] should behave correctly when agent file exists [${policy}]`, async () => {
-          await createDummyFile(expectedAgentPathSingle, "old agent content");
+          const baseInput = getBaseInputSingle();
+          const paths = getPaths();
+          await createDummyFile(
+            paths.expectedAgentPathSingle,
+            "old agent content"
+          );
 
-          const result = await agent.generateSddScaffold(baseInputSingle);
+          const result = await agent.generateSddScaffold(baseInput);
 
           if (policy === OverwritePolicy.ERROR_IF_EXISTS) {
             expect(result.success).toBe(false);
@@ -711,10 +730,10 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             expect(result.error).toBeDefined();
             expect(result.error?.category).toBe(ErrorCategory.OPERATION_FAILED);
             expect(result.error?.message).toContain(
-              `Scaffolding failed: File '${expectedAgentPathSingle}' already exists and overwrite policy is ${OverwritePolicy.ERROR_IF_EXISTS}.`
+              `Scaffolding failed: File '${paths.expectedAgentPathSingle}' already exists and overwrite policy is ${OverwritePolicy.ERROR_IF_EXISTS}.`
             );
             const agentContent = await fs.readFile(
-              expectedAgentPathSingle,
+              paths.expectedAgentPathSingle,
               "utf-8"
             );
             expect(agentContent).toBe("old agent content");
@@ -727,13 +746,15 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
               `Component '${componentName}' of type '${SddComponentType.AGENT}' scaffolded successfully.` // Message for overwrite is same as new creation
             );
             expect(output.generatedFiles).toHaveLength(1);
-            expect(output.generatedFiles).toContain(expectedAgentPathSingle);
+            expect(output.generatedFiles).toContain(
+              paths.expectedAgentPathSingle
+            );
             expect(output.skippedFiles).toBeUndefined(); // Ensure skippedFiles is empty or undefined
 
             expect(output.generatedFileContents).toBeDefined();
             expect(output.generatedFileContents).toHaveLength(1);
             expect(output.generatedFileContents?.[0].filePath).toBe(
-              expectedAgentPathSingle
+              paths.expectedAgentPathSingle
             );
             // Verify that generatedFileContents contains the new content
             expect(output.generatedFileContents?.[0].content).toEqual(
@@ -741,7 +762,7 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             );
 
             const agentContent = await fs.readFile(
-              expectedAgentPathSingle,
+              paths.expectedAgentPathSingle,
               "utf-8"
             );
             expect(agentContent).toEqual(
@@ -759,23 +780,25 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             // Ensure skipped file path appears in output.skippedFiles
             expect(output.skippedFiles).toBeDefined();
             expect(output.skippedFiles).toHaveLength(1);
-            expect(output.skippedFiles).toContain(expectedAgentPathSingle);
+            expect(output.skippedFiles).toContain(
+              paths.expectedAgentPathSingle
+            );
 
             // Ensure skipped file does not appear in output.generatedFiles or output.generatedFileContents
             expect(output.generatedFiles).toHaveLength(0);
             expect(output.generatedFileContents).toBeUndefined();
 
             const agentContent = await fs.readFile(
-              expectedAgentPathSingle,
+              paths.expectedAgentPathSingle,
               "utf-8"
             );
             expect(agentContent).toBe("old agent content"); // Should not have been overwritten
           }
-        });
-
-        // --- FULL_AGENT_SET OverwritePolicy Tests ---
+        }); // --- FULL_AGENT_SET OverwritePolicy Tests ---
         it(`[FULL_AGENT_SET] should behave correctly when no files exist [${policy}]`, async () => {
-          const result = await agent.generateSddScaffold(baseInputFullSet);
+          const baseInput = getBaseInputFullSet();
+          const paths = getPaths();
+          const result = await agent.generateSddScaffold(baseInput);
           expect(result.success).toBe(true);
           expect(result.error).toBeUndefined();
           const output = result.result as MVPSddScaffoldOutput;
@@ -785,23 +808,27 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
           );
           expect(output.generatedFiles).toHaveLength(3);
           expect(output.generatedFiles).toEqual(
-            expect.arrayContaining(allFullSetPaths)
+            expect.arrayContaining(paths.allFullSetPaths)
           );
           expect(output.skippedFiles).toBeUndefined();
           expect(output.generatedFileContents).toHaveLength(3);
-          for (const p of allFullSetPaths) {
+          for (const p of paths.allFullSetPaths) {
             await expect(fs.access(p)).resolves.toBeUndefined();
           }
         });
-
         it(`[FULL_AGENT_SET] should ${
           policy === OverwritePolicy.ERROR_IF_EXISTS
             ? "fail"
             : "behave correctly"
         } when one file (agent) exists [${policy}]`, async () => {
-          await createDummyFile(expectedAgentPathFull, "old agent content");
+          const baseInput = getBaseInputFullSet();
+          const paths = getPaths();
+          await createDummyFile(
+            paths.expectedAgentPathFull,
+            "old agent content"
+          );
 
-          const result = await agent.generateSddScaffold(baseInputFullSet);
+          const result = await agent.generateSddScaffold(baseInput);
 
           if (policy === OverwritePolicy.ERROR_IF_EXISTS) {
             expect(result.success).toBe(false);
@@ -809,13 +836,17 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             expect(result.error).toBeDefined();
             expect(result.error?.category).toBe(ErrorCategory.OPERATION_FAILED);
             expect(result.error?.message).toContain(
-              `Scaffolding failed: File '${expectedAgentPathFull}' already exists and overwrite policy is ${OverwritePolicy.ERROR_IF_EXISTS}.`
+              `Scaffolding failed: File '${paths.expectedAgentPathFull}' already exists and overwrite policy is ${OverwritePolicy.ERROR_IF_EXISTS}.`
             );
             // Ensure no other files were created
-            await expect(fs.access(expectedContractPathFull)).rejects.toThrow();
-            await expect(fs.access(expectedTestPathFull)).rejects.toThrow();
+            await expect(
+              fs.access(paths.expectedContractPathFull)
+            ).rejects.toThrow();
+            await expect(
+              fs.access(paths.expectedTestPathFull)
+            ).rejects.toThrow();
             const agentContent = await fs.readFile(
-              expectedAgentPathFull,
+              paths.expectedAgentPathFull,
               "utf-8"
             );
             expect(agentContent).toBe("old agent content"); // Original file untouched
@@ -828,13 +859,13 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             );
             expect(output.generatedFiles).toHaveLength(3);
             expect(output.generatedFiles).toEqual(
-              expect.arrayContaining(allFullSetPaths)
+              expect.arrayContaining(paths.allFullSetPaths)
             );
             expect(output.skippedFiles).toBeUndefined();
             expect(output.generatedFileContents).toHaveLength(3);
             // Check content of overwritten file
             const agentFileDetail = output.generatedFileContents?.find(
-              (f) => f.filePath === expectedAgentPathFull
+              (f) => f.filePath === paths.expectedAgentPathFull
             );
             expect(agentFileDetail?.content).toEqual(
               expectedAgentContent(componentName, pascalCaseName)
@@ -847,36 +878,42 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
               `Full agent set for '${componentName}' scaffolded with partial success: 2 files created/overwritten, 1 files skipped.`
             );
             expect(output.generatedFiles).toHaveLength(2);
-            expect(output.generatedFiles).not.toContain(expectedAgentPathFull);
+            expect(output.generatedFiles).not.toContain(
+              paths.expectedAgentPathFull
+            );
             expect(output.generatedFiles).toEqual(
               expect.arrayContaining([
-                expectedContractPathFull,
-                expectedTestPathFull,
+                paths.expectedContractPathFull,
+                paths.expectedTestPathFull,
               ])
             );
-            expect(output.skippedFiles).toEqual([expectedAgentPathFull]);
+            expect(output.skippedFiles).toEqual([paths.expectedAgentPathFull]);
             expect(output.generatedFileContents).toHaveLength(2);
             const agentContent = await fs.readFile(
-              expectedAgentPathFull,
+              paths.expectedAgentPathFull,
               "utf-8"
             );
             expect(agentContent).toBe("old agent content"); // Original file untouched
           }
         });
-
         it(`[FULL_AGENT_SET] should ${
           policy === OverwritePolicy.ERROR_IF_EXISTS
             ? "fail"
             : "behave correctly"
         } when all files exist [${policy}]`, async () => {
-          await createDummyFile(expectedAgentPathFull, "old agent content");
+          const baseInput = getBaseInputFullSet();
+          const paths = getPaths();
           await createDummyFile(
-            expectedContractPathFull,
+            paths.expectedAgentPathFull,
+            "old agent content"
+          );
+          await createDummyFile(
+            paths.expectedContractPathFull,
             "old contract content"
           );
-          await createDummyFile(expectedTestPathFull, "old test content");
+          await createDummyFile(paths.expectedTestPathFull, "old test content");
 
-          const result = await agent.generateSddScaffold(baseInputFullSet);
+          const result = await agent.generateSddScaffold(baseInput);
 
           if (policy === OverwritePolicy.ERROR_IF_EXISTS) {
             expect(result.success).toBe(false);
@@ -885,21 +922,21 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             expect(result.error?.category).toBe(ErrorCategory.OPERATION_FAILED);
             // Error message will be for the first file it checks (agent file in this setup)
             expect(result.error?.message).toContain(
-              `Scaffolding failed: File '${expectedAgentPathFull}' already exists and overwrite policy is ${OverwritePolicy.ERROR_IF_EXISTS}.`
+              `Scaffolding failed: File '${paths.expectedAgentPathFull}' already exists and overwrite policy is ${OverwritePolicy.ERROR_IF_EXISTS}.`
             );
             // Ensure original files are untouched
             const agentContent = await fs.readFile(
-              expectedAgentPathFull,
+              paths.expectedAgentPathFull,
               "utf-8"
             );
             expect(agentContent).toBe("old agent content");
             const contractContent = await fs.readFile(
-              expectedContractPathFull,
+              paths.expectedContractPathFull,
               "utf-8"
             );
             expect(contractContent).toBe("old contract content");
             const testContent = await fs.readFile(
-              expectedTestPathFull,
+              paths.expectedTestPathFull,
               "utf-8"
             );
             expect(testContent).toBe("old test content");
@@ -912,25 +949,25 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             );
             expect(output.generatedFiles).toHaveLength(3);
             expect(output.generatedFiles).toEqual(
-              expect.arrayContaining(allFullSetPaths)
+              expect.arrayContaining(paths.allFullSetPaths)
             );
             expect(output.skippedFiles).toBeUndefined();
             expect(output.generatedFileContents).toHaveLength(3);
             // Check content of overwritten files
             const agentFileDetail = output.generatedFileContents?.find(
-              (f) => f.filePath === expectedAgentPathFull
+              (f) => f.filePath === paths.expectedAgentPathFull
             );
             expect(agentFileDetail?.content).toEqual(
               expectedAgentContent(componentName, pascalCaseName)
             );
             const contractFileDetail = output.generatedFileContents?.find(
-              (f) => f.filePath === expectedContractPathFull
+              (f) => f.filePath === paths.expectedContractPathFull
             );
             expect(contractFileDetail?.content).toEqual(
               expectedContractContent(componentName, pascalCaseName)
             );
             const testFileDetail = output.generatedFileContents?.find(
-              (f) => f.filePath === expectedTestPathFull
+              (f) => f.filePath === paths.expectedTestPathFull
             );
             expect(testFileDetail?.content).toEqual(
               expectedTestContent(componentName, pascalCaseName)
@@ -945,22 +982,22 @@ describe('${pascalCaseName}Agent Contract Tests', () => {
             expect(output.generatedFiles).toHaveLength(0);
             expect(output.skippedFiles).toHaveLength(3);
             expect(output.skippedFiles).toEqual(
-              expect.arrayContaining(allFullSetPaths)
+              expect.arrayContaining(paths.allFullSetPaths)
             );
             expect(output.generatedFileContents).toBeUndefined();
             // Ensure original files are untouched
             const agentContent = await fs.readFile(
-              expectedAgentPathFull,
+              paths.expectedAgentPathFull,
               "utf-8"
             );
             expect(agentContent).toBe("old agent content");
             const contractContent = await fs.readFile(
-              expectedContractPathFull,
+              paths.expectedContractPathFull,
               "utf-8"
             );
             expect(contractContent).toBe("old contract content");
             const testContent = await fs.readFile(
-              expectedTestPathFull,
+              paths.expectedTestPathFull,
               "utf-8"
             );
             expect(testContent).toBe("old test content");

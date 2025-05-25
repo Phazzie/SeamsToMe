@@ -29,8 +29,7 @@ export class ScaffoldAgent implements IScaffoldAgent {
 
   constructor() {
     /* SDD-TODO: Initialize any dependencies here */
-  }
-  // SDD-Blueprint: Generates file stubs from a design document, creating a basic structure for new components or modules.
+  }  // SDD-Blueprint: Generates file stubs from a design document, creating a basic structure for new components or modules.
   // It takes a design document and target path, and returns the paths and content of the generated stub files.
   async generateScaffold(
     request: ScaffoldInput
@@ -45,25 +44,17 @@ export class ScaffoldAgent implements IScaffoldAgent {
         )
       );
     }
-    // SDD-TODO: Implement actual business logic here.
-    // Consider using request.requestingAgentId for logging or context.
-
-    // MOCK: Return a minimal scaffold structure
-    return Promise.resolve(
-      success({
-        files: [
-          {
-            path: "mock/file.txt",
-            content: `Mock file content for ${request.targetPath}. Design doc: ${request.designDoc}`,
-            format: request.format || StubFormat.OTHER,
-          },
-        ],
-      })
+    
+    // STUB: Return NotImplementedError as per SDD methodology
+    return failure(
+      createAgentError(
+        this.agentId,
+        "ScaffoldAgent.generateScaffold not yet implemented",
+        ErrorCategory.NOT_IMPLEMENTED,
+        "NotImplementedError",
+        request.requestingAgentId
+      )
     );
-
-    /* Mock error example:
-    return Promise.resolve(failure(createAgentError(this.agentId, "MOCK_SCAFFOLD_ERROR", "Failed to generate scaffold due to a mock error.", "Additional error details here...")));
-    */
   }
 
   // SDD-Blueprint: Validates a set of generated stub files for basic correctness, such as syntax or adherence to naming conventions.
@@ -80,16 +71,15 @@ export class ScaffoldAgent implements IScaffoldAgent {
           "BadRequestError"
         )
       );
-    }
-    // SDD-TODO: Implement actual business logic here.
-    // Consider using request.requestingAgentId for logging or context.
-
-    // MOCK: Return a minimal validation result
-    return Promise.resolve(
-      success({
-        isValid: true,
-        issues: [],
-      })
+    }    // STUB: Return NotImplementedError as per SDD methodology
+    return failure(
+      createAgentError(
+        this.agentId,
+        "ScaffoldAgent.validateStubs not yet implemented",
+        ErrorCategory.NOT_IMPLEMENTED,
+        "NotImplementedError",
+        request.requestingAgentId
+      )
     );
 
     /* Mock error example:

@@ -19,7 +19,7 @@ import {
 } from "../contracts/types";
 
 export class ApiReaderAgent implements IApiReaderAgent {
-  readonly agentId: string = "ApiReaderAgent"; // Added agentId property
+  readonly agentId: string = "api-reader-agent"; // Corrected agentId to match expected format
 
   async readApiDoc(
     request: ApiReaderInput // Changed parameter name from input to request

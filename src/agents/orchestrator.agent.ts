@@ -70,6 +70,13 @@ import {
   StubAgentContract as ScaffoldAgentContract,
   ScaffoldInput,
 } from "../contracts/scaffold.contract";
+import {
+  KnowledgeContract,
+  KnowledgeInput,
+  StoreKnowledgeInput,
+  HasKnowledgeInput,
+  KnowledgeDomain,
+} from "../contracts/knowledge.contract";
 
 /**
  * Orchestrator Agent - Stub Implementation
@@ -80,11 +87,11 @@ import {
 export class OrchestratorAgent implements OrchestratorContract {
   private readonly registeredAgents: Map<AgentId, string[]> = new Map();
   private readonly tasks: Map<TaskId, TaskRequest & { status: TaskStatus }> =
-    new Map();
-  // Agent references
+    new Map();  // Agent references
   private readonly checklistAgent: ChecklistContract | null = null;
   private readonly changelogAgent: ChangelogContract | null = null;
   private readonly documentationAgent: DocumentationContract | null = null;
+  private readonly knowledgeAgent: KnowledgeContract | null = null;
   // New agent references
   private readonly prdAgent: PRDAgentContract | null = null;
   private readonly scaffoldAgent: ScaffoldAgentContract | null = null;
@@ -98,11 +105,11 @@ export class OrchestratorAgent implements OrchestratorContract {
   /**
    * Constructor to inject agent dependencies
    * @param agents Optional map of agents to inject
-   */
-  constructor(agents?: {
+   */  constructor(agents?: {
     checklistAgent?: ChecklistContract;
     changelogAgent?: ChangelogContract;
     documentationAgent?: DocumentationContract;
+    knowledgeAgent?: KnowledgeContract;
     // New agents in constructor
     prdAgent?: PRDAgentContract;
     scaffoldAgent?: ScaffoldAgentContract;
@@ -117,6 +124,7 @@ export class OrchestratorAgent implements OrchestratorContract {
       this.checklistAgent = agents.checklistAgent || null;
       this.changelogAgent = agents.changelogAgent || null;
       this.documentationAgent = agents.documentationAgent || null;
+      this.knowledgeAgent = agents.knowledgeAgent || null;
       // Initialize new agents
       this.prdAgent = agents.prdAgent || null;
       this.scaffoldAgent = agents.scaffoldAgent || null;
@@ -291,11 +299,27 @@ export class OrchestratorAgent implements OrchestratorContract {
           agentContractResult = await this.apiReaderAgent.readApiDoc(
             request.parameters as ApiReaderInput
           );
-        }
-      } else if (request.agentId === "refactor-agent" && this.refactorAgent) {
+        }      } else if (request.agentId === "refactor-agent" && this.refactorAgent) {
         if (request.action === "refactor") {
           agentContractResult = await this.refactorAgent.refactor(
             request.parameters as RefactorInput
+          );
+        }      } else if (request.agentId === "knowledge-agent" && this.knowledgeAgent) {
+        if (request.action === "retrieveKnowledge") {
+          agentContractResult = await this.knowledgeAgent.retrieveKnowledge(
+            request.parameters as KnowledgeInput
+          );
+        } else if (request.action === "storeKnowledge") {
+          const params = request.parameters as { item: StoreKnowledgeInput; agentId: AgentId };
+          agentContractResult = await this.knowledgeAgent.storeKnowledge(
+            params.item,
+            params.agentId
+          );
+        } else if (request.action === "hasKnowledge") {
+          const params = request.parameters as HasKnowledgeInput;
+          agentContractResult = await this.knowledgeAgent.hasKnowledge(
+            params.query,
+            params.domain
           );
         }
       } else {

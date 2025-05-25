@@ -7,49 +7,49 @@
  * ERROR HANDLING: Tests error scenarios between agents
  */
 
-import { bootstrap } from '../index';
-import { TaskPriority } from '../contracts/types';
+import { TaskPriority } from "../contracts/types";
+import { bootstrap } from "../index";
 
-describe('SeemsToMe System Integration', () => {
-  test('should bootstrap the system successfully', async () => {
+describe("SeemsToMe System Integration", () => {
+  test("should bootstrap the system successfully", async () => {
     const system = await bootstrap();
     expect(system.orchestrator).toBeDefined();
     expect(system.knowledgeAgent).toBeDefined();
   });
-  
-  test('should allow task submission through orchestrator', async () => {
+
+  test("should allow task submission through orchestrator", async () => {
     const system = await bootstrap();
-    
+
     const taskResult = await system.orchestrator.submitTask({
-      taskId: 'test-system-task',
-      agentId: 'knowledge-agent',
-      action: 'retrieveKnowledge',
+      taskId: "test-system-task",
+      agentId: "knowledge-agent",
+      action: "retrieveKnowledge",
       parameters: {
-        query: 'SDD'
+        query: "SDD",
       },
-      priority: TaskPriority.NORMAL
+      priority: TaskPriority.NORMAL,
     });
-      expect(taskResult.success).toBe(true);
+    expect(taskResult.success).toBe(true);
     if (taskResult.success) {
-      expect(taskResult.result.taskId).toBe('test-system-task');
+      expect(taskResult.result.taskId).toBe("test-system-task");
       expect(taskResult.result.status).toBeDefined();
     }
   });
-  
-  test('should retrieve task status', async () => {
+
+  test("should retrieve task status", async () => {
     const system = await bootstrap();
-    const taskId = 'status-test-task';
-    
+    const taskId = "status-test-task";
+
     await system.orchestrator.submitTask({
       taskId,
-      agentId: 'knowledge-agent',
-      action: 'retrieveKnowledge',
+      agentId: "knowledge-agent",
+      action: "retrieveKnowledge",
       parameters: {
-        query: 'test'
+        query: "test",
       },
-      priority: TaskPriority.NORMAL
+      priority: TaskPriority.NORMAL,
     });
-    
+
     const status = await system.orchestrator.getTaskStatus(taskId);
     expect(status).toBeDefined();
   });

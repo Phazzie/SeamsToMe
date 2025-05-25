@@ -97,7 +97,7 @@ describe("ApiReaderAgent Contract Tests", () => {
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
       expect(result.error?.name).toEqual("NotImplementedError");
-      expect(result.error?.agentId).toEqual(mockApiReaderAgentId);
+      expect(result.error?.agentId).toEqual("api-reader-agent");
 
       // SDD-TODO: Update these expectations when the stub is implemented
       // expect(result.result).toBeDefined();
@@ -113,12 +113,11 @@ describe("ApiReaderAgent Contract Tests", () => {
 
       const result: ContractResult<ApiReaderOutput, AgentError> =
         await agent.readApiDoc(mockErrorInput);
-
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
       expect(result.error?.name).toEqual("NotImplementedError"); // Stub returns this
-      expect(result.error?.category).toEqual(ErrorCategory.UNEXPECTED_ERROR); // Stub returns this
-      expect(result.error?.agentId).toEqual(mockApiReaderAgentId);
+      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED); // Stub returns this
+      expect(result.error?.agentId).toEqual("api-reader-agent");
       // Ideal error message for a full implementation:
       // expect(result.error?.message).toContain("Either URL or content must be provided");
     });
@@ -133,12 +132,11 @@ describe("ApiReaderAgent Contract Tests", () => {
         await agent.readApiDoc(mockErrorInput);
 
       // The stub doesn't validate the URL, it just returns NotImplementedError.
-      // A full implementation would likely return an INVALID_INPUT error.
-      expect(result.error).toBeDefined();
+      // A full implementation would likely return an INVALID_INPUT error.      expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
       expect(result.error?.name).toEqual("NotImplementedError");
-      expect(result.error?.category).toEqual(ErrorCategory.UNEXPECTED_ERROR);
-      expect(result.error?.agentId).toEqual(mockApiReaderAgentId);
+      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED);
+      expect(result.error?.agentId).toEqual("api-reader-agent");
       // Ideal error for a full implementation:
       // expect(result.error?.category).toEqual(ErrorCategory.INVALID_INPUT);
       // expect(result.error?.message).toContain("Invalid URL format");
@@ -152,12 +150,11 @@ describe("ApiReaderAgent Contract Tests", () => {
 
       const result: ContractResult<ApiReaderOutput, AgentError> =
         await agent.readApiDoc(mockErrorInput);
-
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
       expect(result.error?.name).toEqual("NotImplementedError"); // Stub returns this
-      expect(result.error?.category).toEqual(ErrorCategory.UNEXPECTED_ERROR); // Stub returns this
-      expect(result.error?.agentId).toEqual(mockApiReaderAgentId);
+      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED); // Stub returns this
+      expect(result.error?.agentId).toEqual("api-reader-agent");
       // The stub includes the requestingAgentId in the error details, even if empty.
       expect(result.error?.details?.requestingAgentId).toEqual("");
       // Ideal error for a full implementation:

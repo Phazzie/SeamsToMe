@@ -36,7 +36,8 @@ describe("AnalyzerAgent Contract", () => {
   it("should return an error if the request is invalid (e.g., missing codebasePath)", async () => {
     const invalidRequest = {
       // Removed SeamAnalysisRequest type to allow missing property for testing
-      requestingAgentId: "TestRequestingAgent" as AgentId,    } as SeamAnalysisRequest; // Cast after definition to satisfy TS for the call
+      requestingAgentId: "TestRequestingAgent" as AgentId,
+    } as SeamAnalysisRequest; // Cast after definition to satisfy TS for the call
 
     const result = await analyzerAgent.analyzeSeams(invalidRequest);
     expect(result.success).toBe(false);
@@ -49,7 +50,8 @@ describe("AnalyzerAgent Contract", () => {
   it("should return an error with agentId if requestingAgentId is missing", async () => {
     const requestWithoutRequestingAgentId = {
       // Removed SeamAnalysisRequest type
-      codebasePath: "./src",    } as SeamAnalysisRequest; // Cast after definition
+      codebasePath: "./src",
+    } as SeamAnalysisRequest; // Cast after definition
 
     const result = await analyzerAgent.analyzeSeams(
       requestWithoutRequestingAgentId

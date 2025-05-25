@@ -11,11 +11,11 @@
  */
 
 import { KnowledgeAgent } from "../agents/knowledge.agent";
-import { 
-  KnowledgeDomain, 
+import {
+  KnowledgeDomain,
   KnowledgeFormat,
   KnowledgeInput,
-  StoreKnowledgeInput 
+  StoreKnowledgeInput,
 } from "../contracts/knowledge.contract";
 
 describe("KnowledgeAgent Contract Tests", () => {
@@ -30,11 +30,11 @@ describe("KnowledgeAgent Contract Tests", () => {
       const request: KnowledgeInput = {
         query: "test query",
         requestingAgentId: "test-agent",
-        format: KnowledgeFormat.TEXT
+        format: KnowledgeFormat.TEXT,
       };
 
       const result = await agent.retrieveKnowledge(request);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.result.items).toEqual([]);
@@ -48,7 +48,7 @@ describe("KnowledgeAgent Contract Tests", () => {
       const request: KnowledgeInput = {
         query: "test",
         domain: KnowledgeDomain.TECHNICAL,
-        requestingAgentId: "test-agent"
+        requestingAgentId: "test-agent",
       };
 
       const result = await agent.retrieveKnowledge(request);
@@ -65,13 +65,13 @@ describe("KnowledgeAgent Contract Tests", () => {
           confidence: 0.9,
           timestamp: new Date(),
           domain: KnowledgeDomain.TECHNICAL,
-          tags: ["test"]
+          tags: ["test"],
         },
-        format: KnowledgeFormat.TEXT
+        format: KnowledgeFormat.TEXT,
       };
 
       const result = await agent.storeKnowledge(item, "test-agent");
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(typeof result.result).toBe("string");
@@ -83,7 +83,7 @@ describe("KnowledgeAgent Contract Tests", () => {
   describe("hasKnowledge", () => {
     test("should return false for non-existent knowledge", async () => {
       const result = await agent.hasKnowledge("non-existent query");
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.result).toBe(false);
@@ -98,16 +98,16 @@ describe("KnowledgeAgent Contract Tests", () => {
           source: "test-source",
           confidence: 0.9,
           timestamp: new Date(),
-          domain: KnowledgeDomain.TECHNICAL
+          domain: KnowledgeDomain.TECHNICAL,
         },
-        format: KnowledgeFormat.TEXT
+        format: KnowledgeFormat.TEXT,
       };
 
       await agent.storeKnowledge(item, "test-agent");
 
       // Then check if it exists
       const result = await agent.hasKnowledge("test knowledge");
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.result).toBe(true);
@@ -125,29 +125,37 @@ describe("KnowledgeAgent Contract Tests", () => {
           confidence: 0.95,
           timestamp: new Date(),
           domain: KnowledgeDomain.PROCESS,
-          tags: ["workflow", "integration"]
+          tags: ["workflow", "integration"],
         },
-        format: KnowledgeFormat.MARKDOWN
+        format: KnowledgeFormat.MARKDOWN,
       };
 
-      const storeResult = await agent.storeKnowledge(item, "integration-test-agent");
+      const storeResult = await agent.storeKnowledge(
+        item,
+        "integration-test-agent"
+      );
       expect(storeResult.success).toBe(true);
 
       // Retrieve knowledge
       const retrieveResult = await agent.retrieveKnowledge({
         query: "workflow",
         domain: KnowledgeDomain.PROCESS,
-        requestingAgentId: "integration-test-agent"
+        requestingAgentId: "integration-test-agent",
       });
 
       expect(retrieveResult.success).toBe(true);
       if (retrieveResult.success) {
         expect(retrieveResult.result.items.length).toBe(1);
-        expect(retrieveResult.result.items[0].content).toContain("workflow validation");
+        expect(retrieveResult.result.items[0].content).toContain(
+          "workflow validation"
+        );
       }
 
       // Check knowledge exists
-      const hasResult = await agent.hasKnowledge("workflow", KnowledgeDomain.PROCESS);
+      const hasResult = await agent.hasKnowledge(
+        "workflow",
+        KnowledgeDomain.PROCESS
+      );
       expect(hasResult.success).toBe(true);
       if (hasResult.success) {
         expect(hasResult.result).toBe(true);
