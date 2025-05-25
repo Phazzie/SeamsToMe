@@ -16,6 +16,7 @@ export type RecordChangeInput = RecordChangeRequest;
 export type RecordChangeOutput = string; // Change ID
 export type BreakingChangesOutput = ChangeRecord[];
 export type GenerateChangelogOutput = string;
+export type TurnoverMessageOutput = string;
 
 export enum ChangeType {
   FEATURE = "FEATURE",
@@ -75,6 +76,18 @@ export interface ChangelogResponse {
   breakingChanges: number;
 }
 
+export interface TurnoverMessageRequest {
+  projectName?: string;
+  timeRange?: {
+    since?: Date;
+    until?: Date;
+  };
+  includeValidationCommands?: boolean;
+  includeNextSteps?: boolean;
+  includeKnownIssues?: boolean;
+  format?: "markdown" | "text";
+}
+
 export interface ChangelogContract {
   /**
    * Record a new change in the system
@@ -104,7 +117,6 @@ export interface ChangelogContract {
     request: ChangelogInput,
     format: string
   ): Promise<ContractResult<GenerateChangelogOutput, AgentError>>;
-
   /**
    * Get breaking changes that require migration
    * @param since Optional date to check from
@@ -113,4 +125,13 @@ export interface ChangelogContract {
   getBreakingChanges(
     since?: Date
   ): Promise<ContractResult<BreakingChangesOutput, AgentError>>;
+
+  /**
+   * Generate a comprehensive turnover message for project handoff
+   * @param request The turnover message configuration
+   * @returns A promise that resolves to the formatted turnover message
+   */
+  generateTurnoverMessage(
+    request: TurnoverMessageRequest
+  ): Promise<ContractResult<TurnoverMessageOutput, AgentError>>;
 }
