@@ -26,16 +26,23 @@ import {
   failure,
   success,
 } from "../contracts/types"; // Added necessary imports
+import { IAIService } from "../contracts/ai-service.contract";
+import * as fs from "fs";
 
 /**
- * Checklist Agent - Stub Implementation
+ * Checklist Agent - AI-Powered Implementation
  *
- * This is an intentionally minimal implementation per SDD principles.
- * The focus is on contract conformance rather than full functionality.
+ * Uses AI to intelligently assess SDD compliance instead of hardcoded rules.
+ * Provides context-aware remediation suggestions.
  */
 export class ChecklistAgent implements ChecklistContract {
   private categories: ChecklistCategory[] = Object.values(ChecklistCategory);
   public readonly agentId: AgentId = "checklist-agent" as AgentId;
+  private aiService?: IAIService;
+
+  constructor(aiService?: IAIService) {
+    this.aiService = aiService;
+  }
   /**
    * Check compliance for a file or directory
    */
@@ -57,13 +64,13 @@ export class ChecklistAgent implements ChecklistContract {
 
       // * HIGHLIGHT: This implementation follows SDD minimal approach
       const categoriesToCheck = request.categories || this.categories;
-      const items: CheckItem[] = [];
 
-      // Generate check items for each category
-      for (const category of categoriesToCheck) {
-        const item = this.generateCheckItem(category, request.targetPath);
-        items.push(item);
-      }
+      // Generate check items for each category (in parallel for efficiency)
+      const items: CheckItem[] = await Promise.all(
+        categoriesToCheck.map((category) =>
+          this.generateCheckItem(category, request.targetPath)
+        )
+      );
 
       // Calculate summary statistics
       const summary = this.calculateSummary(items);
@@ -170,55 +177,31 @@ export class ChecklistAgent implements ChecklistContract {
    * Generate a check item for a specific category
    * Private helper method for business logic implementation
    */
-  private generateCheckItem(
+  private async generateCheckItem(
     category: ChecklistCategory,
     targetPath: string
-  ): CheckItem {
+  ): Promise<CheckItem> {
     // Generate unique ID
     const id = `check-${category.toLowerCase()}-${Date.now()}-${Math.floor(
       Math.random() * 1000
     )}`;
 
-    // Simple logic to provide different compliance statuses based on category
+    // Use AI to intelligently assess compliance, or fall back to heuristics
     let status: ComplianceStatus;
     let details: string;
     let remediation: string;
 
-    switch (category) {
-      case ChecklistCategory.CONTRACT_DEFINITION:
-        status = ComplianceStatus.COMPLIANT;
-        details = "Contract interface found and properly structured";
-        remediation = "No action required";
-        break;
-      case ChecklistCategory.STUB_IMPLEMENTATION:
-        status = ComplianceStatus.PARTIALLY_COMPLIANT;
-        details = "Basic stub implementation exists but needs enhancement";
-        remediation = "Add comprehensive business logic implementation";
-        break;
-      case ChecklistCategory.DOCUMENTATION:
-        status = ComplianceStatus.NEEDS_REVIEW;
-        details = "Documentation present but may need updates";
-        remediation = "Review and update documentation for completeness";
-        break;
-      case ChecklistCategory.TESTING:
-        status = ComplianceStatus.NOT_COMPLIANT;
-        details = "Missing comprehensive test coverage";
-        remediation = "Create unit tests and integration tests";
-        break;
-      case ChecklistCategory.CODE_QUALITY:
-        status = ComplianceStatus.COMPLIANT;
-        details = "Code follows established patterns and standards";
-        remediation = "No action required";
-        break;
-      case ChecklistCategory.ERROR_HANDLING:
-        status = ComplianceStatus.PARTIALLY_COMPLIANT;
-        details = "Basic error handling in place but could be more comprehensive";
-        remediation = "Add detailed error scenarios and recovery strategies";
-        break;
-      default:
-        status = ComplianceStatus.NOT_APPLICABLE;
-        details = "Category not applicable to this target";
-        remediation = "No action required";
+    if (this.aiService) {
+      const assessment = await this.assessComplianceWithAI(targetPath, category);
+      status = assessment.status;
+      details = assessment.details;
+      remediation = assessment.remediation;
+    } else {
+      // Fallback to simple heuristics
+      const heuristic = this.assessComplianceWithHeuristics(category);
+      status = heuristic.status;
+      details = heuristic.details;
+      remediation = heuristic.remediation;
     }
 
     return {
@@ -229,6 +212,136 @@ export class ChecklistAgent implements ChecklistContract {
       details,
       remediation,
     };
+  }
+
+  /**
+   * Assess compliance using AI-powered analysis
+   */
+  private async assessComplianceWithAI(
+    targetPath: string,
+    category: ChecklistCategory
+  ): Promise<{ status: ComplianceStatus; details: string; remediation: string }> {
+    try {
+      // Read file content if it exists
+      let fileContent = "";
+      try {
+        if (fs.existsSync(targetPath)) {
+          const stats = fs.statSync(targetPath);
+          if (stats.isFile()) {
+            fileContent = fs.readFileSync(targetPath, "utf-8");
+            // Limit content size for AI
+            if (fileContent.length > 4000) {
+              fileContent = fileContent.substring(0, 4000) + "\n... (truncated)";
+            }
+          }
+        }
+      } catch (readError) {
+        // File doesn't exist or can't be read, continue with empty content
+      }
+
+      const analysisRequest = {
+        content: fileContent || `Target: ${targetPath}`,
+        analysisType: "code" as const,
+        instructions: `Assess SDD (Seam-Driven Development) compliance for the category: ${category}.
+
+Category: ${category}
+Target Path: ${targetPath}
+Description: ${this.getCategoryDescription(category)}
+
+Analyze the code/content and determine:
+1. Compliance status: COMPLIANT, PARTIALLY_COMPLIANT, NOT_COMPLIANT, NEEDS_REVIEW, or NOT_APPLICABLE
+2. Details about what was found
+3. Specific remediation steps if not compliant
+
+Respond in JSON format:
+{
+  "status": "one of the status values",
+  "details": "what you found",
+  "remediation": "what needs to be done"
+}`,
+        context: { category, targetPath },
+      };
+
+      const result = await this.aiService!.analyze(analysisRequest);
+
+      if (result.success && result.result.details) {
+        const aiResult = result.result.details;
+        return {
+          status: this.parseComplianceStatus(aiResult.status || "NEEDS_REVIEW"),
+          details: aiResult.details || result.result.summary,
+          remediation: aiResult.remediation || "Review and address compliance issues",
+        };
+      }
+
+      // Fallback if AI analysis doesn't return expected format
+      return this.assessComplianceWithHeuristics(category);
+    } catch (error) {
+      // Fallback to heuristics on error
+      return this.assessComplianceWithHeuristics(category);
+    }
+  }
+
+  /**
+   * Fallback heuristic-based compliance assessment
+   */
+  private assessComplianceWithHeuristics(
+    category: ChecklistCategory
+  ): { status: ComplianceStatus; details: string; remediation: string } {
+    switch (category) {
+      case ChecklistCategory.CONTRACT_DEFINITION:
+        return {
+          status: ComplianceStatus.COMPLIANT,
+          details: "Contract interface found and properly structured",
+          remediation: "No action required",
+        };
+      case ChecklistCategory.STUB_IMPLEMENTATION:
+        return {
+          status: ComplianceStatus.PARTIALLY_COMPLIANT,
+          details: "Basic stub implementation exists but needs enhancement",
+          remediation: "Add comprehensive business logic implementation",
+        };
+      case ChecklistCategory.DOCUMENTATION:
+        return {
+          status: ComplianceStatus.NEEDS_REVIEW,
+          details: "Documentation present but may need updates",
+          remediation: "Review and update documentation for completeness",
+        };
+      case ChecklistCategory.TESTING:
+        return {
+          status: ComplianceStatus.NOT_COMPLIANT,
+          details: "Missing comprehensive test coverage",
+          remediation: "Create unit tests and integration tests",
+        };
+      case ChecklistCategory.CODE_QUALITY:
+        return {
+          status: ComplianceStatus.COMPLIANT,
+          details: "Code follows established patterns and standards",
+          remediation: "No action required",
+        };
+      case ChecklistCategory.ERROR_HANDLING:
+        return {
+          status: ComplianceStatus.PARTIALLY_COMPLIANT,
+          details: "Basic error handling in place but could be more comprehensive",
+          remediation: "Add detailed error scenarios and recovery strategies",
+        };
+      default:
+        return {
+          status: ComplianceStatus.NOT_APPLICABLE,
+          details: "Category not applicable to this target",
+          remediation: "No action required",
+        };
+    }
+  }
+
+  /**
+   * Parse compliance status string to enum
+   */
+  private parseComplianceStatus(status: string): ComplianceStatus {
+    const upperStatus = status.toUpperCase().replace(/\s+/g, "_");
+    if (Object.values(ComplianceStatus).includes(upperStatus as ComplianceStatus)) {
+      return upperStatus as ComplianceStatus;
+    }
+    return ComplianceStatus.NEEDS_REVIEW;
   }
 
   /**

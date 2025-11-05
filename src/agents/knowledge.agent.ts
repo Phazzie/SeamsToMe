@@ -25,40 +25,78 @@ import {
   failure,
   success,
 } from "../contracts/types";
+import { IAIService } from "../contracts/ai-service.contract";
 
 /**
- * Knowledge Agent - Stub Implementation
+ * Knowledge Agent - AI-Powered Implementation
  *
- * This is an intentionally minimal implementation per SDD principles.
- * The focus is on contract conformance rather than full functionality.
+ * Uses semantic search for intelligent knowledge retrieval.
+ * Replaces keyword matching heuristics with AI-powered similarity.
  */
 export class KnowledgeAgent implements KnowledgeContract {
   private knowledgeStore: Map<string, KnowledgeItem> = new Map();
+  private aiService?: IAIService;
+
+  constructor(aiService?: IAIService) {
+    this.aiService = aiService;
+  }
 
   /**
    * Retrieve knowledge based on a query
+   * Uses AI-powered semantic search for intelligent retrieval
    */
   async retrieveKnowledge(
     request: KnowledgeInput
   ): Promise<ContractResult<KnowledgeOutput, AgentError>> {
     try {
-      // TODO: Implement contract conformance tests for this seam
-
-      // Minimal stub implementation
       const startTime = Date.now();
 
-      // * HIGHLIGHT: This stub is intentionally minimal per SDD
-      const matchingItems: KnowledgeItem[] = [];
+      // Filter by domain if specified
+      let candidateItems = Array.from(this.knowledgeStore.values());
+      if (request.domain) {
+        candidateItems = candidateItems.filter(
+          (item) => item.metadata.domain === request.domain
+        );
+      }
 
-      // Simple keyword matching (would be replaced with proper search in real implementation)
-      for (const item of this.knowledgeStore.values()) {
-        if (request.domain && item.metadata.domain !== request.domain) {
-          continue;
-        }
+      if (candidateItems.length === 0) {
+        return success({
+          items: [],
+          totalResults: 0,
+          query: request.query,
+          executionTime: Date.now() - startTime,
+        });
+      }
 
-        if (item.content.toLowerCase().includes(request.query.toLowerCase())) {
-          matchingItems.push(item);
+      // Use AI semantic search if available, otherwise fall back to keyword matching
+      let matchingItems: KnowledgeItem[] = [];
+
+      if (this.aiService) {
+        // AI-powered semantic search
+        const documents = candidateItems.map((item) => ({
+          id: item.id,
+          content: item.content,
+          metadata: item.metadata,
+        }));
+
+        const searchResult = await this.aiService.semanticSearch({
+          query: request.query,
+          documents,
+          topK: request.maxResults || 10,
+        });
+
+        if (searchResult.success) {
+          // Map search results back to KnowledgeItems
+          matchingItems = searchResult.result
+            .map((result) => this.knowledgeStore.get(result.id))
+            .filter((item): item is KnowledgeItem => item !== undefined);
+        } else {
+          // AI search failed, fall back to keyword matching
+          matchingItems = this.keywordSearch(candidateItems, request.query);
         }
+      } else {
+        // No AI service available, use keyword matching
+        matchingItems = this.keywordSearch(candidateItems, request.query);
       }
 
       const executionTime = Date.now() - startTime;
@@ -79,6 +117,15 @@ export class KnowledgeAgent implements KnowledgeContract {
         )
       );
     }
+  }
+
+  /**
+   * Fallback keyword search when AI is not available
+   */
+  private keywordSearch(items: KnowledgeItem[], query: string): KnowledgeItem[] {
+    return items.filter((item) =>
+      item.content.toLowerCase().includes(query.toLowerCase())
+    );
   }
 
   /**
@@ -116,20 +163,47 @@ export class KnowledgeAgent implements KnowledgeContract {
 
   /**
    * Check if knowledge exists for a specific query
+   * Uses AI-powered semantic matching for intelligent detection
    */
   async hasKnowledge(
     query: string,
     domain?: KnowledgeDomain
   ): Promise<ContractResult<HasKnowledgeOutput, AgentError>> {
     try {
-      // ! WARNING: This agent is tightly coupled—consider refactoring
+      // Filter by domain if specified
+      let candidateItems = Array.from(this.knowledgeStore.values());
+      if (domain) {
+        candidateItems = candidateItems.filter(
+          (item) => item.metadata.domain === domain
+        );
+      }
 
-      // Simplified check (would be more sophisticated in real implementation)
-      for (const item of this.knowledgeStore.values()) {
-        if (domain && item.metadata.domain !== domain) {
-          continue;
+      if (candidateItems.length === 0) {
+        return success(false);
+      }
+
+      // Use AI semantic search if available with topK=1 to check for relevant matches
+      if (this.aiService) {
+        const documents = candidateItems.map((item) => ({
+          id: item.id,
+          content: item.content,
+          metadata: item.metadata,
+        }));
+
+        const searchResult = await this.aiService.semanticSearch({
+          query,
+          documents,
+          topK: 1,
+        });
+
+        if (searchResult.success && searchResult.result.length > 0) {
+          // Consider it a match if the top result has a score > 0.5
+          return success(searchResult.result[0].score > 0.5);
         }
+      }
 
+      // Fallback: keyword matching
+      for (const item of candidateItems) {
         if (item.content.toLowerCase().includes(query.toLowerCase())) {
           return success(true);
         }

@@ -97,8 +97,8 @@ export async function runCompleteWorkflowExample(): Promise<void> {
 
     console.log(
       "Compliance check result:",
-      complianceResult.result
-        ? `${complianceResult.result.summary.compliant} compliant, ${complianceResult.result.summary.notCompliant} non-compliant`
+      complianceResult.success && complianceResult.result?.result
+        ? `Status: ${complianceResult.result.status}`
         : "Pending"
     );
 
@@ -126,15 +126,18 @@ export async function runCompleteWorkflowExample(): Promise<void> {
     });
 
     console.log(
-      "Documentation generated in",
-      docResult.result
-        ? `${docResult.result.metadata.generationTime}ms`
+      "Documentation generated:",
+      docResult.success && docResult.result
+        ? `Status: ${docResult.result.status}`
         : "pending"
     );
 
-    if (docResult.result) {
+    if (docResult.success && docResult.result?.result) {
       console.log("\nExcerpt from generated documentation:");
-      console.log(docResult.result.content.substring(0, 200) + "...");
+      const docContent = docResult.result.result as any;
+      if (docContent.content) {
+        console.log(docContent.content.substring(0, 200) + "...");
+      }
     }
 
     // WORKFLOW STEP 4: Record the contract addition in the changelog
@@ -161,8 +164,8 @@ export async function runCompleteWorkflowExample(): Promise<void> {
     });
 
     console.log(
-      "Change recorded with ID:",
-      changeResult.result ? changeResult.result.changeId : "Pending"
+      "Change recorded:",
+      changeResult.success && changeResult.result ? changeResult.result.status : "Pending"
     );
 
     // WORKFLOW STEP 5: Create a seam definition based on the contract
@@ -181,7 +184,9 @@ export async function runCompleteWorkflowExample(): Promise<void> {
     });
 
     console.log("\nExcerpt from generated seam documentation:");
-    console.log(seamDocResult.content.substring(0, 200) + "...");
+    if (seamDocResult.success && seamDocResult.result.content) {
+      console.log(seamDocResult.result.content.substring(0, 200) + "...");
+    }
 
     // WORKFLOW STEP 6: Update the agent catalog with the new notification agent
     console.log("\nWORKFLOW STEP 6: Generating agent documentation...");
@@ -208,13 +213,17 @@ export async function runCompleteWorkflowExample(): Promise<void> {
     });
 
     console.log("\nExcerpt from generated agent documentation:");
-    console.log(agentDocResult.content.substring(0, 200) + "...");
+    if (agentDocResult.success && agentDocResult.result.content) {
+      console.log(agentDocResult.result.content.substring(0, 200) + "...");
+    }
 
     // WORKFLOW STEP 7: Generate a changelog for the release
     console.log("\nWORKFLOW STEP 7: Generating changelog for release...");
 
-    const changelog = await changelogAgent.generateChangelog({}, "markdown");
-    console.log("Changelog generated:", changelog.substring(0, 150) + "...");
+    const changelogResult = await changelogAgent.generateChangelog({}, "markdown");
+    if (changelogResult.success && typeof changelogResult.result === 'string') {
+      console.log("Changelog generated:", changelogResult.result.substring(0, 150) + "...");
+    }
 
     console.log("\nComplete workflow example finished successfully!");
   } catch (error) {
