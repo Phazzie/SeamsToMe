@@ -1,12 +1,12 @@
 /**
- * PURPOSE: Implement AI service using Anthropic Claude
- * DATA FLOW: Agents → AI Service → Anthropic API
+ * PURPOSE: Implement AI service using xAI Grok
+ * DATA FLOW: Agents → AI Service → xAI Grok API
  * INTEGRATION POINTS: All agents via IAIService contract
  * CONTRACT VERSION: v1
  * ERROR HANDLING: Comprehensive error handling with ContractResult
  */
 
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import {
   AIRequest,
   AIResponse,
@@ -27,19 +27,22 @@ import {
 } from "../contracts/types";
 
 export class AIService implements IAIService {
-  private client: Anthropic;
+  private client: OpenAI;
   private readonly agentId = "ai-service";
-  private readonly defaultModel = "claude-3-5-sonnet-20241022";
+  private readonly defaultModel = "grok-beta";
   private readonly defaultMaxTokens = 4096;
 
   constructor(apiKey?: string) {
-    const key = apiKey || process.env.ANTHROPIC_API_KEY;
+    const key = apiKey || process.env.XAI_API_KEY;
     if (!key) {
       throw new Error(
-        "ANTHROPIC_API_KEY must be provided or set in environment"
+        "XAI_API_KEY must be provided or set in environment"
       );
     }
-    this.client = new Anthropic({ apiKey: key });
+    this.client = new OpenAI({
+      apiKey: key,
+      baseURL: "https://api.x.ai/v1",
+    });
   }
 
   async complete(request: AIRequest): Promise<ContractResult<AIResponse>> {
@@ -54,36 +57,46 @@ export class AIService implements IAIService {
         );
       }
 
-      // Build messages array, filtering out system messages
-      const messages: Anthropic.MessageParam[] = request.messages
-        .filter((msg) => msg.role !== "system")
-        .map((msg) => ({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        }));
+      // Build messages array for OpenAI format
+      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
 
-      // Extract system prompt
+      // Add system message if provided
       const systemPrompt =
         request.systemPrompt ||
         request.messages.find((msg) => msg.role === "system")?.content;
 
-      const response = await this.client.messages.create({
+      if (systemPrompt) {
+        messages.push({
+          role: "system",
+          content: systemPrompt,
+        });
+      }
+
+      // Add other messages
+      request.messages
+        .filter((msg) => msg.role !== "system")
+        .forEach((msg) => {
+          messages.push({
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+          });
+        });
+
+      const response = await this.client.chat.completions.create({
         model: this.defaultModel,
+        messages,
         max_tokens: request.maxTokens || this.defaultMaxTokens,
         temperature: request.temperature || 0.7,
-        system: systemPrompt,
-        messages,
       });
 
-      const content =
-        response.content[0].type === "text" ? response.content[0].text : "";
+      const content = response.choices[0]?.message?.content || "";
 
       return success({
         content,
         model: response.model,
         usage: {
-          inputTokens: response.usage.input_tokens,
-          outputTokens: response.usage.output_tokens,
+          inputTokens: response.usage?.prompt_tokens || 0,
+          outputTokens: response.usage?.completion_tokens || 0,
         },
       });
     } catch (error: any) {

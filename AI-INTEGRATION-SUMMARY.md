@@ -1,7 +1,7 @@
 # AI Integration Summary
 
 ## Overview
-This document describes the AI/LLM integration implemented to replace heuristics throughout the SeamsToMe codebase. All agents now use Claude AI (via Anthropic SDK) for intelligent decision-making instead of hardcoded rules.
+This document describes the AI/LLM integration implemented to replace heuristics throughout the SeamsToMe codebase. All agents now use **xAI Grok** (grok-beta model) for intelligent decision-making instead of hardcoded rules.
 
 ## What Was Changed
 
@@ -9,7 +9,7 @@ This document describes the AI/LLM integration implemented to replace heuristics
 
 **New Files:**
 - `src/contracts/ai-service.contract.ts` - Interface defining AI service capabilities
-- `src/services/ai.service.ts` - Implementation using Anthropic Claude API
+- `src/services/ai.service.ts` - Implementation using xAI Grok API
 - `.env.example` - Configuration template for API keys
 
 **Capabilities:**
@@ -19,8 +19,11 @@ This document describes the AI/LLM integration implemented to replace heuristics
 - `analyze()` - Code and text analysis with structured outputs
 
 **Dependencies Added:**
-- `@anthropic-ai/sdk` - Official Anthropic API client
+- `openai` - OpenAI SDK (used for xAI's OpenAI-compatible API)
 - `dotenv` - Environment variable management
+
+**Model Used:**
+- `grok-beta` - xAI's Grok model via OpenAI-compatible endpoint
 
 ### 2. KnowledgeAgent - AI-Powered Semantic Search ✅
 
@@ -166,8 +169,8 @@ const assessment = await this.assessComplianceWithAI(targetPath, category);
 2. **Configure API Key:**
    ```bash
    cp .env.example .env
-   # Edit .env and add your Anthropic API key:
-   # ANTHROPIC_API_KEY=sk-ant-...
+   # Edit .env and add your xAI API key:
+   # XAI_API_KEY=xai-...
    ```
 
 3. **Usage in Code:**
@@ -219,7 +222,7 @@ Test AI-powered agents:
 
 ```bash
 # Set your API key
-export ANTHROPIC_API_KEY=your_key_here
+export XAI_API_KEY=your_xai_key_here
 
 # Test individual agents
 npm run dev
@@ -281,8 +284,8 @@ npm test
               └──────┬───────┘
                      │
               ┌──────▼───────┐
-              │ Anthropic    │
-              │ Claude API   │
+              │   xAI Grok   │
+              │ API (grok-beta) │
               └──────────────┘
 ```
 
@@ -326,8 +329,23 @@ npm test
 
 The SeamsToMe codebase has been successfully upgraded from heuristic-based decision making to AI-powered intelligence. All changes maintain backwards compatibility while providing significantly enhanced capabilities. The system is now more intelligent, maintainable, and ready for future enhancements.
 
+## Why xAI Grok?
+
+**xAI Grok (grok-beta)** provides several advantages:
+
+1. **Fast Reasoning:** Optimized for quick, intelligent responses
+2. **OpenAI Compatible:** Uses standard OpenAI SDK for easy integration
+3. **Cost-Effective:** Competitive pricing for API usage
+4. **Real-Time Knowledge:** Access to current information
+5. **Strong Code Understanding:** Excellent performance on code analysis tasks
+
+**API Endpoint:** `https://api.x.ai/v1`
+**Model:** `grok-beta`
+**SDK:** OpenAI SDK (OpenAI-compatible interface)
+
 ---
 
 **Generated:** 2025-11-05
+**Updated:** 2025-11-05 (Switched to xAI Grok)
 **Branch:** `claude/analyze-and-fix-repo-011CUpazGg9CduKhRLuqwCed`
-**Status:** ✅ Complete and tested
+**Status:** ✅ Complete and tested with xAI Grok
