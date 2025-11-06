@@ -15,18 +15,15 @@ import {
 import {
   AgentId,
   ContractResult,
-  createAgentError,
-  ErrorCategory,
-  failure,
   success,
-} from "../contracts/types"; // Added AgentId, AgentError, ErrorCategory, success, failure, createAgentError
+} from "../contracts/types";
+import { BaseAgent } from "./base.agent";
 
-const AGENT_ID: AgentId = "QualityAgent"; // Define agentId for this agent
-
-export class QualityAgent implements QualityAgentContract {
-  public readonly agentId: AgentId = AGENT_ID; // Expose agentId
+export class QualityAgent extends BaseAgent implements QualityAgentContract {
+  protected readonly agentId: AgentId = "QualityAgent";
 
   constructor() {
+    super();
     /* SDD-TODO: Initialize any dependencies here */
   }
 
@@ -35,30 +32,17 @@ export class QualityAgent implements QualityAgentContract {
   async checkQuality(
     request: QualityInput
   ): Promise<ContractResult<QualityOutput>> {
-    if (!request.targetPath || request.targetPath.trim() === "") {
-      return failure(
-        createAgentError(
-          this.agentId,
-          "Target path is required",
-          ErrorCategory.INVALID_REQUEST, // Corrected Category
-          "InvalidQualityCheckRequest",
-          request.requestingAgentId,
-          { request }
-        )
-      );
-    }
+    // Use BaseAgent's validateFields helper - replaces 25 lines of manual validation
+    const validation = this.validateFields(
+      {
+        targetPath: { value: request.targetPath, type: "nonEmpty" },
+        checkTypes: { value: request.checkTypes, type: "array" },
+      },
+      request.requestingAgentId
+    );
 
-    if (!request.checkTypes || request.checkTypes.length === 0) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          "Check types are required",
-          ErrorCategory.INVALID_REQUEST, // Corrected Category
-          "InvalidQualityCheckRequest",
-          request.requestingAgentId,
-          { request }
-        )
-      );
+    if (!validation.success) {
+      return validation;
     }
 
     // MOCK: Return a successful quality check result

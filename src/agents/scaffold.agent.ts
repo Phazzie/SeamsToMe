@@ -18,57 +18,37 @@ import {
 import {
   AgentId,
   ContractResult,
-  createAgentError,
-  ErrorCategory,
   failure,
   success,
 } from "../contracts/types";
+import { BaseAgent } from "./base.agent";
 
-export class ScaffoldAgent implements IScaffoldAgent {
-  readonly agentId: AgentId = "ScaffoldAgent";
+export class ScaffoldAgent extends BaseAgent implements IScaffoldAgent {
+  protected readonly agentId: AgentId = "ScaffoldAgent";
 
   constructor() {
+    super();
     /* SDD-TODO: Initialize any dependencies here */
   }  // SDD-Blueprint: Generates file stubs from a design document, creating a basic structure for new components or modules.
   // It takes a design document and target path, and returns the paths and content of the generated stub files.
   async generateScaffold(
     request: ScaffoldInput
   ): Promise<ContractResult<ScaffoldOutput>> {
-    try {
-      // Validate input request
-      if (!request) {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "Request is null or undefined",
-            ErrorCategory.BAD_REQUEST,
-            "ValidationError"
-          )
-        );
-      }
+    // Use BaseAgent's withErrorHandling and validateFields - replaces 50+ lines
+    return this.withErrorHandling(async () => {
+      // Validate request
+      const requestValidation = this.validateRequest(request);
+      if (!requestValidation.success) return requestValidation;
 
-      // Validate required fields
-      if (!request.designDoc || request.designDoc.trim() === "") {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "designDoc is required and cannot be empty",
-            ErrorCategory.INVALID_REQUEST,
-            "ValidationError"
-          )
-        );
-      }
-
-      if (!request.targetPath || request.targetPath.trim() === "") {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "targetPath is required and cannot be empty",
-            ErrorCategory.INVALID_REQUEST,
-            "ValidationError"
-          )
-        );
-      }
+      // Validate fields
+      const fieldsValidation = this.validateFields(
+        {
+          designDoc: { value: request.designDoc, type: "nonEmpty" },
+          targetPath: { value: request.targetPath, type: "nonEmpty" },
+        },
+        request.requestingAgentId
+      );
+      if (!fieldsValidation.success) return fieldsValidation;
 
       // Generate scaffolding files based on design document
       const files = this.generateFilesFromDesign(request);
@@ -77,65 +57,36 @@ export class ScaffoldAgent implements IScaffoldAgent {
         files,
         issues: this.validateGeneratedFiles(files),
       });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          error.message || "Failed to generate scaffold",
-          ErrorCategory.OPERATION_FAILED,
-          "ScaffoldGenerationError"
-        )
-      );
-    }
+    }, "generateScaffold", request.requestingAgentId);
   }
   // SDD-Blueprint: Validates a set of generated stub files for basic correctness, such as syntax or adherence to naming conventions.
   // It takes a list of stub files and returns a validation result indicating if they are valid and lists any issues found.
   async validateStubs(
     request: ValidateStubsInput
   ): Promise<ContractResult<ValidateStubsOutput>> {
-    try {
-      // Validate input request
-      if (!request) {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "Request is null or undefined",
-            ErrorCategory.BAD_REQUEST,
-            "ValidationError"
-          )
-        );
-      }
+    // Use BaseAgent's withErrorHandling - replaces 40+ lines
+    return this.withErrorHandling(async () => {
+      // Validate request
+      const requestValidation = this.validateRequest(request);
+      if (!requestValidation.success) return requestValidation;
 
-      // Validate required fields
-      if (!request.files || !Array.isArray(request.files)) {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "files array is required",
-            ErrorCategory.INVALID_REQUEST,
-            "ValidationError"
-          )
-        );
-      }
+      // Validate files array
+      const filesValidation = this.validateNonEmptyArray(
+        request.files,
+        "files",
+        request.requestingAgentId
+      );
+      if (!filesValidation.success) return filesValidation;
 
       // Validate the stub files
       const issues = this.validateStubFiles(request.files);
-      const isValid = issues.every(issue => issue.severity !== "ERROR");
+      const isValid = issues.every((issue) => issue.severity !== "ERROR");
 
       return success({
         isValid,
         issues,
       });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          error.message || "Failed to validate stubs",
-          ErrorCategory.OPERATION_FAILED,
-          "StubValidationError"
-        )
-      );
-    }
+    }, "validateStubs", request.requestingAgentId);
   }
 
   /**

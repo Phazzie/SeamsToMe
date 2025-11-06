@@ -257,6 +257,61 @@ export abstract class BaseAgent {
       { methodName }
     );
   }
+
+  /**
+   * Create a validation error
+   * Shorthand for common validation failure patterns
+   *
+   * @example
+   * return failure(this.createValidationError("targetPath"));
+   * return failure(this.createValidationError("targetPath", "Must be absolute path"));
+   */
+  protected createValidationError(
+    fieldName: string,
+    message?: string,
+    requestingAgentId?: AgentId
+  ): AgentError {
+    return createAgentError(
+      this.agentId,
+      message || `${fieldName} validation failed`,
+      ErrorCategory.VALIDATION_ERROR,
+      "ValidationError",
+      requestingAgentId,
+      { fieldName }
+    );
+  }
+
+  /**
+   * Create an operation error from a caught exception
+   * Standardizes error handling for failed operations
+   *
+   * @example
+   * catch (error: any) {
+   *   return failure(this.createOperationError("checkCompliance", error));
+   * }
+   */
+  protected createOperationError(
+    operation: string,
+    error: Error | any,
+    requestingAgentId?: AgentId
+  ): AgentError {
+    return createAgentError(
+      this.agentId,
+      `${operation} failed: ${error.message || String(error)}`,
+      ErrorCategory.OPERATION_FAILED,
+      `${this.capitalize(operation)}Error`,
+      requestingAgentId,
+      { originalError: error.stack || error }
+    );
+  }
+
+  /**
+   * Capitalize first letter of a string
+   * Helper for creating error names
+   */
+  private capitalize(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
 }
 
 /**
