@@ -27,6 +27,7 @@ import {
   success,
 } from "../contracts/types"; // Added necessary imports
 import { IAIService } from "../contracts/ai-service.contract";
+import { parseEnumSnakeCase } from "../utils/enumParser";
 import * as fs from "fs";
 
 /**
@@ -337,11 +338,11 @@ Respond in JSON format:
    * Parse compliance status string to enum
    */
   private parseComplianceStatus(status: string): ComplianceStatus {
-    const upperStatus = status.toUpperCase().replace(/\s+/g, "_");
-    if (Object.values(ComplianceStatus).includes(upperStatus as ComplianceStatus)) {
-      return upperStatus as ComplianceStatus;
-    }
-    return ComplianceStatus.NEEDS_REVIEW;
+    return parseEnumSnakeCase(
+      status,
+      Object.values(ComplianceStatus),
+      ComplianceStatus.NEEDS_REVIEW
+    );
   }
 
   /**

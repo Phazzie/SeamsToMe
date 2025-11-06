@@ -117,13 +117,13 @@ export class ChangelogAgent implements ChangelogContract {
       }
 
       if (request.includeBreakingOnly) {
-        filteredChanges = filteredChanges.filter((c) => c.breaking);
+        filteredChanges = this.filterBreakingChanges(filteredChanges);
       }
 
       return success({
         changes: filteredChanges,
         totalChanges: filteredChanges.length,
-        breakingChanges: filteredChanges.filter((c) => c.breaking).length,
+        breakingChanges: this.countBreakingChanges(filteredChanges),
       });
     } catch (error: any) {
       return failure(
@@ -316,7 +316,7 @@ export class ChangelogAgent implements ChangelogContract {
     const completedChanges = changes.filter(
       (c) => c.type === "FEATURE" || c.type === "BUGFIX"
     );
-    const breakingChanges = changes.filter((c) => c.breaking);
+    const breakingChanges = this.filterBreakingChanges(changes);
 
     message += `## ✅ MISSION STATUS\n\n`;
     message += `**Recent Activity**: ${changes.length} changes recorded in analysis period\n`;
@@ -422,7 +422,7 @@ export class ChangelogAgent implements ChangelogContract {
 
     message += `MISSION STATUS:\n`;
     message += `- Total Changes: ${changes.length}\n`;
-    message += `- Breaking Changes: ${changes.filter((c) => c.breaking).length}\n\n`;
+    message += `- Breaking Changes: ${this.countBreakingChanges(changes)}\n\n`;
 
     if (changes.length > 0) {
       message += `RECENT ACCOMPLISHMENTS:\n`;
@@ -467,5 +467,21 @@ export class ChangelogAgent implements ChangelogContract {
     });
 
     return grouped;
+  }
+
+  /**
+   * Filter breaking changes from a list of changes
+   * Eliminates duplicate filter((c) => c.breaking) pattern
+   */
+  private filterBreakingChanges(changes: ChangeRecord[]): ChangeRecord[] {
+    return changes.filter((c) => c.breaking);
+  }
+
+  /**
+   * Count breaking changes in a list
+   * Eliminates duplicate filter((c) => c.breaking).length pattern
+   */
+  private countBreakingChanges(changes: ChangeRecord[]): number {
+    return this.filterBreakingChanges(changes).length;
   }
 }

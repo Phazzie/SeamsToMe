@@ -22,6 +22,7 @@ import {
   success,
 } from "../contracts/types";
 import { IAIService } from "../contracts/ai-service.contract";
+import { parseEnum } from "../utils/enumParser";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -279,26 +280,18 @@ Provide analysis in JSON format:
   }
 
   /**
-   * Parse seam status
+   * Parse seam status using shared enum parser utility
    */
   private parseSeamStatus(
     status: any
   ): "ACTIVE" | "DEPRECATED" | "PLANNED" {
-    const statusUpper = String(status || "").toUpperCase();
-    if (["ACTIVE", "DEPRECATED", "PLANNED"].includes(statusUpper)) {
-      return statusUpper as "ACTIVE" | "DEPRECATED" | "PLANNED";
-    }
-    return "ACTIVE";
+    return parseEnum(status, ["ACTIVE", "DEPRECATED", "PLANNED"], "ACTIVE");
   }
 
   /**
-   * Parse risk level
+   * Parse risk level using shared enum parser utility
    */
   private parseRiskLevel(level: any): "LOW" | "MEDIUM" | "HIGH" {
-    const levelUpper = String(level || "").toUpperCase();
-    if (["LOW", "MEDIUM", "HIGH"].includes(levelUpper)) {
-      return levelUpper as "LOW" | "MEDIUM" | "HIGH";
-    }
-    return "MEDIUM";
+    return parseEnum(level, ["LOW", "MEDIUM", "HIGH"], "MEDIUM");
   }
 }
