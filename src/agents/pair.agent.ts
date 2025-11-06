@@ -16,6 +16,7 @@ import {
   AgentError,
   AgentId,
   ContractResult,
+  failure,
   success,
 } from "../contracts/types";
 import { BaseAgent } from "./base.agent";
@@ -33,14 +34,26 @@ export class PairAgent extends BaseAgent implements PairProgrammingAgentContract
     request: PairInput
   ): Promise<ContractResult<PairOutput, AgentError>> {
     return this.withErrorHandling(async () => {
-      // Validate required fields
-      const validation = this.validateFields({
-        'contract': { value: request.contract, type: 'nonEmpty' },
-        'language': { value: request.language, type: 'nonEmpty' }
-      }, request.requestingAgentId);
+      // Validate contract field
+      if (!request.contract || request.contract.trim() === "") {
+        return failure(
+          this.createValidationError(
+            "contract",
+            "Contract definition is required",
+            request.requestingAgentId
+          )
+        );
+      }
 
-      if (!validation.success) {
-        return validation;
+      // Validate language field
+      if (!request.language || request.language.trim() === "") {
+        return failure(
+          this.createValidationError(
+            "language",
+            "Target language is required",
+            request.requestingAgentId
+          )
+        );
       }
 
       // MOCK: Return a minimal code generation result

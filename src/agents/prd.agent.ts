@@ -37,7 +37,7 @@ export class PrdAgent extends BaseAgent implements IPrdAgent {
           this.createValidationError(
             "conversation/requirements",
             "Conversation or requirements must be provided",
-            request.requestingAgentId
+            request?.requestingAgentId
           )
         );
       }
@@ -55,7 +55,7 @@ export class PrdAgent extends BaseAgent implements IPrdAgent {
         generatedOn: new Date(),
         wordCount: 10,
       });
-    }, "generatePRD", request.requestingAgentId);
+    }, "generatePRD", request?.requestingAgentId);
   }
 
   // SDD-Blueprint: Validates the content of an existing PRD string for completeness, correctness, and adherence to standards.

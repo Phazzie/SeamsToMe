@@ -35,9 +35,9 @@ export class PromptAgent extends BaseAgent implements IPromptAgent {
     return this.withErrorHandling(async () => {
       // Not implemented yet - return error instead of throwing
       return failure(
-        this.createNotImplementedError("executePrompt", request.requestingAgentId)
+        this.createNotImplementedError("executePrompt", request?.requestingAgentId)
       );
-    }, "executePrompt", request.requestingAgentId);
+    }, "executePrompt", request?.requestingAgentId);
   }
 
   async generatePrompt(
@@ -45,16 +45,18 @@ export class PromptAgent extends BaseAgent implements IPromptAgent {
   ): Promise<ContractResult<PromptOutput>> {
     return this.withErrorHandling(async () => {
       // Validate request exists
-      const requestValidation = this.validateRequest(request, request.requestingAgentId);
+      const requestValidation = this.validateRequest(request, request?.requestingAgentId);
       if (!requestValidation.success) return requestValidation;
 
-      // Validate contract field is provided
-      const contractValidation = this.validateRequired(
-        request.contract,
-        "contract",
+      // Validate fields using validateFields helper
+      const fieldsValidation = this.validateFields(
+        {
+          requestingAgentId: { value: request.requestingAgentId, type: "nonEmpty" },
+          contract: { value: request.contract, type: "nonEmpty" },
+        },
         request.requestingAgentId
       );
-      if (!contractValidation.success) return contractValidation;
+      if (!fieldsValidation.success) return fieldsValidation;
 
       // MOCK: Return mock prompt data
       return success({
@@ -62,6 +64,6 @@ export class PromptAgent extends BaseAgent implements IPromptAgent {
         rationale:
           "This mock prompt is generated based on the provided input contract and documentation (if any).",
       });
-    }, "generatePrompt", request.requestingAgentId);
+    }, "generatePrompt", request?.requestingAgentId);
   }
 }

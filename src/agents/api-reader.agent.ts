@@ -38,7 +38,7 @@ export class ApiReaderAgent extends BaseAgent implements IApiReaderAgent {
 
       // MOCK: Return a NotImplemented error by default
       return failure(
-        this.createNotImplementedError("readApiDoc", request.requestingAgentId)
+        this.createNotImplementedError("readApiDoc", request?.requestingAgentId)
       );
 
       /*
@@ -71,6 +71,6 @@ export class ApiReaderAgent extends BaseAgent implements IApiReaderAgent {
         },
       });
       */
-    }, "readApiDoc", request.requestingAgentId);
+    }, "readApiDoc", request?.requestingAgentId);
   }
 }

@@ -151,7 +151,7 @@ export class AgentDispatcher {
     }
 
     const method = registration.instance[action];
-    return method && typeof method === "function";
+    return !!(method && typeof method === "function");
   }
 
   /**

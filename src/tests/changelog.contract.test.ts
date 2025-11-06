@@ -34,9 +34,12 @@ describe("Changelog Contract Conformance", () => {
         breaking: false,
       };
 
-      const changeId = await changelog.recordChange(request);
-      expect(typeof changeId).toBe("string");
-      expect(changeId).toBeTruthy();
+      const result = await changelog.recordChange(request);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(typeof result.result).toBe("string");
+        expect(result.result).toBeTruthy();
+      }
     });
 
     test("should record a breaking change with migration guidance", async () => {
@@ -51,9 +54,12 @@ describe("Changelog Contract Conformance", () => {
         migrationGuidance: "Update to the new interface",
       };
 
-      const changeId = await changelog.recordChange(request);
-      expect(typeof changeId).toBe("string");
-      expect(changeId).toBeTruthy();
+      const result = await changelog.recordChange(request);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(typeof result.result).toBe("string");
+        expect(result.result).toBeTruthy();
+      }
       // Verify the change was recorded properly by checking breaking changes
       const breakingChanges = await changelog.getBreakingChanges();
       expect(breakingChanges.success).toBe(true);
@@ -189,21 +195,28 @@ describe("Changelog Contract Conformance", () => {
     });
 
     test("should generate a markdown changelog", async () => {
-      const markdown = await changelog.generateChangelog({}, "markdown");
+      const result = await changelog.generateChangelog({}, "markdown");
 
-      expect(typeof markdown).toBe("string");
-      expect(markdown).toContain("# Changelog");
-      expect(markdown).toContain("FEATURE");
-      expect(markdown).toContain("Test feature");
-      expect(markdown).toContain("CONTRACT_CHANGE");
-      expect(markdown).toContain("Breaking change");
-      expect(markdown).toContain("[BREAKING]");
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(typeof result.result).toBe("string");
+        expect(result.result).toContain("# Changelog");
+        expect(result.result).toContain("FEATURE");
+        expect(result.result).toContain("Test feature");
+        expect(result.result).toContain("CONTRACT_CHANGE");
+        expect(result.result).toContain("Breaking change");
+        expect(result.result).toContain("[BREAKING]");
+      }
     });
 
-    test("should throw error for unsupported formats", async () => {
-      await expect(
-        changelog.generateChangelog({}, "unsupported")
-      ).rejects.toThrow("Format unsupported not supported yet");
+    test("should return error for unsupported formats", async () => {
+      const result = await changelog.generateChangelog({}, "unsupported");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toContain("Format unsupported not supported yet");
+        expect(result.error.category).toBe("VALIDATION_ERROR");
+      }
     });
   });
 

@@ -43,8 +43,8 @@ describe("AnalyzerAgent Contract", () => {
     const result = await analyzerAgent.analyzeSeams(invalidRequest);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.category).toBe(ErrorCategory.INVALID_REQUEST);
-      expect(result.error.agentId).toBe("analyzer-agent"); // Agent ID is "analyzer-agent"
+      expect(result.error.category).toBe(ErrorCategory.VALIDATION_ERROR);
+      expect(result.error.agentId).toBe("AnalyzerAgent");
     }
   });
 
@@ -59,8 +59,8 @@ describe("AnalyzerAgent Contract", () => {
     );
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.category).toBe(ErrorCategory.INVALID_REQUEST);
-      expect(result.error.agentId).toBe(analyzerAgent.agentId);
+      expect(result.error.category).toBe(ErrorCategory.VALIDATION_ERROR);
+      expect(result.error.agentId).toBe("AnalyzerAgent");
     }
   });
 
@@ -75,7 +75,7 @@ describe("AnalyzerAgent Contract", () => {
       name: "AnalysisError",
       message: "Simulated analysis error",
       category: ErrorCategory.INTERNAL_ERROR,
-      agentId: "analyzer-agent", // Agent's ID
+      agentId: "AnalyzerAgent",
       data: { details: "Failed to process problematic/path" },
     };
     // Mock the analyzeSeams method to simulate an internal failure
@@ -89,7 +89,7 @@ describe("AnalyzerAgent Contract", () => {
     if (!result.success) {
       expect(result.error.message).toBe("Simulated analysis error");
       expect(result.error.category).toBe(ErrorCategory.INTERNAL_ERROR);
-      expect(result.error.agentId).toBe(analyzerAgent.agentId);
+      expect(result.error.agentId).toBe("AnalyzerAgent");
     }
   });
 

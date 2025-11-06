@@ -39,7 +39,7 @@ describe("ScaffoldAgent Contract Tests", () => {
   });
 
   describe("generateScaffold", () => {
-    test("should return a NotImplementedError because it's not implemented", async () => {
+    test("should return a successful ContractResult with scaffold files", async () => {
       const mockInput: ScaffoldInput = {
         requestingAgentId: mockRequestingAgentId,
         designDoc: "Design for a new UI component",
@@ -52,14 +52,12 @@ describe("ScaffoldAgent Contract Tests", () => {
         AgentError | NotImplementedError
       > = await scaffoldAgent.generateScaffold(mockInput);
 
-      expect(result.success).toBe(false);
-      expect(result.result).toBeUndefined();
-      expect(result.error).toBeDefined();
-      expect(result.error?.agentId).toEqual(expectedScaffoldAgentId);
-      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED);
-      expect(result.error?.message).toContain(
-        "generateScaffold is not implemented"
-      );
+      expect(result.success).toBe(true);
+      expect(result.result).toBeDefined();
+      expect(result.error).toBeUndefined();
+      expect(result.result?.files).toBeInstanceOf(Array);
+      expect(result.result?.files.length).toBeGreaterThan(0);
+      expect(result.result?.issues).toBeInstanceOf(Array);
     });
 
     test("should return an AgentError if request is null", async () => {
@@ -125,7 +123,7 @@ describe("ScaffoldAgent Contract Tests", () => {
   });
 
   describe("validateStubs", () => {
-    test("should return a NotImplementedError because it's not implemented", async () => {
+    test("should return a successful ContractResult with validation results", async () => {
       const mockFiles: StubFile[] = [
         {
           path: "./src/components/new-component/index.ts",
@@ -143,14 +141,11 @@ describe("ScaffoldAgent Contract Tests", () => {
         AgentError | NotImplementedError
       > = await scaffoldAgent.validateStubs(mockInput);
 
-      expect(result.success).toBe(false);
-      expect(result.result).toBeUndefined();
-      expect(result.error).toBeDefined();
-      expect(result.error?.agentId).toEqual(expectedScaffoldAgentId);
-      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED);
-      expect(result.error?.message).toContain(
-        "validateStubs is not implemented"
-      );
+      expect(result.success).toBe(true);
+      expect(result.result).toBeDefined();
+      expect(result.error).toBeUndefined();
+      expect(result.result?.isValid).toBeDefined();
+      expect(result.result?.issues).toBeInstanceOf(Array);
     });
 
     test("should return an AgentError if request is null", async () => {

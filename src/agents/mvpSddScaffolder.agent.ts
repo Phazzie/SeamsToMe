@@ -35,6 +35,19 @@ export class MVPSddScaffolderAgent extends BaseAgent implements IMVPSddScaffolde
       );
       if (!targetDirValidation.success) return targetDirValidation;
 
+      // Validate component type
+      const validTypes = Object.values(SddComponentType);
+      if (!validTypes.includes(request.sddComponentType)) {
+        return failure(
+          this.createError(
+            `Unknown SDD component type: ${request.sddComponentType}`,
+            ErrorCategory.VALIDATION_ERROR,
+            "ValidationError",
+            request.requestingAgentId
+          )
+        );
+      }
+
       // Build file paths exactly as tests expect
       const componentDir = path.join(
         request.targetDirectory,
@@ -115,14 +128,9 @@ export class MVPSddScaffolderAgent extends BaseAgent implements IMVPSddScaffolde
       `${request.componentName}.contract.ts`
     );
 
-    // Check for existing files if overwrite policy is ERROR_IF_EXISTS
     const overwritePolicy = request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
-    if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
-      const checkResult = await this.checkFileExists(agentFilePath, request.requestingAgentId);
-      if (!checkResult.success) return checkResult;
-    }
 
-    // Generate content that matches test expectations with proper template substitution
+    // Generate content
     const agentContent = this.substituteTemplate(
       `/**
  * {{componentName}} Agent
@@ -148,6 +156,53 @@ export interface I{{componentName}}Agent {
       request.componentName,
       request.templateVariables
     );
+
+    // Create directory
+    try {
+      await fs.mkdir(componentDir, { recursive: true });
+    } catch (error: any) {
+      return failure(
+        this.createOperationError("create directory", error, request.requestingAgentId)
+      );
+    }
+
+    // Handle writing based on policy - write files one at a time
+    const filesToWrite = [
+      { path: agentFilePath, content: agentContent },
+      { path: contractFilePath, content: contractContent }
+    ];
+
+    for (const file of filesToWrite) {
+      // Check file existence based on policy
+      if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
+        const checkResult = await this.checkFileExists(file.path, request.requestingAgentId);
+        if (!checkResult.success) return checkResult;
+      } else if (overwritePolicy === OverwritePolicy.SKIP) {
+        // Check if file exists, skip if it does
+        try {
+          await fs.stat(file.path);
+          // File exists, skip it
+          continue;
+        } catch (error: any) {
+          if (error.code !== "ENOENT") {
+            return failure(
+              this.createOperationError("check file", error, request.requestingAgentId)
+            );
+          }
+          // File doesn't exist, write it
+        }
+      }
+      // For OVERWRITE, don't check, just write
+
+      // Write the file
+      try {
+        await fs.writeFile(file.path, file.content);
+      } catch (error: any) {
+        return failure(
+          this.createOperationError("write file", error, request.requestingAgentId)
+        );
+      }
+    }
 
     return success({
       files: [agentFilePath, contractFilePath],
@@ -180,6 +235,10 @@ export interface I{{componentName}}Agent {
     if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
       const checkResult = await this.checkFileExists(agentFilePath, request.requestingAgentId);
       if (!checkResult.success) return checkResult;
+      const checkResult2 = await this.checkFileExists(contractFilePath, request.requestingAgentId);
+      if (!checkResult2.success) return checkResult2;
+      const checkResult3 = await this.checkFileExists(testFilePath, request.requestingAgentId);
+      if (!checkResult3.success) return checkResult3;
     }
 
     // Generate content for all three files with proper template substitution
@@ -222,6 +281,22 @@ describe("{{componentName}}Agent Contract Tests", () => {
       request.templateVariables
     );
 
+    // Create directory and write files
+    try {
+      await fs.mkdir(componentDir, { recursive: true });
+      await fs.writeFile(agentFilePath, agentContent);
+      await fs.writeFile(contractFilePath, contractContent);
+      await fs.writeFile(testFilePath, testContent);
+    } catch (error: any) {
+      return failure(
+        this.createOperationError(
+          "write files",
+          error,
+          request.requestingAgentId
+        )
+      );
+    }
+
     return success({
       files: [agentFilePath, contractFilePath, testFilePath],
       contents: [
@@ -248,14 +323,32 @@ describe("{{componentName}}Agent Contract Tests", () => {
       if (!checkResult.success) return checkResult;
     }
 
-    const contractContent = `/**
- * ${request.componentName} Contract
+    const contractContent = this.substituteTemplate(
+      `/**
+ * {{componentName}} Contract
  */
 
-export interface I${request.componentName}Agent {
-  // Contract for ${request.componentName}
-  // Custom variables: ${request.templateVariables?.customVar || ""}
-}`;
+export interface I{{componentName}}Agent {
+  // Contract for {{componentName}}
+  // Custom: {{customVar}}Custom
+}`,
+      request.componentName,
+      request.templateVariables
+    );
+
+    // Create directory and write files
+    try {
+      await fs.mkdir(componentDir, { recursive: true });
+      await fs.writeFile(contractFilePath, contractContent);
+    } catch (error: any) {
+      return failure(
+        this.createOperationError(
+          "write files",
+          error,
+          request.requestingAgentId
+        )
+      );
+    }
 
     return success({
       files: [contractFilePath],
@@ -279,14 +372,32 @@ export interface I${request.componentName}Agent {
       if (!checkResult.success) return checkResult;
     }
 
-    const testContent = `/**
- * ${request.componentName} Contract Test
+    const testContent = this.substituteTemplate(
+      `/**
+ * {{componentName}} Contract Test
  */
 
-describe("${request.componentName}Agent Contract Tests", () => {
-  // Contract test for ${request.componentName}
-  // Custom variables: ${request.templateVariables?.customVar || ""}
-});`;
+describe("{{componentName}}Agent Contract Tests", () => {
+  // Contract test for {{componentName}}
+  // Custom: {{customVar}}Custom
+});`,
+      request.componentName,
+      request.templateVariables
+    );
+
+    // Create directory and write files
+    try {
+      await fs.mkdir(componentDir, { recursive: true });
+      await fs.writeFile(testFilePath, testContent);
+    } catch (error: any) {
+      return failure(
+        this.createOperationError(
+          "write files",
+          error,
+          request.requestingAgentId
+        )
+      );
+    }
 
     return success({
       files: [testFilePath],
@@ -302,7 +413,7 @@ describe("${request.componentName}Agent Contract Tests", () => {
       await fs.stat(filePath);
       return failure(
         this.createError(
-          `File already exists: ${filePath}`,
+          `File ${filePath} already exists. OverwritePolicy is ERROR_IF_EXISTS.`,
           ErrorCategory.FILE_SYSTEM_ERROR,
           "FileExistsError",
           requestingAgentId

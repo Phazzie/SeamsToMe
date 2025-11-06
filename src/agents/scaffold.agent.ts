@@ -57,7 +57,7 @@ export class ScaffoldAgent extends BaseAgent implements IScaffoldAgent {
         files,
         issues: this.validateGeneratedFiles(files),
       });
-    }, "generateScaffold", request.requestingAgentId);
+    }, "generateScaffold", request?.requestingAgentId);
   }
   // SDD-Blueprint: Validates a set of generated stub files for basic correctness, such as syntax or adherence to naming conventions.
   // It takes a list of stub files and returns a validation result indicating if they are valid and lists any issues found.
@@ -86,7 +86,7 @@ export class ScaffoldAgent extends BaseAgent implements IScaffoldAgent {
         isValid,
         issues,
       });
-    }, "validateStubs", request.requestingAgentId);
+    }, "validateStubs", request?.requestingAgentId);
   }
 
   /**
