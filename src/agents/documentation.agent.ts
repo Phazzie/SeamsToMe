@@ -18,13 +18,8 @@ import {
   DocumentationType,
   DocumentationValidationResult,
 } from "../contracts/documentation.contract";
-import {
-  ContractResult,
-  createAgentError,
-  ErrorCategory,
-  failure,
-  success,
-} from "../contracts/types";
+import { ContractResult, success } from "../contracts/types";
+import { BaseAgent } from "./base.agent";
 
 /**
  * Documentation Agent - Stub Implementation
@@ -32,56 +27,55 @@ import {
  * This is an intentionally minimal implementation per SDD principles.
  * The focus is on contract conformance rather than full functionality.
  */
-export class DocumentationAgent implements DocumentationContract {
+export class DocumentationAgent
+  extends BaseAgent
+  implements DocumentationContract
+{
+  protected readonly agentId = "documentation-agent";
   /**
    * Generate documentation based on sources
    */
   async generateDocumentation(
     request: DocumentationRequest
   ): Promise<ContractResult<DocumentationResult>> {
-    try {
-      // TODO: Implement contract conformance tests for this seam
+    return this.withErrorHandling(
+      async () => {
+        // TODO: Implement contract conformance tests for this seam
 
-      const startTime = Date.now();
-      let content = "";
+        const startTime = Date.now();
+        let content = "";
 
-      // * HIGHLIGHT: This stub is intentionally minimal per SDD
-      switch (request.docType) {
-        case DocumentationType.CONTRACT:
-          content = this.generateContractDocumentation(request);
-          break;
-        case DocumentationType.SEAM:
-          content = this.generateSeamDocumentation(request);
-          break;
-        case DocumentationType.AGENT:
-          content = this.generateAgentDocumentation(request);
-          break;
-        default:
-          content = this.generateGenericDocumentation(request);
-      }
+        // * HIGHLIGHT: This stub is intentionally minimal per SDD
+        switch (request.docType) {
+          case DocumentationType.CONTRACT:
+            content = this.generateContractDocumentation(request);
+            break;
+          case DocumentationType.SEAM:
+            content = this.generateSeamDocumentation(request);
+            break;
+          case DocumentationType.AGENT:
+            content = this.generateAgentDocumentation(request);
+            break;
+          default:
+            content = this.generateGenericDocumentation(request);
+        }
 
-      const endTime = Date.now();
+        const endTime = Date.now();
 
-      return success({
-        content,
-        format: request.format,
-        metadata: {
-          generatedOn: new Date(),
-          docType: request.docType,
-          wordCount: content.split(/\s+/).length,
-          generationTime: endTime - startTime,
-        },
-      });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "documentation-agent",
-          error.message || "Failed to generate documentation",
-          ErrorCategory.OPERATION_FAILED,
-          "GenerateDocumentationError"
-        )
-      );
-    }
+        return success({
+          content,
+          format: request.format,
+          metadata: {
+            generatedOn: new Date(),
+            docType: request.docType,
+            wordCount: content.split(/\s+/).length,
+            generationTime: endTime - startTime,
+          },
+        });
+      },
+      "generateDocumentation",
+      undefined
+    );
   }
   /**
    * Validate existing documentation against sources
@@ -90,32 +84,37 @@ export class DocumentationAgent implements DocumentationContract {
     docPath: string,
     sources: DocumentationSource[]
   ): Promise<ContractResult<DocumentationValidationResult>> {
-    try {
-      // ? QUESTION: Is the error handling strategy sufficient for all edge cases?
-
-      // Stub implementation that always reports documentation as valid
-      // with a warning that this is not fully implemented
-      return success({
-        isValid: true,
-        issues: [
+    return this.withErrorHandling(
+      async () => {
+        // Validate inputs
+        const validation = this.validateFields(
           {
-            severity: "WARNING",
-            message: "Documentation validation is not fully implemented",
-            suggestion:
-              "Check documentation manually until implementation is complete",
+            docPath: { value: docPath, type: "nonEmpty" },
+            sources: { value: sources, type: "array" },
           },
-        ],
-      });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "documentation-agent",
-          error.message || "Failed to validate documentation",
-          ErrorCategory.OPERATION_FAILED,
-          "ValidateDocumentationError"
-        )
-      );
-    }
+          undefined
+        );
+        if (!validation.success) return validation;
+
+        // ? QUESTION: Is the error handling strategy sufficient for all edge cases?
+
+        // Stub implementation that always reports documentation as valid
+        // with a warning that this is not fully implemented
+        return success({
+          isValid: true,
+          issues: [
+            {
+              severity: "WARNING",
+              message: "Documentation validation is not fully implemented",
+              suggestion:
+                "Check documentation manually until implementation is complete",
+            },
+          ],
+        });
+      },
+      "validateDocumentation",
+      undefined
+    );
   }
   /**
    * Update existing documentation with changes
@@ -125,44 +124,49 @@ export class DocumentationAgent implements DocumentationContract {
     sources: DocumentationSource[],
     preserveSections?: string[]
   ): Promise<ContractResult<DocumentationResult>> {
-    try {
-      // ! WARNING: This agent is tightly coupled—consider refactoring
+    return this.withErrorHandling(
+      async () => {
+        // Validate inputs
+        const validation = this.validateFields(
+          {
+            docPath: { value: docPath, type: "nonEmpty" },
+            sources: { value: sources, type: "array" },
+          },
+          undefined
+        );
+        if (!validation.success) return validation;
 
-      // Stub implementation that pretends to update documentation
-      const format = this.detectFormat(docPath);
-      const startTime = Date.now();
+        // ! WARNING: This agent is tightly coupled—consider refactoring
 
-      let content = "Updated Documentation";
+        // Stub implementation that pretends to update documentation
+        const format = this.detectFormat(docPath);
+        const startTime = Date.now();
 
-      // In a real implementation, we would:
-      // 1. Read the existing documentation
-      // 2. Extract preserve sections if specified
-      // 3. Generate new content based on sources
-      // 4. Merge preserved sections with new content
-      // 5. Write the result back to the file
+        let content = "Updated Documentation";
 
-      // For now, just return a stub result
-      const endTime = Date.now();
+        // In a real implementation, we would:
+        // 1. Read the existing documentation
+        // 2. Extract preserve sections if specified
+        // 3. Generate new content based on sources
+        // 4. Merge preserved sections with new content
+        // 5. Write the result back to the file
 
-      return success({
-        content,
-        format,
-        metadata: {
-          generatedOn: new Date(),
-          docType: DocumentationType.CONTRACT, // Default to contract type in stub
-          generationTime: endTime - startTime,
-        },
-      });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "documentation-agent",
-          error.message || "Failed to update documentation",
-          ErrorCategory.OPERATION_FAILED,
-          "UpdateDocumentationError"
-        )
-      );
-    }
+        // For now, just return a stub result
+        const endTime = Date.now();
+
+        return success({
+          content,
+          format,
+          metadata: {
+            generatedOn: new Date(),
+            docType: DocumentationType.CONTRACT, // Default to contract type in stub
+            generationTime: endTime - startTime,
+          },
+        });
+      },
+      "updateDocumentation",
+      undefined
+    );
   }
   /**
    * Extract blueprint comments from source files
@@ -185,51 +189,54 @@ export class DocumentationAgent implements DocumentationContract {
       }>
     >
   > {
-    try {
-      // NOTE: Update contract version and notify all consumers when full implementation is ready
+    return this.withErrorHandling(
+      async () => {
+        // Validate inputs
+        const validation = this.validateNonEmptyArray(
+          sourcePaths,
+          "sourcePaths",
+          undefined
+        );
+        if (!validation.success) return validation;
 
-      // Stub implementation that returns sample blueprint comments
-      const result = sourcePaths.map((path) => ({
-        path,
-        comments: [
-          {
-            content: "Define the interface for the system",
-            location: "File header",
-            type: "PURPOSE" as const,
-          },
-          {
-            content: "Component A → Component B",
-            location: "Line 10",
-            type: "DATA_FLOW" as const,
-          },
-          {
-            content: "Connected to Agent X and Agent Y",
-            location: "Line 15",
-            type: "INTEGRATION_POINTS" as const,
-          },
-          {
-            content: "v1",
-            location: "Line 20",
-            type: "CONTRACT_VERSION" as const,
-          },
-          {
-            content: "Errors are logged and reported to the orchestrator",
-            location: "Line 25",
-            type: "ERROR_HANDLING" as const,
-          },
-        ],
-      }));
-      return success(result);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "documentation-agent",
-          error.message || "Failed to extract blueprint comments",
-          ErrorCategory.OPERATION_FAILED,
-          "ExtractBlueprintCommentsError"
-        )
-      );
-    }
+        // NOTE: Update contract version and notify all consumers when full implementation is ready
+
+        // Stub implementation that returns sample blueprint comments
+        const result = sourcePaths.map((path) => ({
+          path,
+          comments: [
+            {
+              content: "Define the interface for the system",
+              location: "File header",
+              type: "PURPOSE" as const,
+            },
+            {
+              content: "Component A → Component B",
+              location: "Line 10",
+              type: "DATA_FLOW" as const,
+            },
+            {
+              content: "Connected to Agent X and Agent Y",
+              location: "Line 15",
+              type: "INTEGRATION_POINTS" as const,
+            },
+            {
+              content: "v1",
+              location: "Line 20",
+              type: "CONTRACT_VERSION" as const,
+            },
+            {
+              content: "Errors are logged and reported to the orchestrator",
+              location: "Line 25",
+              type: "ERROR_HANDLING" as const,
+            },
+          ],
+        }));
+        return success(result);
+      },
+      "extractBlueprintComments",
+      undefined
+    );
   }
 
   // Private helper methods (would be more sophisticated in full implementation)

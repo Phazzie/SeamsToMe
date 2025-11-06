@@ -7,40 +7,33 @@ import {
   OverwritePolicy,
   SddComponentType,
 } from "../contracts/mvpSddScaffolder.contract";
-import { AgentError, ContractResult, ErrorCategory } from "../contracts/types";
+import { AgentError, ContractResult, ErrorCategory, failure, success } from "../contracts/types";
+import { BaseAgent } from "./base.agent";
 
 /**
  * MVPSddScaffolderAgent
  * Fresh minimal implementation to identify real contract requirements
  */
-export class MVPSddScaffolderAgent implements IMVPSddScaffolderAgent {
+export class MVPSddScaffolderAgent extends BaseAgent implements IMVPSddScaffolderAgent {
+  protected readonly agentId = "MVPSddScaffolderAgent";
   async generateSddScaffold(
     request: MVPSddScaffoldRequest
   ): Promise<ContractResult<MVPSddScaffoldOutput, AgentError>> {
-    try {
-      if (!request.componentName) {
-        return {
-          success: false,
-          error: {
-            name: "AgentError",
-            agentId: "MVPSddScaffolderAgent",
-            category: ErrorCategory.VALIDATION_ERROR,
-            message: "Component name cannot be empty",
-          },
-        };
-      }
+    return this.withErrorHandling(async () => {
+      // Validate required fields
+      const componentNameValidation = this.validateNonEmpty(
+        request.componentName,
+        "Component name",
+        request.requestingAgentId
+      );
+      if (!componentNameValidation.success) return componentNameValidation;
 
-      if (!request.targetDirectory) {
-        return {
-          success: false,
-          error: {
-            name: "AgentError",
-            agentId: "MVPSddScaffolderAgent",
-            category: ErrorCategory.VALIDATION_ERROR,
-            message: "Target directory cannot be empty",
-          },
-        };
-      }
+      const targetDirValidation = this.validateNonEmpty(
+        request.targetDirectory,
+        "Target directory",
+        request.requestingAgentId
+      );
+      if (!targetDirValidation.success) return targetDirValidation;
 
       // Build file paths exactly as tests expect
       const componentDir = path.join(
@@ -56,264 +49,28 @@ export class MVPSddScaffolderAgent implements IMVPSddScaffolderAgent {
 
       // Handle different component types
       if (request.sddComponentType === SddComponentType.AGENT) {
-        const agentFilePath = path.join(
-          componentDir,
-          `${request.componentName}.agent.ts`
-        );
-        const contractFilePath = path.join(
-          componentDir,
-          `${request.componentName}.contract.ts`
-        );
-
-        // Check for existing files if overwrite policy is ERROR_IF_EXISTS
-        const overwritePolicy =
-          request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
-        if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
-          try {
-            await fs.stat(agentFilePath);
-            return {
-              success: false,
-              error: {
-                name: "AgentError",
-                agentId: "MVPSddScaffolderAgent",
-                category: ErrorCategory.FILE_SYSTEM_ERROR,
-                message: `File already exists: ${agentFilePath}`,
-              },
-            };
-          } catch (error: any) {
-            if (error.code !== "ENOENT") {
-              return {
-                success: false,
-                error: {
-                  name: "AgentError",
-                  agentId: "MVPSddScaffolderAgent",
-                  category: ErrorCategory.FILE_SYSTEM_ERROR,
-                  message: `Error checking file existence: ${error.message}`,
-                },
-              };
-            }
-          }
-        } // Generate content that matches test expectations with proper template substitution
-        const agentContent = this.substituteTemplate(
-          `/**
- * {{componentName}} Agent
- */
-
-export class {{componentName}}Agent {
-  // Placeholder for {{componentName}}Agent
-  // Custom: {{customVar}}Custom
-}`,
-          request.componentName,
-          request.templateVariables
-        );
-
-        const contractContent = this.substituteTemplate(
-          `/**
- * {{componentName}} Contract
- */
-
-export interface I{{componentName}}Agent {
-  // Contract for {{componentName}}
-  // Custom: {{customVar}}Custom
-}`,
-          request.componentName,
-          request.templateVariables
-        );
-
-        generatedFiles.push(agentFilePath, contractFilePath);
-        generatedFileContents.push(
-          { filePath: agentFilePath, content: agentContent },
-          { filePath: contractFilePath, content: contractContent }
-        );
+        const result = await this.generateAgentFiles(request, componentDir);
+        if (!result.success) return result;
+        generatedFiles.push(...result.result.files);
+        generatedFileContents.push(...result.result.contents);
       } else if (request.sddComponentType === SddComponentType.FULL_AGENT_SET) {
-        const agentFilePath = path.join(
-          componentDir,
-          `${request.componentName}.agent.ts`
-        );
-        const contractFilePath = path.join(
-          componentDir,
-          `${request.componentName}.contract.ts`
-        );
-        const testFilePath = path.join(
-          componentDir,
-          `${request.componentName}.contract.test.ts`
-        );
-
-        // Check for existing files if overwrite policy is ERROR_IF_EXISTS
-        const overwritePolicy =
-          request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
-        if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
-          try {
-            await fs.stat(agentFilePath);
-            return {
-              success: false,
-              error: {
-                name: "AgentError",
-                agentId: "MVPSddScaffolderAgent",
-                category: ErrorCategory.FILE_SYSTEM_ERROR,
-                message: `File already exists: ${agentFilePath}`,
-              },
-            };
-          } catch (error: any) {
-            if (error.code !== "ENOENT") {
-              return {
-                success: false,
-                error: {
-                  name: "AgentError",
-                  agentId: "MVPSddScaffolderAgent",
-                  category: ErrorCategory.FILE_SYSTEM_ERROR,
-                  message: `Error checking file existence: ${error.message}`,
-                },
-              };
-            }
-          }
-        } // Generate content for all three files with proper template substitution
-        const agentContent = this.substituteTemplate(
-          `/**
- * {{componentName}} Agent
- */
-
-export class {{componentName}}Agent {
-  // Placeholder for {{componentName}}Agent
-  // Custom: {{customVar}}Custom
-}`,
-          request.componentName,
-          request.templateVariables
-        );
-
-        const contractContent = this.substituteTemplate(
-          `/**
- * {{componentName}} Contract
- */
-
-export interface I{{componentName}}Agent {
-  // Contract for {{componentName}}
-  // Custom: {{customVar}}Custom
-}`,
-          request.componentName,
-          request.templateVariables
-        );
-
-        const testContent = this.substituteTemplate(
-          `/**
- * {{componentName}} Contract Test
- */
-
-describe("{{componentName}}Agent Contract Tests", () => {
-  // Contract test for {{componentName}}
-  // Custom: {{customVar}}Custom
-});`,
-          request.componentName,
-          request.templateVariables
-        );
-
-        generatedFiles.push(agentFilePath, contractFilePath, testFilePath);
-        generatedFileContents.push(
-          { filePath: agentFilePath, content: agentContent },
-          { filePath: contractFilePath, content: contractContent },
-          { filePath: testFilePath, content: testContent }
-        );
+        const result = await this.generateFullAgentSet(request, componentDir);
+        if (!result.success) return result;
+        generatedFiles.push(...result.result.files);
+        generatedFileContents.push(...result.result.contents);
       } else if (request.sddComponentType === SddComponentType.CONTRACT) {
-        const contractFilePath = path.join(
-          componentDir,
-          `${request.componentName}.contract.ts`
-        );
-
-        // Check for existing files if overwrite policy is ERROR_IF_EXISTS
-        const overwritePolicy =
-          request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
-        if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
-          try {
-            await fs.stat(contractFilePath);
-            return {
-              success: false,
-              error: {
-                name: "AgentError",
-                agentId: "MVPSddScaffolderAgent",
-                category: ErrorCategory.FILE_SYSTEM_ERROR,
-                message: `File already exists: ${contractFilePath}`,
-              },
-            };
-          } catch (error: any) {
-            if (error.code !== "ENOENT") {
-              return {
-                success: false,
-                error: {
-                  name: "AgentError",
-                  agentId: "MVPSddScaffolderAgent",
-                  category: ErrorCategory.FILE_SYSTEM_ERROR,
-                  message: `Error checking file existence: ${error.message}`,
-                },
-              };
-            }
-          }
-        }
-
-        const contractContent = `/**
- * ${request.componentName} Contract
- */
-
-export interface I${request.componentName}Agent {
-  // Contract for ${request.componentName}
-  // Custom variables: ${request.templateVariables?.customVar || ""}
-}`;
-
-        generatedFiles.push(contractFilePath);
-        generatedFileContents.push({
-          filePath: contractFilePath,
-          content: contractContent,
-        });
+        const result = await this.generateContractFile(request, componentDir);
+        if (!result.success) return result;
+        generatedFiles.push(...result.result.files);
+        generatedFileContents.push(...result.result.contents);
       } else if (request.sddComponentType === SddComponentType.TEST) {
-        const testFilePath = path.join(
-          componentDir,
-          `${request.componentName}.contract.test.ts`
-        );
+        const result = await this.generateTestFile(request, componentDir);
+        if (!result.success) return result;
+        generatedFiles.push(...result.result.files);
+        generatedFileContents.push(...result.result.contents);
+      }
 
-        // Check for existing files if overwrite policy is ERROR_IF_EXISTS
-        const overwritePolicy =
-          request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
-        if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
-          try {
-            await fs.stat(testFilePath);
-            return {
-              success: false,
-              error: {
-                name: "AgentError",
-                agentId: "MVPSddScaffolderAgent",
-                category: ErrorCategory.FILE_SYSTEM_ERROR,
-                message: `File already exists: ${testFilePath}`,
-              },
-            };
-          } catch (error: any) {
-            if (error.code !== "ENOENT") {
-              return {
-                success: false,
-                error: {
-                  name: "AgentError",
-                  agentId: "MVPSddScaffolderAgent",
-                  category: ErrorCategory.FILE_SYSTEM_ERROR,
-                  message: `Error checking file existence: ${error.message}`,
-                },
-              };
-            }
-          }
-        }
-
-        const testContent = `/**
- * ${request.componentName} Contract Test
- */
-
-describe("${request.componentName}Agent Contract Tests", () => {
-  // Contract test for ${request.componentName}
-  // Custom variables: ${request.templateVariables?.customVar || ""}
-});`;
-
-        generatedFiles.push(testFilePath);
-        generatedFileContents.push({
-          filePath: testFilePath,
-          content: testContent,
-        });
-      } // Generate appropriate summary message based on component type
+      // Generate appropriate summary message based on component type
       let summaryMessage: string;
       switch (request.sddComponentType) {
         case SddComponentType.AGENT:
@@ -332,31 +89,237 @@ describe("${request.componentName}Agent Contract Tests", () => {
           summaryMessage = `Successfully scaffolded ${request.componentName}`;
       }
 
-      return {
-        success: true,
-        result: {
-          scaffolderAgentId: "MVPSddScaffolderAgent",
-          generatedFiles,
-          overallStatus: "success",
-          summaryMessage,
-          generatedFileContents,
-          targetDirectory: request.targetDirectory,
-          componentName: request.componentName,
-          sddComponentType: request.sddComponentType,
-        },
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: {
-          name: "AgentError",
-          agentId: "MVPSddScaffolderAgent",
-          category: ErrorCategory.UNEXPECTED_ERROR,
-          message: `Unexpected error: ${error.message}`,
-          details: { error: error.toString() },
-        },
-      };
+      return success({
+        scaffolderAgentId: "MVPSddScaffolderAgent",
+        generatedFiles,
+        overallStatus: "success",
+        summaryMessage,
+        generatedFileContents,
+        targetDirectory: request.targetDirectory,
+        componentName: request.componentName,
+        sddComponentType: request.sddComponentType,
+      });
+    }, "generateSddScaffold", request.requestingAgentId);
+  }
+
+  private async generateAgentFiles(
+    request: MVPSddScaffoldRequest,
+    componentDir: string
+  ): Promise<ContractResult<{ files: string[]; contents: Array<{ filePath: string; content: string }> }>> {
+    const agentFilePath = path.join(
+      componentDir,
+      `${request.componentName}.agent.ts`
+    );
+    const contractFilePath = path.join(
+      componentDir,
+      `${request.componentName}.contract.ts`
+    );
+
+    // Check for existing files if overwrite policy is ERROR_IF_EXISTS
+    const overwritePolicy = request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
+    if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
+      const checkResult = await this.checkFileExists(agentFilePath, request.requestingAgentId);
+      if (!checkResult.success) return checkResult;
     }
+
+    // Generate content that matches test expectations with proper template substitution
+    const agentContent = this.substituteTemplate(
+      `/**
+ * {{componentName}} Agent
+ */
+
+export class {{componentName}}Agent {
+  // Placeholder for {{componentName}}Agent
+  // Custom: {{customVar}}Custom
+}`,
+      request.componentName,
+      request.templateVariables
+    );
+
+    const contractContent = this.substituteTemplate(
+      `/**
+ * {{componentName}} Contract
+ */
+
+export interface I{{componentName}}Agent {
+  // Contract for {{componentName}}
+  // Custom: {{customVar}}Custom
+}`,
+      request.componentName,
+      request.templateVariables
+    );
+
+    return success({
+      files: [agentFilePath, contractFilePath],
+      contents: [
+        { filePath: agentFilePath, content: agentContent },
+        { filePath: contractFilePath, content: contractContent },
+      ],
+    });
+  }
+
+  private async generateFullAgentSet(
+    request: MVPSddScaffoldRequest,
+    componentDir: string
+  ): Promise<ContractResult<{ files: string[]; contents: Array<{ filePath: string; content: string }> }>> {
+    const agentFilePath = path.join(
+      componentDir,
+      `${request.componentName}.agent.ts`
+    );
+    const contractFilePath = path.join(
+      componentDir,
+      `${request.componentName}.contract.ts`
+    );
+    const testFilePath = path.join(
+      componentDir,
+      `${request.componentName}.contract.test.ts`
+    );
+
+    // Check for existing files if overwrite policy is ERROR_IF_EXISTS
+    const overwritePolicy = request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
+    if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
+      const checkResult = await this.checkFileExists(agentFilePath, request.requestingAgentId);
+      if (!checkResult.success) return checkResult;
+    }
+
+    // Generate content for all three files with proper template substitution
+    const agentContent = this.substituteTemplate(
+      `/**
+ * {{componentName}} Agent
+ */
+
+export class {{componentName}}Agent {
+  // Placeholder for {{componentName}}Agent
+  // Custom: {{customVar}}Custom
+}`,
+      request.componentName,
+      request.templateVariables
+    );
+
+    const contractContent = this.substituteTemplate(
+      `/**
+ * {{componentName}} Contract
+ */
+
+export interface I{{componentName}}Agent {
+  // Contract for {{componentName}}
+  // Custom: {{customVar}}Custom
+}`,
+      request.componentName,
+      request.templateVariables
+    );
+
+    const testContent = this.substituteTemplate(
+      `/**
+ * {{componentName}} Contract Test
+ */
+
+describe("{{componentName}}Agent Contract Tests", () => {
+  // Contract test for {{componentName}}
+  // Custom: {{customVar}}Custom
+});`,
+      request.componentName,
+      request.templateVariables
+    );
+
+    return success({
+      files: [agentFilePath, contractFilePath, testFilePath],
+      contents: [
+        { filePath: agentFilePath, content: agentContent },
+        { filePath: contractFilePath, content: contractContent },
+        { filePath: testFilePath, content: testContent },
+      ],
+    });
+  }
+
+  private async generateContractFile(
+    request: MVPSddScaffoldRequest,
+    componentDir: string
+  ): Promise<ContractResult<{ files: string[]; contents: Array<{ filePath: string; content: string }> }>> {
+    const contractFilePath = path.join(
+      componentDir,
+      `${request.componentName}.contract.ts`
+    );
+
+    // Check for existing files if overwrite policy is ERROR_IF_EXISTS
+    const overwritePolicy = request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
+    if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
+      const checkResult = await this.checkFileExists(contractFilePath, request.requestingAgentId);
+      if (!checkResult.success) return checkResult;
+    }
+
+    const contractContent = `/**
+ * ${request.componentName} Contract
+ */
+
+export interface I${request.componentName}Agent {
+  // Contract for ${request.componentName}
+  // Custom variables: ${request.templateVariables?.customVar || ""}
+}`;
+
+    return success({
+      files: [contractFilePath],
+      contents: [{ filePath: contractFilePath, content: contractContent }],
+    });
+  }
+
+  private async generateTestFile(
+    request: MVPSddScaffoldRequest,
+    componentDir: string
+  ): Promise<ContractResult<{ files: string[]; contents: Array<{ filePath: string; content: string }> }>> {
+    const testFilePath = path.join(
+      componentDir,
+      `${request.componentName}.contract.test.ts`
+    );
+
+    // Check for existing files if overwrite policy is ERROR_IF_EXISTS
+    const overwritePolicy = request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
+    if (overwritePolicy === OverwritePolicy.ERROR_IF_EXISTS) {
+      const checkResult = await this.checkFileExists(testFilePath, request.requestingAgentId);
+      if (!checkResult.success) return checkResult;
+    }
+
+    const testContent = `/**
+ * ${request.componentName} Contract Test
+ */
+
+describe("${request.componentName}Agent Contract Tests", () => {
+  // Contract test for ${request.componentName}
+  // Custom variables: ${request.templateVariables?.customVar || ""}
+});`;
+
+    return success({
+      files: [testFilePath],
+      contents: [{ filePath: testFilePath, content: testContent }],
+    });
+  }
+
+  private async checkFileExists(
+    filePath: string,
+    requestingAgentId?: string
+  ): Promise<ContractResult<void>> {
+    try {
+      await fs.stat(filePath);
+      return failure(
+        this.createError(
+          `File already exists: ${filePath}`,
+          ErrorCategory.FILE_SYSTEM_ERROR,
+          "FileExistsError",
+          requestingAgentId
+        )
+      );
+    } catch (error: any) {
+      if (error.code !== "ENOENT") {
+        return failure(
+          this.createOperationError(
+            "check file existence",
+            error,
+            requestingAgentId
+          )
+        );
+      }
+    }
+    return success(undefined);
   }
 
   /**

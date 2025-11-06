@@ -20,12 +20,10 @@ import {
   AgentError,
   AgentId,
   ContractResult,
-  createAgentError,
-  ErrorCategory,
-  failure,
   success,
 } from "../contracts/types";
 import { IAIService } from "../contracts/ai-service.contract";
+import { BaseAgent } from "./base.agent";
 
 /**
  * Knowledge Agent - AI-Powered Implementation
@@ -33,11 +31,13 @@ import { IAIService } from "../contracts/ai-service.contract";
  * Uses semantic search for intelligent knowledge retrieval.
  * Replaces keyword matching heuristics with AI-powered similarity.
  */
-export class KnowledgeAgent implements KnowledgeContract {
+export class KnowledgeAgent extends BaseAgent implements KnowledgeContract {
+  protected readonly agentId = "knowledge-agent" as const;
   private knowledgeStore: Map<string, KnowledgeItem> = new Map();
   private aiService?: IAIService;
 
   constructor(aiService?: IAIService) {
+    super();
     this.aiService = aiService;
   }
 
@@ -48,7 +48,16 @@ export class KnowledgeAgent implements KnowledgeContract {
   async retrieveKnowledge(
     request: KnowledgeInput
   ): Promise<ContractResult<KnowledgeOutput, AgentError>> {
-    try {
+    return this.withErrorHandling(async () => {
+      // Validate request and query
+      const requestValidation = this.validateRequest(request, request.requestingAgentId);
+      if (!requestValidation.success) return requestValidation;
+
+      const validation = this.validateFields({
+        query: { value: request.query, type: "nonEmpty" },
+      }, request.requestingAgentId);
+      if (!validation.success) return validation;
+
       const startTime = Date.now();
 
       // Filter by domain if specified
@@ -107,16 +116,7 @@ export class KnowledgeAgent implements KnowledgeContract {
         query: request.query,
         executionTime,
       });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "knowledge-agent",
-          error.message || "Failed to retrieve knowledge",
-          ErrorCategory.OPERATION_FAILED,
-          "KnowledgeRetrievalError"
-        )
-      );
-    }
+    }, "retrieveKnowledge", request.requestingAgentId);
   }
 
   /**
@@ -135,8 +135,15 @@ export class KnowledgeAgent implements KnowledgeContract {
     item: StoreKnowledgeInput,
     agentId: AgentId
   ): Promise<ContractResult<StoreKnowledgeOutput, AgentError>> {
-    try {
-      // ? QUESTION: Is the error handling strategy sufficient for all edge cases?
+    return this.withErrorHandling(async () => {
+      // Validate item and required fields
+      const itemValidation = this.validateRequest(item, agentId);
+      if (!itemValidation.success) return itemValidation;
+
+      const validation = this.validateFields({
+        content: { value: item.content, type: "nonEmpty" },
+      }, agentId);
+      if (!validation.success) return validation;
 
       // Generate a simple ID (would be more sophisticated in real implementation)
       const id = `knowledge-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -149,16 +156,7 @@ export class KnowledgeAgent implements KnowledgeContract {
       this.knowledgeStore.set(id, knowledgeItem);
 
       return success(id);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "knowledge-agent",
-          error.message || "Failed to store knowledge",
-          ErrorCategory.OPERATION_FAILED,
-          "KnowledgeStorageError"
-        )
-      );
-    }
+    }, "storeKnowledge", agentId);
   }
 
   /**
@@ -169,7 +167,11 @@ export class KnowledgeAgent implements KnowledgeContract {
     query: string,
     domain?: KnowledgeDomain
   ): Promise<ContractResult<HasKnowledgeOutput, AgentError>> {
-    try {
+    return this.withErrorHandling(async () => {
+      // Validate query
+      const validation = this.validateNonEmpty(query, "query");
+      if (!validation.success) return validation;
+
       // Filter by domain if specified
       let candidateItems = Array.from(this.knowledgeStore.values());
       if (domain) {
@@ -210,15 +212,6 @@ export class KnowledgeAgent implements KnowledgeContract {
       }
 
       return success(false);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "knowledge-agent",
-          error.message || "Failed to check knowledge existence",
-          ErrorCategory.OPERATION_FAILED,
-          "KnowledgeCheckError"
-        )
-      );
-    }
+    }, "hasKnowledge");
   }
 }

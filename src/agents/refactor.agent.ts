@@ -13,56 +13,41 @@ import {
   RefactorOutput,
 } from "../contracts/refactor.contract";
 import {
-  AgentId,
   ContractResult,
-  createAgentError,
   ErrorCategory,
   failure,
   success,
 } from "../contracts/types";
 import { IAIService } from "../contracts/ai-service.contract";
+import { BaseAgent } from "./base.agent";
 
-export class RefactorAgent implements IRefactorAgent {
-  readonly agentId: AgentId = "RefactorAgent";
+export class RefactorAgent extends BaseAgent implements IRefactorAgent {
+  protected readonly agentId = "RefactorAgent" as const;
   private aiService?: IAIService;
 
   constructor(aiService?: IAIService) {
+    super();
     this.aiService = aiService;
   }
 
   async refactor(
     request: RefactorInput
   ): Promise<ContractResult<RefactorOutput>> {
-    try {
+    return this.withErrorHandling(async () => {
       // Validate request
-      if (!request) {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "Request is null or undefined.",
-            ErrorCategory.BAD_REQUEST,
-            "RefactorAgentError"
-          )
-        );
-      }
+      const requestValidation = this.validateRequest(request, request?.requestingAgentId);
+      if (!requestValidation.success) return requestValidation;
 
-      if (!request.code || request.code.trim() === "") {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "Code cannot be empty",
-            ErrorCategory.VALIDATION_ERROR,
-            "RefactorAgentError",
-            request.requestingAgentId
-          )
-        );
-      }
+      // Validate fields
+      const fieldsValidation = this.validateFields({
+        code: { value: request.code, type: "nonEmpty" }
+      }, request.requestingAgentId);
+      if (!fieldsValidation.success) return fieldsValidation;
 
       // Use AI service if available
       if (!this.aiService) {
         return failure(
-          createAgentError(
-            this.agentId,
+          this.createError(
             "AI service not available. RefactorAgent requires AI service to function.",
             ErrorCategory.AGENT_UNAVAILABLE,
             "RefactorAgentError",
@@ -119,13 +104,10 @@ Focus on:
 
       if (!analysisResult.success) {
         return failure(
-          createAgentError(
-            this.agentId,
-            `AI analysis failed: ${analysisResult.error.message}`,
-            ErrorCategory.OPERATION_FAILED,
-            "RefactorAgentError",
-            request.requestingAgentId,
-            { originalError: analysisResult.error }
+          this.createOperationError(
+            "AI analysis",
+            new Error(analysisResult.error.message),
+            request.requestingAgentId
           )
         );
       }
@@ -167,17 +149,6 @@ Focus on:
       }
 
       return success(refactorPlan);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          `Refactoring failed: ${error.message}`,
-          ErrorCategory.UNEXPECTED_ERROR,
-          "RefactorAgentError",
-          request.requestingAgentId,
-          { originalError: error }
-        )
-      );
-    }
+    }, "refactor", request?.requestingAgentId);
   }
 }

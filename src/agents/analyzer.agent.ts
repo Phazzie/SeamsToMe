@@ -16,49 +16,43 @@ import {
 import {
   AgentId,
   ContractResult,
-  createAgentError,
   ErrorCategory,
   failure,
   success,
 } from "../contracts/types";
 import { IAIService } from "../contracts/ai-service.contract";
 import { parseEnum } from "../utils/enumParser";
+import { BaseAgent } from "./base.agent";
 import * as fs from "fs";
 import * as path from "path";
 
-const AGENT_ID: AgentId = "AnalyzerAgent";
-
-export class AnalyzerAgent implements AnalyzerAgentContract {
-  public readonly agentId: AgentId = AGENT_ID;
+export class AnalyzerAgent extends BaseAgent implements AnalyzerAgentContract {
+  protected readonly agentId: AgentId = "AnalyzerAgent";
   private aiService?: IAIService;
 
   constructor(aiService?: IAIService) {
+    super();
     this.aiService = aiService;
   }
 
   async analyzeSeams(
     request: AnalyzerInput
   ): Promise<ContractResult<AnalyzerOutput>> {
-    try {
-      // Validate request
-      if (!request.codebasePath || !request.requestingAgentId) {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "Invalid request: Missing codebasePath or requestingAgentId",
-            ErrorCategory.INVALID_REQUEST,
-            "InvalidSeamAnalysisRequest",
-            request.requestingAgentId,
-            { request }
-          )
-        );
-      }
+    return this.withErrorHandling(async () => {
+      // Validate request fields
+      const validation = this.validateFields(
+        {
+          codebasePath: { value: request.codebasePath, type: "nonEmpty" },
+          requestingAgentId: { value: request.requestingAgentId, type: "nonEmpty" },
+        },
+        request.requestingAgentId
+      );
+      if (!validation.success) return validation;
 
       // Check if AI service is available
       if (!this.aiService) {
         return failure(
-          createAgentError(
-            this.agentId,
+          this.createError(
             "AI service not available. AnalyzerAgent requires AI service to function.",
             ErrorCategory.AGENT_UNAVAILABLE,
             "AnalyzerAgentError",
@@ -71,8 +65,7 @@ export class AnalyzerAgent implements AnalyzerAgentContract {
       const codebaseContent = await this.readCodebase(request.codebasePath);
       if (!codebaseContent || codebaseContent.trim() === "") {
         return failure(
-          createAgentError(
-            this.agentId,
+          this.createError(
             `Failed to read codebase at path: ${request.codebasePath}`,
             ErrorCategory.FILE_SYSTEM_ERROR,
             "CodebaseReadError",
@@ -135,13 +128,10 @@ Provide analysis in JSON format:
 
       if (!analysisResult.success) {
         return failure(
-          createAgentError(
-            this.agentId,
-            `AI analysis failed: ${analysisResult.error.message}`,
-            ErrorCategory.OPERATION_FAILED,
-            "AnalysisError",
-            request.requestingAgentId,
-            { originalError: analysisResult.error }
+          this.createOperationError(
+            "AI analysis",
+            analysisResult.error,
+            request.requestingAgentId
           )
         );
       }
@@ -183,18 +173,7 @@ Provide analysis in JSON format:
       }
 
       return success(seamAnalysis);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          `Analysis failed: ${error.message}`,
-          ErrorCategory.UNEXPECTED_ERROR,
-          "AnalyzerAgentError",
-          request.requestingAgentId,
-          { originalError: error }
-        )
-      );
-    }
+    }, "Analysis", request.requestingAgentId);
   }
 
   /**

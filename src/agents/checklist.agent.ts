@@ -21,12 +21,12 @@ import {
   AgentError,
   AgentId,
   ContractResult,
-  createAgentError,
   ErrorCategory,
   failure,
   success,
-} from "../contracts/types"; // Added necessary imports
+} from "../contracts/types";
 import { IAIService } from "../contracts/ai-service.contract";
+import { BaseAgent } from "./base.agent";
 import { parseEnumSnakeCase } from "../utils/enumParser";
 import * as fs from "fs";
 
@@ -36,12 +36,13 @@ import * as fs from "fs";
  * Uses AI to intelligently assess SDD compliance instead of hardcoded rules.
  * Provides context-aware remediation suggestions.
  */
-export class ChecklistAgent implements ChecklistContract {
+export class ChecklistAgent extends BaseAgent implements ChecklistContract {
+  protected readonly agentId: AgentId = "checklist-agent" as AgentId;
   private categories: ChecklistCategory[] = Object.values(ChecklistCategory);
-  public readonly agentId: AgentId = "checklist-agent" as AgentId;
   private aiService?: IAIService;
 
   constructor(aiService?: IAIService) {
+    super();
     this.aiService = aiService;
   }
   /**
@@ -50,18 +51,17 @@ export class ChecklistAgent implements ChecklistContract {
   async checkCompliance(
     request: ChecklistInput
   ): Promise<ContractResult<ChecklistOutput, AgentError>> {
-    try {
+    return this.withErrorHandling(async () => {
       // Validate request
-      if (!request || !request.targetPath) {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "targetPath is required",
-            ErrorCategory.INVALID_REQUEST,
-            "ValidationError"
-          )
-        );
-      }
+      const requestValidation = this.validateRequest(request);
+      if (!requestValidation.success) return requestValidation;
+
+      const fieldValidation = this.validateNonEmpty(
+        request.targetPath,
+        "targetPath",
+        request.requestingAgentId
+      );
+      if (!fieldValidation.success) return fieldValidation;
 
       // * HIGHLIGHT: This implementation follows SDD minimal approach
       const categoriesToCheck = request.categories || this.categories;
@@ -81,34 +81,16 @@ export class ChecklistAgent implements ChecklistContract {
         summary,
         targetPath: request.targetPath,
       });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          error.message || "Failed to check compliance",
-          ErrorCategory.OPERATION_FAILED,
-          "ComplianceCheckError"
-        )
-      );
-    }
+    }, "checkCompliance", request?.requestingAgentId);
   }
   /**
    * Get available checklist categories
    */
   async getCategories(): Promise<ContractResult<CategoriesOutput, AgentError>> {
-    try {
+    return this.withErrorHandling(async () => {
       // ? QUESTION: Is the error handling strategy sufficient for all edge cases?
       return success([...this.categories]);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          error.message || "Failed to retrieve categories",
-          ErrorCategory.OPERATION_FAILED,
-          "CategoryRetrievalError"
-        )
-      );
-    }
+    }, "getCategories");
   }
   /**
    * Generate a compliance report
@@ -118,27 +100,22 @@ export class ChecklistAgent implements ChecklistContract {
     format: string,
     requestingAgentId?: AgentId
   ): Promise<ContractResult<ReportOutput, AgentError>> {
-    try {
+    return this.withErrorHandling(async () => {
       // Validate request
-      if (!targetPath) {
-        return failure(
-          createAgentError(
-            this.agentId,
-            "targetPath is required",
-            ErrorCategory.INVALID_REQUEST,
-            "ValidationError"
-          )
-        );
-      }
+      const validation = this.validateNonEmpty(
+        targetPath,
+        "targetPath",
+        requestingAgentId
+      );
+      if (!validation.success) return validation;
 
       // Only support markdown format for now
       if (format.toLowerCase() !== "markdown") {
         return failure(
-          createAgentError(
-            this.agentId,
+          this.createValidationError(
+            "format",
             `Format ${format} not supported yet`,
-            ErrorCategory.INVALID_REQUEST,
-            "UnsupportedFormatError"
+            requestingAgentId
           )
         );
       }
@@ -162,16 +139,7 @@ export class ChecklistAgent implements ChecklistContract {
       const report = this.generateMarkdownReport(checkResponse);
 
       return success(report);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          error.message || "Failed to generate report",
-          ErrorCategory.OPERATION_FAILED,
-          "ReportGenerationError"
-        )
-      );
-    }
+    }, "generateReport", requestingAgentId);
   }
 
   /**
