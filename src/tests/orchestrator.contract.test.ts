@@ -25,7 +25,8 @@ describe("Orchestrator Contract Conformance", () => {
 
   beforeEach(() => {
     // Create a fresh instance for each test
-    orchestrator = new OrchestratorAgent();
+    // New constructor requires AgentRegistration array
+    orchestrator = new OrchestratorAgent([]);
   });
   describe("registerAgent", () => {
     test("should register a new agent successfully", async () => {
