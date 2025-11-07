@@ -262,6 +262,55 @@ AI_MODE=mock                        # Set to 'mock' for development
 
 ---
 
+## Security & Environment Configuration
+
+### Environment Variables
+
+This project uses environment variables for configuration. **NEVER commit actual .env files to version control!**
+
+#### Setup:
+1. Copy `.env.example` to `.env.development`:
+   ```bash
+   cp .env.example .env.development
+   ```
+
+2. Fill in your actual values:
+   ```bash
+   # .env.development
+   XAI_API_KEY=xai-abc123def456...  # Your actual API key
+   ```
+
+3. The `.env.development` file is in `.gitignore` and will not be committed.
+
+#### Required Variables:
+- `XAI_API_KEY` - Your xAI API key (get one at https://x.ai/api)
+
+#### Optional Variables:
+- `LOG_LEVEL` - Logging verbosity (debug, info, warn, error)
+- `VERBOSE_ERRORS` - Show detailed errors (**NEVER set to true in production!**)
+- `AI_MAX_TOKENS` - Maximum tokens for AI responses (default: 4096)
+
+### Pre-commit Hooks
+
+A pre-commit hook is installed that prevents accidentally committing:
+- `.env` files (except `.env.example`)
+- Files containing potential secrets/API keys
+
+If you need to bypass this check (not recommended), use:
+```bash
+git commit --no-verify
+```
+
+### API Key Security
+
+- **NEVER** commit API keys to version control
+- **NEVER** share `.env` files
+- **ALWAYS** use environment variables for secrets
+- **ROTATE** API keys if accidentally exposed
+- **SET** `VERBOSE_ERRORS=false` in production (exposes stack traces otherwise)
+
+---
+
 ## Development
 
 ### SDD Quickstart
