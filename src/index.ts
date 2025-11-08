@@ -16,24 +16,23 @@ import { TaskPriority } from "./contracts/types";
  */
 async function bootstrap() {
   try {
-    console.log("Starting SeemsToMe SDD multi-agent system...");    // Initialize agents
+    console.log("Starting SeemsToMe SDD multi-agent system...");
+
+    // Initialize agents
     const knowledgeAgent = new KnowledgeAgent();
-    const orchestrator = new OrchestratorAgent({
-      knowledgeAgent: knowledgeAgent
-    });
-    // Register agents with orchestrator
-    const registrationResult = await orchestrator.registerAgent(
-      "knowledge-agent",
-      ["retrieve", "store"]
-    );
-    if (registrationResult.success) {
-      console.log("Knowledge Agent registered with Orchestrator");
-    } else {
-      console.error(
-        "Failed to register Knowledge Agent:",
-        registrationResult.error
-      );
-    }
+
+    // Create orchestrator with registered agents (NEW PATTERN)
+    const orchestrator = new OrchestratorAgent([
+      {
+        agentId: "knowledge-agent",
+        instance: knowledgeAgent,
+        capabilities: ["retrieveKnowledge", "storeKnowledge", "hasKnowledge"],
+        description: "Knowledge management and retrieval"
+      }
+    ]);
+
+    // Agents are automatically registered during construction
+    console.log("Knowledge Agent registered with Orchestrator");
 
     // Example task submission
     const taskResult = await orchestrator.submitTask({

@@ -7,6 +7,7 @@ import { PromptAgent } from "../agents/prompt.agent";
 import {
   IPromptAgent,
   PromptExecutionInput,
+  PromptExecutionOutput,
   PromptInput,
   PromptOutput,
 } from "../contracts/prompt.contract";
@@ -69,10 +70,10 @@ describe("PromptAgent Contract Tests", () => {
 
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
-      expect(result.error?.name).toEqual("NotImplementedError"); // Stub returns this
-      expect(result.error?.category).toEqual(ErrorCategory.UNEXPECTED_ERROR); // Stub returns this
-      expect(result.error?.agentId).toEqual("PromptAgent"); // Stub returns this
-      // expect(result.error?.message).toContain("Contract definition is required"); // Ideal, but stub returns generic
+      expect(result.error?.name).toEqual("ValidationError"); // BaseAgent pattern
+      expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR); // BaseAgent pattern
+      expect(result.error?.agentId).toEqual("PromptAgent");
+      expect(result.error?.message).toContain("contract cannot be empty"); // BaseAgent validation message
     });
 
     test("should return an AgentError for generatePrompt if requestingAgentId is missing", async () => {
@@ -86,34 +87,33 @@ describe("PromptAgent Contract Tests", () => {
 
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
-      expect(result.error?.name).toEqual("NotImplementedError"); // Stub returns this
-      expect(result.error?.category).toEqual(ErrorCategory.UNEXPECTED_ERROR); // Stub returns this
-      expect(result.error?.agentId).toEqual("PromptAgent"); // Stub returns this
-      // expect(result.error?.message).toContain("requestingAgentId is required"); // Ideal, but stub returns generic
+      expect(result.error?.name).toEqual("ValidationError"); // BaseAgent pattern
+      expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR); // BaseAgent pattern
+      expect(result.error?.agentId).toEqual("PromptAgent");
+      expect(result.error?.message).toContain("requestingAgentId cannot be empty"); // BaseAgent validation message
     });
   });
 
   describe("executePrompt", () => {
-    test("should return a successful ContractResult with a response on happy path", async () => {
+    test("should return a NotImplementedError because executePrompt is not implemented yet", async () => {
       const mockInput: PromptExecutionInput = {
         requestingAgentId: mockRequestingAgentId,
         prompt: "Generate a TypeScript function that adds two numbers.",
         context: { language: "typescript" },
       };
 
-      // The stub currently throws "Method not implemented."
-      // We'll test for that specific error until the stub is updated.
-      try {
+      const result: ContractResult<PromptExecutionOutput, AgentError> =
         await promptAgent.executePrompt(mockInput);
-        // Should not reach here
-        expect(true).toBe(false);
-      } catch (e: any) {
-        expect(e.message).toEqual("Method not implemented.");
-      }
+
+      expect(result.success).toBe(false);
+      expect(result.result).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error?.name).toEqual("NotImplementedError");
+      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED);
+      expect(result.error?.agentId).toEqual("PromptAgent");
+      expect(result.error?.message).toContain("executePrompt");
 
       // SDD-TODO: Update this test when the PromptAgent.executePrompt stub is implemented
-      // const result: ContractResult<PromptExecutionOutput, AgentError> =
-      //   await promptAgent.executePrompt(mockInput);
       // expect(result.result).toBeDefined();
       // expect(result.error).toBeUndefined();
       // expect(result.result?.response).toBeDefined();
@@ -121,54 +121,49 @@ describe("PromptAgent Contract Tests", () => {
       // expect(result.result?.response.length).toBeGreaterThan(0);
     });
 
-    test("should return an AgentError in ContractResult if prompt is missing for executePrompt", async () => {
+    test("should return a NotImplementedError if prompt is missing for executePrompt", async () => {
       const mockErrorInput: PromptExecutionInput = {
         requestingAgentId: mockRequestingAgentId,
         prompt: "", // Missing prompt
       };
-      // The stub currently throws "Method not implemented."
-      // We'll test for that specific error until the stub is updated.
-      try {
+
+      const result: ContractResult<PromptExecutionOutput, AgentError> =
         await promptAgent.executePrompt(mockErrorInput);
-        // Should not reach here
-        expect(true).toBe(false);
-      } catch (e: any) {
-        expect(e.message).toEqual("Method not implemented.");
-      }
+
+      // Currently returns NotImplementedError because method is not implemented
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+      expect(result.result).toBeUndefined();
+      expect(result.error?.name).toEqual("NotImplementedError");
+      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED);
+      expect(result.error?.agentId).toEqual("PromptAgent");
 
       // SDD-TODO: Update this test when the PromptAgent.executePrompt stub is implemented
-      // const result: ContractResult<PromptExecutionOutput, AgentError> =
-      //   await promptAgent.executePrompt(mockErrorInput);
-      // expect(result.error).toBeDefined();
-      // expect(result.result).toBeUndefined();
-      // expect(result.error?.name).toEqual("NotImplementedError"); // Or a more specific error
-      // expect(result.error?.category).toEqual(ErrorCategory.INVALID_INPUT);
-      // expect(result.error?.agentId).toEqual("PromptAgent");
+      // Should then return VALIDATION_ERROR instead
+      // expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR);
       // expect(result.error?.message).toContain("Prompt is required");
     });
 
-    test("should return an AgentError for executePrompt if requestingAgentId is missing", async () => {
+    test("should return a NotImplementedError for executePrompt if requestingAgentId is missing", async () => {
       const mockErrorInput: PromptExecutionInput = {
         requestingAgentId: "" as AgentId, // Missing requestingAgentId
         prompt: "Generate a TypeScript function.",
       };
-      // The stub currently throws "Method not implemented."
-      // We'll test for that specific error until the stub is updated.
-      try {
+
+      const result: ContractResult<PromptExecutionOutput, AgentError> =
         await promptAgent.executePrompt(mockErrorInput);
-        // Should not reach here
-        expect(true).toBe(false);
-      } catch (e: any) {
-        expect(e.message).toEqual("Method not implemented.");
-      }
+
+      // Currently returns NotImplementedError because method is not implemented
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+      expect(result.result).toBeUndefined();
+      expect(result.error?.name).toEqual("NotImplementedError");
+      expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED);
+      expect(result.error?.agentId).toEqual("PromptAgent");
+
       // SDD-TODO: Update this test when the PromptAgent.executePrompt stub is implemented
-      // const result: ContractResult<PromptExecutionOutput, AgentError> =
-      //   await promptAgent.executePrompt(mockErrorInput);
-      // expect(result.error).toBeDefined();
-      // expect(result.result).toBeUndefined();
-      // expect(result.error?.name).toEqual("NotImplementedError"); // Or a more specific error
-      // expect(result.error?.category).toEqual(ErrorCategory.INVALID_INPUT);
-      // expect(result.error?.agentId).toEqual("PromptAgent");
+      // Should then return VALIDATION_ERROR instead
+      // expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR);
       // expect(result.error?.message).toContain("requestingAgentId is required");
     });
   });

@@ -72,8 +72,8 @@ describe("QualityAgent Contract Tests", () => {
       expect(result.result).toBeUndefined();
       expect(result.error?.agentId).toEqual(mockQualityAgentId);
       expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId);
-      expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST);
-      expect(result.error?.message).toContain("Target path is required");
+      expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR);
+      expect(result.error?.message).toContain("targetPath cannot be empty");
     });
 
     test("should return an AgentError in ContractResult if checkTypes is empty", async () => {
@@ -90,8 +90,8 @@ describe("QualityAgent Contract Tests", () => {
       expect(result.result).toBeUndefined();
       expect(result.error?.agentId).toEqual(mockQualityAgentId);
       expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId);
-      expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST);
-      expect(result.error?.message).toContain("Check types are required");
+      expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR);
+      expect(result.error?.message).toContain("checkTypes cannot be empty");
     });
 
     test("should return issues if quality problems are found", async () => {

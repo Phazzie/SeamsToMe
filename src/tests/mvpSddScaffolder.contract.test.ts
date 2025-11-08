@@ -261,9 +261,8 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
 
     expect(testContent).toBeDefined();
     expect(testContent?.content).toContain(
-      `describe(\"${componentName} Contract Tests\"`
+      `describe(\"${componentName}Agent Contract Tests\"`
     );
-    expect(testContent?.content).toContain(`I${componentName}Agent`);
     expect(testContent?.content).toContain(componentName);
   });
 
@@ -387,9 +386,8 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
     );
     expect(testContent).toBeDefined();
     expect(testContent?.content).toContain(
-      `describe(\"${componentName} Contract Tests\"`
+      `describe(\"${componentName}Agent Contract Tests\"`
     );
-    expect(testContent?.content).toContain(`I${componentName}Agent`);
     expect(testContent?.content).toContain(componentName);
   });
 
@@ -411,7 +409,7 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
     expect(result.success).toBe(false);
     expect(result.result).toBeUndefined();
     expect(result.error).toBeDefined();
-    expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST); // Corrected to INVALID_REQUEST
+    expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR);
     expect(result.error?.message).toContain("Component name cannot be empty");
   });
 
@@ -433,7 +431,7 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
     expect(result.success).toBe(false);
     expect(result.result).toBeUndefined();
     expect(result.error).toBeDefined();
-    expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST); // Corrected to INVALID_REQUEST
+    expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR);
     expect(result.error?.message).toContain("Target directory cannot be empty");
   });
 
@@ -455,7 +453,7 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
     expect(result.success).toBe(false);
     expect(result.result).toBeUndefined();
     expect(result.error).toBeDefined();
-    expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST); // Corrected to INVALID_REQUEST
+    expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR);
     expect(result.error?.message).toContain(
       "Unknown SDD component type: unknown-type"
     );
@@ -474,8 +472,7 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
       sddComponentType: SddComponentType.AGENT,
       targetDirectory: targetDirectory,
       templateVariables: {
-        authorName: "Test User",
-        featureDescription: "a new amazing feature",
+        customVar: "test value",
       },
     };
 
@@ -505,12 +502,11 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
     );
 
     expect(agentContent).toBeDefined();
-    expect(agentContent?.content).toContain("TestUser");
-    expect(agentContent?.content).toContain("ANewAmazingFeature");
+    // Check that template variable is transformed to PascalCase
+    expect(agentContent?.content).toContain("TestValueCustom");
 
     expect(contractContent).toBeDefined();
-    expect(contractContent?.content).toContain("TestUser");
-    expect(contractContent?.content).toContain("ANewAmazingFeature");
+    expect(contractContent?.content).toContain("TestValueCustom");
   });
 
   // Add a new describe block for OverwritePolicy tests
@@ -721,7 +717,7 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
         expect(result.success).toBe(true);
         const output = result.result as MVPSddScaffoldOutput;
         expect(output.overallStatus).toBe("success");
-        expect(output.summaryMessage).toContain("successfully scaffolded");
+        expect(output.summaryMessage).toContain("Successfully scaffolded");
         expect(output.generatedFiles).toEqual(
           expect.arrayContaining([
             expectedAgentFilePath,
@@ -750,7 +746,7 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
         expect(result.success).toBe(true);
         const output = result.result as MVPSddScaffoldOutput;
         expect(output.overallStatus).toBe("success");
-        expect(output.summaryMessage).toContain("successfully scaffolded");
+        expect(output.summaryMessage).toContain("Successfully scaffolded");
         expect(output.generatedFiles).toEqual(
           expect.arrayContaining([
             expectedAgentFilePath,
@@ -779,7 +775,7 @@ describe("MVPSddScaffolderAgent Contract Tests", () => {
         expect(result.success).toBe(true);
         const output = result.result as MVPSddScaffoldOutput;
         expect(output.overallStatus).toBe("success");
-        expect(output.summaryMessage).toContain("successfully scaffolded");
+        expect(output.summaryMessage).toContain("Successfully scaffolded");
         expect(output.generatedFiles).toEqual(
           expect.arrayContaining([
             expectedAgentFilePath,

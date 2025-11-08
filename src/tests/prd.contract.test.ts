@@ -19,7 +19,7 @@ import {
 } from "../contracts/types";
 
 const mockRequestingAgentId: AgentId = "test-orchestrator";
-const mockPrdAgentId: AgentId = "prd-agent"; // This can be used when creating expected AgentError objects
+const mockPrdAgentId: AgentId = "PrdAgent"; // Match the actual agent ID from PrdAgent
 
 describe("PrdAgent Contract Tests", () => {
   let prdAgent: PRDAgentContract; // Changed from IPrdAgentContract
@@ -77,12 +77,12 @@ describe("PrdAgent Contract Tests", () => {
 
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
-      expect(result.error?.agentId).toEqual(mockPrdAgentId); // Assuming agent sets this ID when creating error
+      expect(result.error?.agentId).toEqual(mockPrdAgentId); // Matches PrdAgent's agentId
       // expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId); // AgentError does not have requestingAgentId
-      expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST); // Changed from INVALID_INPUT
+      expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR); // BaseAgent pattern
       expect(result.error?.message).toContain(
         "Conversation or requirements must be provided"
-      ); // Example error message
+      ); // PrdAgent's custom validation message
     });
   });
 
@@ -112,11 +112,11 @@ describe("PrdAgent Contract Tests", () => {
 
       expect(result.error).toBeDefined();
       expect(result.result).toBeUndefined();
-      expect(result.error?.agentId).toEqual(mockPrdAgentId); // Assuming agent sets this ID
+      expect(result.error?.agentId).toEqual(mockPrdAgentId); // Matches PrdAgent's agentId
       // expect(result.error?.requestingAgentId).toEqual(mockRequestingAgentId); // AgentError does not have requestingAgentId
-      expect(result.error?.category).toEqual(ErrorCategory.INVALID_REQUEST); // Changed from INVALID_INPUT
+      expect(result.error?.category).toEqual(ErrorCategory.VALIDATION_ERROR); // BaseAgent pattern
       expect(result.error?.message).toContain(
-        "PRD content is required for review" // Example error message
+        "prdContent cannot be empty" // BaseAgent validation message
       );
     });
   });

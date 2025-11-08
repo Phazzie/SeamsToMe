@@ -50,9 +50,9 @@ export interface AgentError {
   category: ErrorCategory;
   agentId: AgentId;
   taskId?: TaskId;
-  details?: any; // Changed from Record<string, any> to any
+  details?: Record<string, unknown>; // Type-safe but flexible
   requestingAgentId?: AgentId; // Added: To track who made the request
-  data?: any; // Added: For arbitrary data related to the error, like the original request
+  data?: Record<string, unknown>; // Type-safe but flexible
   methodName?: string; // Added
 }
 
@@ -63,7 +63,7 @@ export function createAgentError(
   category: ErrorCategory,
   name: string = "AgentError", // Default name
   requestingAgentId?: AgentId,
-  details?: any, // Changed from 'data' to 'details' to match interface
+  details?: Record<string, unknown>, // Type-safe but flexible
   taskId?: TaskId
 ): AgentError {
   return {
@@ -121,13 +121,52 @@ export function failure<T, E extends AgentError = AgentError>(
   return { success: false, error };
 }
 
+/**
+ * Common error detail types for better type safety
+ */
+export interface StackTraceDetails extends Record<string, unknown> {
+  originalError: string;
+  stack?: string;
+}
+
+export interface OperationDetails extends Record<string, unknown> {
+  operation: string;
+  targetPath?: string;
+  attemptCount?: number;
+}
+
+export interface ValidationDetails extends Record<string, unknown> {
+  field: string;
+  providedValue?: unknown;
+  expectedFormat?: string;
+  constraint?: string;
+}
+
+export interface DispatchDetails extends Record<string, unknown> {
+  agentId: AgentId;
+  action: string;
+  availableAgents?: AgentId[];
+  availableActions?: string[];
+}
+
+/**
+ * Helper to create type-safe error details
+ */
+export function createErrorDetails<T extends Record<string, unknown>>(
+  details: T
+): Record<string, unknown> {
+  return details;
+}
+
 // Type guard to check if an object is an AgentError
-export function isAgentError(obj: any): obj is AgentError {
+export function isAgentError(obj: unknown): obj is AgentError {
   return (
-    obj &&
-    typeof obj.name === "string" &&
-    typeof obj.message === "string" &&
-    typeof obj.agentId === "string" &&
-    Object.values(ErrorCategory).includes(obj.category)
+    obj !== null &&
+    obj !== undefined &&
+    typeof obj === "object" &&
+    typeof (obj as AgentError).name === "string" &&
+    typeof (obj as AgentError).message === "string" &&
+    typeof (obj as AgentError).agentId === "string" &&
+    Object.values(ErrorCategory).includes((obj as AgentError).category)
   );
 }

@@ -155,8 +155,8 @@ describe("ApiReaderAgent Contract Tests", () => {
       expect(result.error?.name).toEqual("NotImplementedError"); // Stub returns this
       expect(result.error?.category).toEqual(ErrorCategory.NOT_IMPLEMENTED); // Stub returns this
       expect(result.error?.agentId).toEqual("api-reader-agent");
-      // The stub includes the requestingAgentId in the error details, even if empty.
-      expect(result.error?.details?.requestingAgentId).toEqual("");
+      // The requestingAgentId is included as a top-level property, even if empty
+      expect(result.error?.requestingAgentId).toEqual("");
       // Ideal error for a full implementation:
       // expect(result.error?.message).toContain("requestingAgentId is required");
     });

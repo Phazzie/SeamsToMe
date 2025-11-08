@@ -20,45 +20,97 @@ import {
   AgentError,
   AgentId,
   ContractResult,
-  createAgentError,
-  ErrorCategory,
-  failure,
   success,
+  failure,
 } from "../contracts/types";
+import { IAIService } from "../contracts/ai-service.contract";
+import { BaseAgent } from "./base.agent";
 
 /**
- * Knowledge Agent - Stub Implementation
+ * Knowledge Agent - AI-Powered Implementation
  *
- * This is an intentionally minimal implementation per SDD principles.
- * The focus is on contract conformance rather than full functionality.
+ * Uses semantic search for intelligent knowledge retrieval.
+ * Replaces keyword matching heuristics with AI-powered similarity.
  */
-export class KnowledgeAgent implements KnowledgeContract {
+export class KnowledgeAgent extends BaseAgent implements KnowledgeContract {
+  protected readonly agentId = "knowledge-agent" as const;
   private knowledgeStore: Map<string, KnowledgeItem> = new Map();
+  private aiService?: IAIService;
+
+  constructor(aiService?: IAIService) {
+    super();
+    this.aiService = aiService;
+  }
 
   /**
    * Retrieve knowledge based on a query
+   * Uses AI-powered semantic search for intelligent retrieval
    */
   async retrieveKnowledge(
     request: KnowledgeInput
   ): Promise<ContractResult<KnowledgeOutput, AgentError>> {
-    try {
-      // TODO: Implement contract conformance tests for this seam
+    return this.withErrorHandling(async () => {
+      // Validate request and query
+      const agentId = request.requestingAgentId;
+      if (!this.validateRequest(request, agentId)) {
+        return failure(
+          this.createValidationError("request", "Request is required", agentId)
+        );
+      }
 
-      // Minimal stub implementation
+      const validation = this.validateFields({
+        query: { value: request.query, type: "nonEmpty" },
+      }, request.requestingAgentId);
+      if (!validation.success) return validation;
+
       const startTime = Date.now();
 
-      // * HIGHLIGHT: This stub is intentionally minimal per SDD
-      const matchingItems: KnowledgeItem[] = [];
+      // Filter by domain if specified
+      let candidateItems = Array.from(this.knowledgeStore.values());
+      if (request.domain) {
+        candidateItems = candidateItems.filter(
+          (item) => item.metadata.domain === request.domain
+        );
+      }
 
-      // Simple keyword matching (would be replaced with proper search in real implementation)
-      for (const item of this.knowledgeStore.values()) {
-        if (request.domain && item.metadata.domain !== request.domain) {
-          continue;
-        }
+      if (candidateItems.length === 0) {
+        return success({
+          items: [],
+          totalResults: 0,
+          query: request.query,
+          executionTime: Date.now() - startTime,
+        });
+      }
 
-        if (item.content.toLowerCase().includes(request.query.toLowerCase())) {
-          matchingItems.push(item);
+      // Use AI semantic search if available, otherwise fall back to keyword matching
+      let matchingItems: KnowledgeItem[] = [];
+
+      if (this.aiService) {
+        // AI-powered semantic search
+        const documents = candidateItems.map((item) => ({
+          id: item.id,
+          content: item.content,
+          metadata: item.metadata,
+        }));
+
+        const searchResult = await this.aiService.semanticSearch({
+          query: request.query,
+          documents,
+          topK: request.maxResults || 10,
+        });
+
+        if (searchResult.success) {
+          // Map search results back to KnowledgeItems
+          matchingItems = searchResult.result
+            .map((result) => this.knowledgeStore.get(result.id))
+            .filter((item): item is KnowledgeItem => item !== undefined);
+        } else {
+          // AI search failed, fall back to keyword matching
+          matchingItems = this.keywordSearch(candidateItems, request.query);
         }
+      } else {
+        // No AI service available, use keyword matching
+        matchingItems = this.keywordSearch(candidateItems, request.query);
       }
 
       const executionTime = Date.now() - startTime;
@@ -69,16 +121,16 @@ export class KnowledgeAgent implements KnowledgeContract {
         query: request.query,
         executionTime,
       });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "knowledge-agent",
-          error.message || "Failed to retrieve knowledge",
-          ErrorCategory.OPERATION_FAILED,
-          "KnowledgeRetrievalError"
-        )
-      );
-    }
+    }, "retrieveKnowledge", request.requestingAgentId);
+  }
+
+  /**
+   * Fallback keyword search when AI is not available
+   */
+  private keywordSearch(items: KnowledgeItem[], query: string): KnowledgeItem[] {
+    return items.filter((item) =>
+      item.content.toLowerCase().includes(query.toLowerCase())
+    );
   }
 
   /**
@@ -88,8 +140,18 @@ export class KnowledgeAgent implements KnowledgeContract {
     item: StoreKnowledgeInput,
     agentId: AgentId
   ): Promise<ContractResult<StoreKnowledgeOutput, AgentError>> {
-    try {
-      // ? QUESTION: Is the error handling strategy sufficient for all edge cases?
+    return this.withErrorHandling(async () => {
+      // Validate item and required fields
+      if (!this.validateRequest(item, agentId)) {
+        return failure(
+          this.createValidationError("item", "Item is required", agentId)
+        );
+      }
+
+      const validation = this.validateFields({
+        content: { value: item.content, type: "nonEmpty" },
+      }, agentId);
+      if (!validation.success) return validation;
 
       // Generate a simple ID (would be more sophisticated in real implementation)
       const id = `knowledge-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -102,49 +164,65 @@ export class KnowledgeAgent implements KnowledgeContract {
       this.knowledgeStore.set(id, knowledgeItem);
 
       return success(id);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "knowledge-agent",
-          error.message || "Failed to store knowledge",
-          ErrorCategory.OPERATION_FAILED,
-          "KnowledgeStorageError"
-        )
-      );
-    }
+    }, "storeKnowledge", agentId);
   }
 
   /**
    * Check if knowledge exists for a specific query
+   * Uses AI-powered semantic matching for intelligent detection
    */
   async hasKnowledge(
     query: string,
     domain?: KnowledgeDomain
   ): Promise<ContractResult<HasKnowledgeOutput, AgentError>> {
-    try {
-      // ! WARNING: This agent is tightly coupled—consider refactoring
+    return this.withErrorHandling(async () => {
+      // Validate query
+      if (!this.validateNonEmpty(query, "query")) {
+        return failure(
+          this.createValidationError("query", "query cannot be empty")
+        );
+      }
 
-      // Simplified check (would be more sophisticated in real implementation)
-      for (const item of this.knowledgeStore.values()) {
-        if (domain && item.metadata.domain !== domain) {
-          continue;
+      // Filter by domain if specified
+      let candidateItems = Array.from(this.knowledgeStore.values());
+      if (domain) {
+        candidateItems = candidateItems.filter(
+          (item) => item.metadata.domain === domain
+        );
+      }
+
+      if (candidateItems.length === 0) {
+        return success(false);
+      }
+
+      // Use AI semantic search if available with topK=1 to check for relevant matches
+      if (this.aiService) {
+        const documents = candidateItems.map((item) => ({
+          id: item.id,
+          content: item.content,
+          metadata: item.metadata,
+        }));
+
+        const searchResult = await this.aiService.semanticSearch({
+          query,
+          documents,
+          topK: 1,
+        });
+
+        if (searchResult.success && searchResult.result.length > 0) {
+          // Consider it a match if the top result has a score > 0.5
+          return success(searchResult.result[0].score > 0.5);
         }
+      }
 
+      // Fallback: keyword matching
+      for (const item of candidateItems) {
         if (item.content.toLowerCase().includes(query.toLowerCase())) {
           return success(true);
         }
       }
 
       return success(false);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "knowledge-agent",
-          error.message || "Failed to check knowledge existence",
-          ErrorCategory.OPERATION_FAILED,
-          "KnowledgeCheckError"
-        )
-      );
-    }
+    }, "hasKnowledge");
   }
 }

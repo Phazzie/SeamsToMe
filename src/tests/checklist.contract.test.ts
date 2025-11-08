@@ -96,7 +96,7 @@ describe("Checklist Contract Conformance", () => {
       if (result.success) return; // Type guard
       const error = result.error as AgentError;
       expect(error).toBeDefined();
-      expect(error.category).toEqual("INVALID_REQUEST");
+      expect(error.category).toEqual("VALIDATION_ERROR");
       expect(error.agentId).toEqual("checklist-agent");
     });
   });
@@ -133,7 +133,7 @@ describe("Checklist Contract Conformance", () => {
       const error = result.error as AgentError;
       expect(error).toBeDefined();
       expect(error.message).toContain(`Format ${format} not supported yet`);
-      expect(error.category).toEqual("INVALID_REQUEST");
+      expect(error.category).toEqual("VALIDATION_ERROR");
       expect(error.agentId).toEqual("checklist-agent");
     });
 
@@ -148,7 +148,7 @@ describe("Checklist Contract Conformance", () => {
       if (result.success) return; // Type guard
       const error = result.error as AgentError;
       expect(error).toBeDefined();
-      expect(error.category).toEqual("INVALID_REQUEST");
+      expect(error.category).toEqual("VALIDATION_ERROR");
       expect(error.agentId).toEqual("checklist-agent");
     });
   });

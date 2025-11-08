@@ -18,11 +18,11 @@ import {
 } from "../contracts/changelog.contract";
 import {
   ContractResult,
-  createAgentError,
   ErrorCategory,
   failure,
   success,
 } from "../contracts/types";
+import { BaseAgent } from "./base.agent";
 
 /**
  * Changelog Agent - Stub Implementation
@@ -30,7 +30,8 @@ import {
  * This is an intentionally minimal implementation per SDD principles.
  * The focus is on contract conformance rather than full functionality.
  */
-export class ChangelogAgent implements ChangelogContract {
+export class ChangelogAgent extends BaseAgent implements ChangelogContract {
+  protected readonly agentId = "changelog-agent" as const;
   private changes: Map<string, ChangeRecord> = new Map();
   /**
    * Record a new change in the system
@@ -38,7 +39,7 @@ export class ChangelogAgent implements ChangelogContract {
   async recordChange(
     request: RecordChangeInput
   ): Promise<ContractResult<string>> {
-    try {
+    return this.withErrorHandling(async () => {
       // Generate a unique ID for the change
       const changeId = `change-${Date.now()}-${Math.floor(
         Math.random() * 1000
@@ -53,16 +54,7 @@ export class ChangelogAgent implements ChangelogContract {
 
       this.changes.set(changeId, changeRecord);
       return success(changeId);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "changelog-agent",
-          error.message || "Failed to record change",
-          ErrorCategory.OPERATION_FAILED,
-          "RecordChangeError"
-        )
-      );
-    }
+    }, "recordChange");
   }
   /**
    * Get changes matching the specified criteria
@@ -70,7 +62,7 @@ export class ChangelogAgent implements ChangelogContract {
   async getChanges(
     request: ChangelogInput
   ): Promise<ContractResult<ChangelogOutput>> {
-    try {
+    return this.withErrorHandling(async () => {
       // Filter changes based on request parameters
       let filteredChanges = Array.from(this.changes.values());
 
@@ -117,24 +109,15 @@ export class ChangelogAgent implements ChangelogContract {
       }
 
       if (request.includeBreakingOnly) {
-        filteredChanges = filteredChanges.filter((c) => c.breaking);
+        filteredChanges = this.filterBreakingChanges(filteredChanges);
       }
 
       return success({
         changes: filteredChanges,
         totalChanges: filteredChanges.length,
-        breakingChanges: filteredChanges.filter((c) => c.breaking).length,
+        breakingChanges: this.countBreakingChanges(filteredChanges),
       });
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "changelog-agent",
-          error.message || "Failed to get changes",
-          ErrorCategory.OPERATION_FAILED,
-          "GetChangesError"
-        )
-      );
-    }
+    }, "getChanges");
   }
   /**
    * Generate a formatted changelog
@@ -143,7 +126,7 @@ export class ChangelogAgent implements ChangelogContract {
     request: ChangelogInput,
     format: string
   ): Promise<ContractResult<string>> {
-    try {
+    return this.withErrorHandling(async () => {
       // ! WARNING: This agent is tightly coupled—consider refactoring
 
       // Get filtered changes
@@ -155,11 +138,9 @@ export class ChangelogAgent implements ChangelogContract {
       // Stub implementation for markdown format
       if (format.toLowerCase() !== "markdown") {
         return failure(
-          createAgentError(
-            "changelog-agent",
-            `Format ${format} not supported yet`,
-            ErrorCategory.VALIDATION_ERROR,
-            "UnsupportedFormatError"
+          this.createValidationError(
+            "format",
+            `Format ${format} not supported yet`
           )
         );
       }
@@ -199,16 +180,7 @@ export class ChangelogAgent implements ChangelogContract {
 
       // NOTE: Update contract version and notify all consumers when full implementation is ready
       return success(changelog);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "changelog-agent",
-          error.message || "Failed to generate changelog",
-          ErrorCategory.OPERATION_FAILED,
-          "GenerateChangelogError"
-        )
-      );
-    }
+    }, "generateChangelog");
   }
   /**
    * Get breaking changes that require migration
@@ -216,7 +188,7 @@ export class ChangelogAgent implements ChangelogContract {
   async getBreakingChanges(
     since?: Date
   ): Promise<ContractResult<ChangeRecord[]>> {
-    try {
+    return this.withErrorHandling(async () => {
       const request: ChangelogInput = {
         since,
         includeBreakingOnly: true,
@@ -228,16 +200,7 @@ export class ChangelogAgent implements ChangelogContract {
       }
 
       return success(changesResult.result.changes);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "changelog-agent",
-          error.message || "Failed to get breaking changes",
-          ErrorCategory.OPERATION_FAILED,
-          "GetBreakingChangesError"
-        )
-      );
-    }
+    }, "getBreakingChanges");
   }
 
   /**
@@ -246,7 +209,7 @@ export class ChangelogAgent implements ChangelogContract {
   async generateTurnoverMessage(
     request: TurnoverMessageRequest
   ): Promise<ContractResult<string>> {
-    try {
+    return this.withErrorHandling(async () => {
       const projectName = request.projectName || "SeemsToMe";
       const timeRange = request.timeRange || {
         since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -289,16 +252,7 @@ export class ChangelogAgent implements ChangelogContract {
       }
 
       return success(turnoverMessage);
-    } catch (error: any) {
-      return failure(
-        createAgentError(
-          "changelog-agent",
-          error.message || "Failed to generate turnover message",
-          ErrorCategory.OPERATION_FAILED,
-          "GenerateTurnoverError"
-        )
-      );
-    }
+    }, "generateTurnoverMessage");
   }
 
   /**
@@ -316,7 +270,7 @@ export class ChangelogAgent implements ChangelogContract {
     const completedChanges = changes.filter(
       (c) => c.type === "FEATURE" || c.type === "BUGFIX"
     );
-    const breakingChanges = changes.filter((c) => c.breaking);
+    const breakingChanges = this.filterBreakingChanges(changes);
 
     message += `## ✅ MISSION STATUS\n\n`;
     message += `**Recent Activity**: ${changes.length} changes recorded in analysis period\n`;
@@ -422,7 +376,7 @@ export class ChangelogAgent implements ChangelogContract {
 
     message += `MISSION STATUS:\n`;
     message += `- Total Changes: ${changes.length}\n`;
-    message += `- Breaking Changes: ${changes.filter((c) => c.breaking).length}\n\n`;
+    message += `- Breaking Changes: ${this.countBreakingChanges(changes)}\n\n`;
 
     if (changes.length > 0) {
       message += `RECENT ACCOMPLISHMENTS:\n`;
@@ -467,5 +421,21 @@ export class ChangelogAgent implements ChangelogContract {
     });
 
     return grouped;
+  }
+
+  /**
+   * Filter breaking changes from a list of changes
+   * Eliminates duplicate filter((c) => c.breaking) pattern
+   */
+  private filterBreakingChanges(changes: ChangeRecord[]): ChangeRecord[] {
+    return changes.filter((c) => c.breaking);
+  }
+
+  /**
+   * Count breaking changes in a list
+   * Eliminates duplicate filter((c) => c.breaking).length pattern
+   */
+  private countBreakingChanges(changes: ChangeRecord[]): number {
+    return this.filterBreakingChanges(changes).length;
   }
 }

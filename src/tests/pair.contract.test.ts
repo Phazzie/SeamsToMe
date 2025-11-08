@@ -70,7 +70,7 @@ describe("PairAgent Contract Tests", () => {
       if (!result.success) {
         expect(result.error.agentId).toEqual((pairAgent as PairAgent).agentId);
         expect(result.error.requestingAgentId).toEqual(mockRequestingAgentId);
-        expect(result.error.category).toEqual(ErrorCategory.INVALID_REQUEST); // Corrected category
+        expect(result.error.category).toEqual(ErrorCategory.VALIDATION_ERROR); // BaseAgent uses VALIDATION_ERROR
         expect(result.error.message).toContain(
           "Contract definition is required"
         );
@@ -91,7 +91,7 @@ describe("PairAgent Contract Tests", () => {
       if (!result.success) {
         expect(result.error.agentId).toEqual((pairAgent as PairAgent).agentId);
         expect(result.error.requestingAgentId).toEqual(mockRequestingAgentId);
-        expect(result.error.category).toEqual(ErrorCategory.INVALID_REQUEST); // Corrected category
+        expect(result.error.category).toEqual(ErrorCategory.VALIDATION_ERROR); // BaseAgent uses VALIDATION_ERROR
         expect(result.error.message).toContain("Target language is required");
       }
     });

@@ -1,89 +1,284 @@
 /**
- * Seam Analyzer Agent Stub
+ * Seam Analyzer Agent - AI-Powered Implementation
  *
- * Purpose: Analyzes code/docs to detect seams and integration points.
+ * Purpose: Analyzes code/docs to detect seams and integration points using AI.
  * Data Flow: Receives code/doc input, outputs seam analysis results.
- * Integration: Invoked by orchestrator; may call other agents for context.
+ * Integration: Invoked by orchestrator; uses AIService for intelligent analysis.
  *
- * SDD: Minimal stub implementing contract, with mock returns for all methods.
+ * SDD: Full implementation using AI to replace heuristic-based seam detection.
  */
 import {
   AnalyzerAgentContract,
   AnalyzerInput,
   AnalyzerOutput,
+  SeamInfo,
 } from "../contracts/analyzer.contract";
 import {
   AgentId,
   ContractResult,
-  createAgentError,
   ErrorCategory,
   failure,
   success,
-} from "../contracts/types"; // Added AgentId, AgentError, ErrorCategory, success, failure, createAgentError
+} from "../contracts/types";
+import { IAIService } from "../contracts/ai-service.contract";
+import { parseEnum } from "../utils/enumParser";
+import { validateTargetDirectory } from "../utils/pathValidation";
+import { BaseAgent } from "./base.agent";
+import * as fs from "fs";
+import * as path from "path";
 
-const AGENT_ID: AgentId = "AnalyzerAgent"; // Define agentId for this agent
+export class AnalyzerAgent extends BaseAgent implements AnalyzerAgentContract {
+  protected readonly agentId: AgentId = "AnalyzerAgent";
+  private aiService?: IAIService;
 
-export class AnalyzerAgent implements AnalyzerAgentContract {
-  public readonly agentId: AgentId = AGENT_ID; // Expose agentId
-
-  constructor() {
-    /* SDD-TODO: Initialize any dependencies here */
+  constructor(aiService?: IAIService) {
+    super();
+    this.aiService = aiService;
   }
 
-  // SDD-Blueprint: Analyzes the codebase and documentation to identify seams, integration points, and potential risks.
-  // It takes paths to the codebase and docs, and returns a structured analysis of identified seams.
   async analyzeSeams(
-    request: AnalyzerInput // AnalyzerInput is an alias for SeamAnalysisRequest
+    request: AnalyzerInput
   ): Promise<ContractResult<AnalyzerOutput>> {
-    // Validate request
-    if (!request.codebasePath || !request.requestingAgentId) {
-      return failure(
-        createAgentError(
-          this.agentId, // Use this agent's ID
-          "Invalid request: Missing codebasePath or requestingAgentId",
-          ErrorCategory.INVALID_REQUEST,
-          "InvalidSeamAnalysisRequest",
-          request.requestingAgentId, // Pass through the original requestingAgentId if available
-          { request }
-        )
+    return this.withErrorHandling(async () => {
+      // Validate request fields
+      const validation = this.validateFields(
+        {
+          codebasePath: { value: request.codebasePath, type: "nonEmpty" },
+          requestingAgentId: { value: request.requestingAgentId, type: "nonEmpty" },
+        },
+        request.requestingAgentId
       );
+      if (!validation.success) return validation;
+
+      // Check if AI service is available
+      if (!this.aiService) {
+        return failure(
+          this.createError(
+            "AI service not available. AnalyzerAgent requires AI service to function.",
+            ErrorCategory.AGENT_UNAVAILABLE,
+            "AnalyzerAgentError",
+            request.requestingAgentId
+          )
+        );
+      }
+
+      // Read codebase files
+      const codebaseContent = await this.readCodebase(request.codebasePath);
+      if (!codebaseContent || codebaseContent.trim() === "") {
+        return failure(
+          this.createError(
+            `Failed to read codebase at path: ${request.codebasePath}`,
+            ErrorCategory.FILE_SYSTEM_ERROR,
+            "CodebaseReadError",
+            request.requestingAgentId,
+            { path: request.codebasePath }
+          )
+        );
+      }
+
+      // Read documentation if provided
+      let docsContent = "";
+      if (request.docsPath) {
+        docsContent = await this.readCodebase(request.docsPath);
+      }
+
+      // Prepare AI analysis request
+      const instructions = `Analyze this codebase following Seam-Driven Development (SDD) principles to identify:
+
+1. **Seams**: Clear boundaries/contracts between components (interfaces, APIs, integration points)
+2. **Integration Points**: Where different components/modules interact
+3. **Risk Assessment**: Potential issues in the identified seams
+4. **Agent Identification**: Which agents/components are involved in each seam
+
+Codebase:
+\`\`\`
+${codebaseContent.substring(0, 8000)}${codebaseContent.length > 8000 ? "\n... (truncated)" : ""}
+\`\`\`
+${docsContent ? `\n\nDocumentation:\n\`\`\`\n${docsContent.substring(0, 2000)}\n\`\`\`\n` : ""}
+
+Provide analysis in JSON format:
+{
+  "seams": [
+    {
+      "seamId": "unique-identifier",
+      "agents": ["agent1", "agent2"],
+      "description": "What this seam represents",
+      "status": "ACTIVE" | "DEPRECATED" | "PLANNED",
+      "riskLevel": "LOW" | "MEDIUM" | "HIGH"
+    }
+  ],
+  "issues": [
+    {
+      "severity": "ERROR" | "WARNING" | "INFO",
+      "message": "Issue description",
+      "location": "file or component",
+      "suggestion": "How to fix"
+    }
+  ]
+}`;
+
+      const analysisResult = await this.aiService.analyze({
+        content: codebaseContent,
+        analysisType: "code",
+        instructions,
+        context: {
+          codebasePath: request.codebasePath,
+          docsPath: request.docsPath,
+        },
+      });
+
+      if (!analysisResult.success) {
+        return failure(
+          this.createOperationError(
+            "AI analysis",
+            analysisResult.error,
+            request.requestingAgentId
+          )
+        );
+      }
+
+      // Parse AI response
+      const aiResult = analysisResult.result;
+      let seamAnalysis: AnalyzerOutput;
+
+      // Try to extract structured data from details
+      if (aiResult.details && typeof aiResult.details === "object") {
+        seamAnalysis = {
+          seams: this.parseSeams(aiResult.details.seams || []),
+          issues: aiResult.details.issues || [],
+        };
+      } else {
+        // Fallback: construct from unstructured response
+        seamAnalysis = {
+          seams: this.createSeamsFromInsights(aiResult.insights),
+          issues: [
+            {
+              severity: "INFO",
+              message: aiResult.summary,
+              location: request.codebasePath,
+            },
+          ],
+        };
+      }
+
+      // Add recommendations as issues
+      if (aiResult.recommendations && aiResult.recommendations.length > 0) {
+        aiResult.recommendations.forEach((rec) => {
+          seamAnalysis.issues = seamAnalysis.issues || [];
+          seamAnalysis.issues.push({
+            severity: "INFO",
+            message: rec,
+            location: request.codebasePath,
+          });
+        });
+      }
+
+      return success(seamAnalysis);
+    }, "Analysis", request.requestingAgentId);
+  }
+
+  /**
+   * Read codebase content from a path
+   */
+  private async readCodebase(targetPath: string): Promise<string> {
+    try {
+      // Validate path for security
+      const pathResult = validateTargetDirectory(targetPath);
+      if (!pathResult.success) {
+        return ""; // Return empty for invalid paths
+      }
+      const safePath = pathResult.result;
+
+      if (!fs.existsSync(safePath)) {
+        return "";
+      }
+
+      const stats = fs.statSync(safePath);
+
+      if (stats.isFile()) {
+        return fs.readFileSync(safePath, "utf-8");
+      } else if (stats.isDirectory()) {
+        // Read multiple files from directory
+        const files = fs.readdirSync(safePath);
+        let content = "";
+
+        for (const file of files.slice(0, 10)) {
+          // Limit to first 10 files
+          const filePath = path.join(safePath, file);
+          const fileStats = fs.statSync(filePath);
+
+          if (
+            fileStats.isFile() &&
+            (file.endsWith(".ts") ||
+              file.endsWith(".js") ||
+              file.endsWith(".md"))
+          ) {
+            const fileContent = fs.readFileSync(filePath, "utf-8");
+            content += `\n\n// File: ${file}\n${fileContent.substring(0, 2000)}`;
+          }
+        }
+
+        return content;
+      }
+
+      return "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  /**
+   * Parse seams from AI response
+   */
+  private parseSeams(seamsData: any[]): SeamInfo[] {
+    if (!Array.isArray(seamsData)) {
+      return [];
     }
 
-    // SDD-TODO: Implement actual business logic here.
-    // For now, returning a mock success or a specific error based on input for testing.
-
-    if (request.codebasePath === "problematic/path") {
-      return failure(
-        createAgentError(
-          this.agentId,
-          "Simulated analysis error",
-          ErrorCategory.INTERNAL_ERROR,
-          "AnalysisError",
-          request.requestingAgentId,
-          { details: "Failed to process problematic/path" }
-        )
-      );
+    const parsed: SeamInfo[] = [];
+    for (let idx = 0; idx < seamsData.length; idx++) {
+      const seam = seamsData[idx];
+      try {
+        parsed.push({
+          seamId: seam.seamId || `seam-${idx}`,
+          agents: Array.isArray(seam.agents) ? seam.agents : [this.agentId],
+          description: seam.description || "Identified seam",
+          status: this.parseSeamStatus(seam.status),
+          riskLevel: this.parseRiskLevel(seam.riskLevel),
+        });
+      } catch {
+        // Skip invalid seams
+      }
     }
+    return parsed;
+  }
 
-    // MOCK: Return a minimal seam analysis result for other valid requests
-    const mockOutput: AnalyzerOutput = {
-      seams: [
-        {
-          seamId: "mockSeam123",
-          agents: [this.agentId, request.requestingAgentId],
-          description: "A mock seam identified during analysis.",
-          status: "ACTIVE",
-          riskLevel: "LOW",
-        },
-      ],
-      issues: [
-        {
-          severity: "INFO",
-          message: "Mock analysis completed successfully.",
-          location: request.codebasePath,
-        },
-      ],
-    };
-    return success(mockOutput);
+  /**
+   * Create seams from unstructured insights
+   */
+  private createSeamsFromInsights(insights: string[]): SeamInfo[] {
+    return insights.map((insight, idx) => ({
+      seamId: `seam-insight-${idx}`,
+      agents: [this.agentId],
+      description: insight,
+      status: "ACTIVE" as const,
+      riskLevel: "MEDIUM" as const,
+    }));
+  }
+
+  /**
+   * Parse seam status using shared enum parser utility
+   */
+  private parseSeamStatus(
+    status: any
+  ): "ACTIVE" | "DEPRECATED" | "PLANNED" {
+    return parseEnum(status, ["ACTIVE", "DEPRECATED", "PLANNED"], "ACTIVE");
+  }
+
+  /**
+   * Parse risk level using shared enum parser utility
+   */
+  private parseRiskLevel(level: any): "LOW" | "MEDIUM" | "HIGH" {
+    return parseEnum(level, ["LOW", "MEDIUM", "HIGH"], "MEDIUM");
   }
 }
