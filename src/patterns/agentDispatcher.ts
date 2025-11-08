@@ -18,7 +18,7 @@ import { AgentRegistry } from "./agentRegistry";
 /**
  * Request format for agent dispatch
  */
-export interface DispatchRequest {
+export interface DispatchRequest<TPayload = unknown> {
   /** Target agent ID */
   agentId: AgentId;
 
@@ -26,7 +26,7 @@ export interface DispatchRequest {
   action: string;
 
   /** Payload to pass to the agent method */
-  payload: any;
+  payload: TPayload;
 
   /** Optional requesting agent ID for error context */
   requestingAgentId?: AgentId;
@@ -61,7 +61,9 @@ export class AgentDispatcher {
    * @param request Dispatch request
    * @returns Result from the agent method
    */
-  async dispatch(request: DispatchRequest): Promise<ContractResult<any>> {
+  async dispatch<TResult = unknown, TPayload = unknown>(
+    request: DispatchRequest<TPayload>
+  ): Promise<ContractResult<TResult>> {
     // Validate request
     if (!request || !request.agentId || !request.action) {
       return failure(
@@ -116,7 +118,10 @@ export class AgentDispatcher {
 
     // Invoke method
     try {
-      const result = await method.call(registration.instance, request.payload);
+      const result = await (method as Function).call(
+        registration.instance,
+        request.payload
+      ) as ContractResult<TResult>;
       return result;
     } catch (error: any) {
       return failure(

@@ -35,8 +35,12 @@ export class RefactorAgent extends BaseAgent implements IRefactorAgent {
   ): Promise<ContractResult<RefactorOutput>> {
     return this.withErrorHandling(async () => {
       // Validate request
-      const requestValidation = this.validateRequest(request, request?.requestingAgentId);
-      if (!requestValidation.success) return requestValidation;
+      const agentId = request?.requestingAgentId;
+      if (!this.validateRequest(request, agentId)) {
+        return failure(
+          this.createValidationError("request", "Request is required", agentId)
+        );
+      }
 
       // Validate fields
       const fieldsValidation = this.validateFields({

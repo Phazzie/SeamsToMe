@@ -36,89 +36,61 @@ export abstract class BaseAgent {
 
   /**
    * Validate that a value is not null or undefined
+   * Returns a type guard for type safety
    */
-  protected validateRequired(
-    value: any,
+  protected validateRequired<T>(
+    value: T | null | undefined,
     fieldName: string,
     requestingAgentId?: AgentId
-  ): ContractResult<void> {
+  ): value is T {
     if (value === null || value === undefined) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          `${fieldName} is required`,
-          ErrorCategory.VALIDATION_ERROR,
-          "ValidationError",
-          requestingAgentId
-        )
-      );
+      return false;
     }
-    return success(undefined);
+    return true;
   }
 
   /**
    * Validate that a string is not empty
+   * Returns a type guard for type safety
    */
   protected validateNonEmpty(
-    value: string | undefined | null,
+    value: string | null | undefined,
     fieldName: string,
     requestingAgentId?: AgentId
-  ): ContractResult<void> {
-    if (!value || value.trim() === "") {
-      return failure(
-        createAgentError(
-          this.agentId,
-          `${fieldName} cannot be empty`,
-          ErrorCategory.VALIDATION_ERROR,
-          "ValidationError",
-          requestingAgentId
-        )
-      );
+  ): value is string {
+    if (!value || typeof value !== 'string' || value.trim() === "") {
+      return false;
     }
-    return success(undefined);
+    return true;
   }
 
   /**
    * Validate that an array is not empty
+   * Returns a type guard for type safety
    */
-  protected validateNonEmptyArray(
-    value: any[] | undefined | null,
+  protected validateNonEmptyArray<T>(
+    value: T[] | undefined | null,
     fieldName: string,
     requestingAgentId?: AgentId
-  ): ContractResult<void> {
-    if (!value || value.length === 0) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          `${fieldName} cannot be empty`,
-          ErrorCategory.VALIDATION_ERROR,
-          "ValidationError",
-          requestingAgentId
-        )
-      );
+  ): value is T[] {
+    if (!Array.isArray(value) || value.length === 0) {
+      return false;
     }
-    return success(undefined);
+    return true;
   }
 
   /**
    * Validate request object exists
+   * Returns a type guard for type safety
    */
-  protected validateRequest(
-    request: any,
+  protected validateRequest<T>(
+    request: T | null | undefined,
     requestingAgentId?: AgentId
-  ): ContractResult<void> {
+  ): request is T {
     if (!request) {
-      return failure(
-        createAgentError(
-          this.agentId,
-          "Request is null or undefined",
-          ErrorCategory.BAD_REQUEST,
-          "BadRequestError",
-          requestingAgentId
-        )
-      );
+      return false;
     }
-    return success(undefined);
+    return true;
   }
 
   /**
@@ -129,7 +101,7 @@ export abstract class BaseAgent {
     category: ErrorCategory,
     name: string = "AgentError",
     requestingAgentId?: AgentId,
-    details?: any
+    details?: Record<string, unknown>
   ): AgentError {
     return createAgentError(
       this.agentId,
@@ -159,15 +131,18 @@ export abstract class BaseAgent {
   ): Promise<ContractResult<R>> {
     try {
       return await fn();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+
       return failure(
         createAgentError(
           this.agentId,
-          `${operation} failed: ${error.message}`,
+          `${operation} failed: ${errorMessage}`,
           ErrorCategory.UNEXPECTED_ERROR,
           "UnexpectedError",
           requestingAgentId,
-          { originalError: error, stack: error.stack }
+          { originalError: String(error), stack: errorStack }
         )
       );
     }
@@ -180,7 +155,7 @@ export abstract class BaseAgent {
    * ```typescript
    * const validationResult = this.validateFields({
    *   'targetPath': { value: request.targetPath, type: 'nonEmpty' },
-   *   'categories': { value: request.categories, type: 'array' }
+   *   'categories': { value: request.categories, type: 'nonEmptyArray' }
    * }, request.requestingAgentId);
    *
    * if (!validationResult.success) {
@@ -191,41 +166,47 @@ export abstract class BaseAgent {
   protected validateFields(
     fields: Record<
       string,
-      { value: any; type: "required" | "nonEmpty" | "array" }
+      { value: unknown; type: "required" | "nonEmpty" | "nonEmptyArray" }
     >,
     requestingAgentId?: AgentId
   ): ContractResult<void> {
     for (const [fieldName, config] of Object.entries(fields)) {
-      let result: ContractResult<void>;
+      const { value, type } = config;
 
-      switch (config.type) {
+      switch (type) {
         case "required":
-          result = this.validateRequired(
-            config.value,
-            fieldName,
-            requestingAgentId
-          );
+          if (!this.validateRequired(value, fieldName, requestingAgentId)) {
+            return failure(
+              this.createValidationError(
+                fieldName,
+                `${fieldName} is required`,
+                requestingAgentId
+              )
+            );
+          }
           break;
         case "nonEmpty":
-          result = this.validateNonEmpty(
-            config.value,
-            fieldName,
-            requestingAgentId
-          );
+          if (!this.validateNonEmpty(value as string, fieldName, requestingAgentId)) {
+            return failure(
+              this.createValidationError(
+                fieldName,
+                `${fieldName} cannot be empty`,
+                requestingAgentId
+              )
+            );
+          }
           break;
-        case "array":
-          result = this.validateNonEmptyArray(
-            config.value,
-            fieldName,
-            requestingAgentId
-          );
+        case "nonEmptyArray":
+          if (!this.validateNonEmptyArray(value as unknown[], fieldName, requestingAgentId)) {
+            return failure(
+              this.createValidationError(
+                fieldName,
+                `${fieldName} must be a non-empty array`,
+                requestingAgentId
+              )
+            );
+          }
           break;
-        default:
-          continue;
-      }
-
-      if (!result.success) {
-        return result;
       }
     }
 
@@ -286,22 +267,25 @@ export abstract class BaseAgent {
    * Standardizes error handling for failed operations
    *
    * @example
-   * catch (error: any) {
+   * catch (error) {
    *   return failure(this.createOperationError("checkCompliance", error));
    * }
    */
   protected createOperationError(
     operation: string,
-    error: Error | any,
+    error: unknown,
     requestingAgentId?: AgentId
   ): AgentError {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     return createAgentError(
       this.agentId,
-      `${operation} failed: ${error.message || String(error)}`,
+      `${operation} failed: ${errorMessage}`,
       ErrorCategory.OPERATION_FAILED,
       `${this.capitalize(operation)}Error`,
       requestingAgentId,
-      { originalError: error.stack || error }
+      { originalError: errorStack || String(error) }
     );
   }
 
@@ -329,7 +313,7 @@ export abstract class BaseAgent {
  *     // Validate fields
  *     const fieldsValidation = this.validateFields({
  *       'field1': { value: request.field1, type: 'nonEmpty' },
- *       'field2': { value: request.field2, type: 'array' }
+ *       'field2': { value: request.field2, type: 'nonEmptyArray' }
  *     }, request.requestingAgentId);
  *     if (!fieldsValidation.success) return fieldsValidation;
  *

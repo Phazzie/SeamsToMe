@@ -18,7 +18,7 @@ import {
   DocumentationType,
   DocumentationValidationResult,
 } from "../contracts/documentation.contract";
-import { ContractResult, success } from "../contracts/types";
+import { ContractResult, success, failure } from "../contracts/types";
 import { BaseAgent } from "./base.agent";
 
 /**
@@ -90,7 +90,7 @@ export class DocumentationAgent
         const validation = this.validateFields(
           {
             docPath: { value: docPath, type: "nonEmpty" },
-            sources: { value: sources, type: "array" },
+            sources: { value: sources, type: "nonEmptyArray" },
           },
           undefined
         );
@@ -130,7 +130,7 @@ export class DocumentationAgent
         const validation = this.validateFields(
           {
             docPath: { value: docPath, type: "nonEmpty" },
-            sources: { value: sources, type: "array" },
+            sources: { value: sources, type: "nonEmptyArray" },
           },
           undefined
         );
@@ -192,12 +192,11 @@ export class DocumentationAgent
     return this.withErrorHandling(
       async () => {
         // Validate inputs
-        const validation = this.validateNonEmptyArray(
-          sourcePaths,
-          "sourcePaths",
-          undefined
-        );
-        if (!validation.success) return validation;
+        if (!this.validateNonEmptyArray(sourcePaths, "sourcePaths", undefined)) {
+          return failure(
+            this.createValidationError("sourcePaths", "sourcePaths must be a non-empty array", undefined)
+          );
+        }
 
         // NOTE: Update contract version and notify all consumers when full implementation is ready
 

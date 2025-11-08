@@ -21,6 +21,7 @@ import {
   AgentId,
   ContractResult,
   success,
+  failure,
 } from "../contracts/types";
 import { IAIService } from "../contracts/ai-service.contract";
 import { BaseAgent } from "./base.agent";
@@ -50,8 +51,12 @@ export class KnowledgeAgent extends BaseAgent implements KnowledgeContract {
   ): Promise<ContractResult<KnowledgeOutput, AgentError>> {
     return this.withErrorHandling(async () => {
       // Validate request and query
-      const requestValidation = this.validateRequest(request, request.requestingAgentId);
-      if (!requestValidation.success) return requestValidation;
+      const agentId = request.requestingAgentId;
+      if (!this.validateRequest(request, agentId)) {
+        return failure(
+          this.createValidationError("request", "Request is required", agentId)
+        );
+      }
 
       const validation = this.validateFields({
         query: { value: request.query, type: "nonEmpty" },
@@ -137,8 +142,11 @@ export class KnowledgeAgent extends BaseAgent implements KnowledgeContract {
   ): Promise<ContractResult<StoreKnowledgeOutput, AgentError>> {
     return this.withErrorHandling(async () => {
       // Validate item and required fields
-      const itemValidation = this.validateRequest(item, agentId);
-      if (!itemValidation.success) return itemValidation;
+      if (!this.validateRequest(item, agentId)) {
+        return failure(
+          this.createValidationError("item", "Item is required", agentId)
+        );
+      }
 
       const validation = this.validateFields({
         content: { value: item.content, type: "nonEmpty" },
@@ -169,8 +177,11 @@ export class KnowledgeAgent extends BaseAgent implements KnowledgeContract {
   ): Promise<ContractResult<HasKnowledgeOutput, AgentError>> {
     return this.withErrorHandling(async () => {
       // Validate query
-      const validation = this.validateNonEmpty(query, "query");
-      if (!validation.success) return validation;
+      if (!this.validateNonEmpty(query, "query")) {
+        return failure(
+          this.createValidationError("query", "query cannot be empty")
+        );
+      }
 
       // Filter by domain if specified
       let candidateItems = Array.from(this.knowledgeStore.values());

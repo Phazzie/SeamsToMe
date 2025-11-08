@@ -45,8 +45,12 @@ export class PromptAgent extends BaseAgent implements IPromptAgent {
   ): Promise<ContractResult<PromptOutput>> {
     return this.withErrorHandling(async () => {
       // Validate request exists
-      const requestValidation = this.validateRequest(request, request?.requestingAgentId);
-      if (!requestValidation.success) return requestValidation;
+      const agentId = request?.requestingAgentId;
+      if (!this.validateRequest(request, agentId)) {
+        return failure(
+          this.createValidationError("request", "Request is required", agentId)
+        );
+      }
 
       // Validate fields using validateFields helper
       const fieldsValidation = this.validateFields(

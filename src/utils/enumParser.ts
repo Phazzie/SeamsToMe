@@ -35,18 +35,35 @@
  * // Returns: "PARTIALLY_COMPLIANT"
  */
 export function parseEnum<T>(
-  value: any,
+  value: unknown,
   enumValues: T[],
   defaultValue: T,
   normalize: (s: string) => string = (s) => s.toUpperCase()
 ): T {
-  if (!value && value !== 0) return defaultValue;
+  // Type guard: handle null and undefined
+  if (value === null || value === undefined) {
+    return defaultValue;
+  }
+
+  // Type guard: only accept string, number, and boolean types
+  if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
+    return defaultValue;
+  }
 
   try {
     const normalized = normalize(String(value));
-    return enumValues.includes(normalized as T)
-      ? (normalized as T)
-      : defaultValue;
+
+    // Check for exact match first
+    if (enumValues.includes(normalized as T)) {
+      return normalized as T;
+    }
+
+    // For numeric values, also check if the original number exists in enum
+    if (typeof value === 'number' && enumValues.includes(value as T)) {
+      return value as T;
+    }
+
+    return defaultValue;
   } catch {
     return defaultValue;
   }
@@ -65,7 +82,7 @@ export function parseEnum<T>(
  * // Returns: "PARTIALLY_COMPLIANT"
  */
 export function parseEnumSnakeCase<T>(
-  value: any,
+  value: unknown,
   enumValues: T[],
   defaultValue: T
 ): T {
@@ -90,7 +107,7 @@ export function parseEnumSnakeCase<T>(
  * // Returns: "partially-compliant"
  */
 export function parseEnumKebabCase<T>(
-  value: any,
+  value: unknown,
   enumValues: T[],
   defaultValue: T
 ): T {
@@ -113,6 +130,16 @@ export function parseEnumKebabCase<T>(
  * isValidEnum("ACTIVE", ["ACTIVE", "DEPRECATED"])  // true
  * isValidEnum("INVALID", ["ACTIVE", "DEPRECATED"])  // false
  */
-export function isValidEnum<T>(value: any, enumValues: T[]): boolean {
+export function isValidEnum<T>(value: unknown, enumValues: T[]): boolean {
+  // Type guard: handle null and undefined
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  // Type guard: only accept string, number, and boolean types
+  if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
+    return false;
+  }
+
   return enumValues.includes(value as T);
 }

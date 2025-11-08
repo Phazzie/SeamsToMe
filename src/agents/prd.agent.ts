@@ -65,12 +65,11 @@ export class PrdAgent extends BaseAgent implements IPrdAgent {
     requestingAgentId?: string
   ): Promise<ContractResult<PRDValidationResult>> {
     return this.withErrorHandling(async () => {
-      const validation = this.validateNonEmpty(
-        prdContent,
-        "prdContent",
-        requestingAgentId
-      );
-      if (!validation.success) return validation;
+      if (!this.validateNonEmpty(prdContent, "prdContent", requestingAgentId)) {
+        return failure(
+          this.createValidationError("prdContent", "prdContent cannot be empty", requestingAgentId)
+        );
+      }
 
       // MOCK: Return a minimal validation result
       return success({

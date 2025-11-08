@@ -28,6 +28,7 @@ import {
 import { IAIService } from "../contracts/ai-service.contract";
 import { BaseAgent } from "./base.agent";
 import { parseEnumSnakeCase } from "../utils/enumParser";
+import { validateTargetDirectory } from "../utils/pathValidation";
 import * as fs from "fs";
 
 /**
@@ -53,15 +54,18 @@ export class ChecklistAgent extends BaseAgent implements ChecklistContract {
   ): Promise<ContractResult<ChecklistOutput, AgentError>> {
     return this.withErrorHandling(async () => {
       // Validate request
-      const requestValidation = this.validateRequest(request);
-      if (!requestValidation.success) return requestValidation;
+      const agentId = request?.requestingAgentId;
+      if (!this.validateRequest(request, agentId)) {
+        return failure(
+          this.createValidationError("request", "Request is required", agentId)
+        );
+      }
 
-      const fieldValidation = this.validateNonEmpty(
-        request.targetPath,
-        "targetPath",
-        request.requestingAgentId
-      );
-      if (!fieldValidation.success) return fieldValidation;
+      if (!this.validateNonEmpty(request.targetPath, "targetPath", request.requestingAgentId)) {
+        return failure(
+          this.createValidationError("targetPath", "targetPath cannot be empty", request.requestingAgentId)
+        );
+      }
 
       // * HIGHLIGHT: This implementation follows SDD minimal approach
       const categoriesToCheck = request.categories || this.categories;
@@ -102,12 +106,11 @@ export class ChecklistAgent extends BaseAgent implements ChecklistContract {
   ): Promise<ContractResult<ReportOutput, AgentError>> {
     return this.withErrorHandling(async () => {
       // Validate request
-      const validation = this.validateNonEmpty(
-        targetPath,
-        "targetPath",
-        requestingAgentId
-      );
-      if (!validation.success) return validation;
+      if (!this.validateNonEmpty(targetPath, "targetPath", requestingAgentId)) {
+        return failure(
+          this.createValidationError("targetPath", "targetPath cannot be empty", requestingAgentId)
+        );
+      }
 
       // Only support markdown format for now
       if (format.toLowerCase() !== "markdown") {
@@ -191,21 +194,31 @@ export class ChecklistAgent extends BaseAgent implements ChecklistContract {
     category: ChecklistCategory
   ): Promise<{ status: ComplianceStatus; details: string; remediation: string }> {
     try {
-      // Read file content if it exists
+      // Validate path for security
+      const pathResult = validateTargetDirectory(targetPath);
       let fileContent = "";
-      try {
-        if (fs.existsSync(targetPath)) {
-          const stats = fs.statSync(targetPath);
-          if (stats.isFile()) {
-            fileContent = fs.readFileSync(targetPath, "utf-8");
-            // Limit content size for AI
-            if (fileContent.length > 4000) {
-              fileContent = fileContent.substring(0, 4000) + "\n... (truncated)";
+
+      if (!pathResult.success) {
+        console.warn(`Invalid target path: ${targetPath}`);
+        // Continue with empty content for invalid paths
+        fileContent = "";
+      } else {
+        // Read file content if it exists
+        try {
+          const safePath = pathResult.result;
+          if (fs.existsSync(safePath)) {
+            const stats = fs.statSync(safePath);
+            if (stats.isFile()) {
+              fileContent = fs.readFileSync(safePath, "utf-8");
+              // Limit content size for AI
+              if (fileContent.length > 4000) {
+                fileContent = fileContent.substring(0, 4000) + "\n... (truncated)";
+              }
             }
           }
+        } catch (readError) {
+          // File doesn't exist or can't be read, continue with empty content
         }
-      } catch (readError) {
-        // File doesn't exist or can't be read, continue with empty content
       }
 
       const analysisRequest = {

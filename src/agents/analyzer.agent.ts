@@ -22,6 +22,7 @@ import {
 } from "../contracts/types";
 import { IAIService } from "../contracts/ai-service.contract";
 import { parseEnum } from "../utils/enumParser";
+import { validateTargetDirectory } from "../utils/pathValidation";
 import { BaseAgent } from "./base.agent";
 import * as fs from "fs";
 import * as path from "path";
@@ -181,22 +182,29 @@ Provide analysis in JSON format:
    */
   private async readCodebase(targetPath: string): Promise<string> {
     try {
-      if (!fs.existsSync(targetPath)) {
+      // Validate path for security
+      const pathResult = validateTargetDirectory(targetPath);
+      if (!pathResult.success) {
+        return ""; // Return empty for invalid paths
+      }
+      const safePath = pathResult.result;
+
+      if (!fs.existsSync(safePath)) {
         return "";
       }
 
-      const stats = fs.statSync(targetPath);
+      const stats = fs.statSync(safePath);
 
       if (stats.isFile()) {
-        return fs.readFileSync(targetPath, "utf-8");
+        return fs.readFileSync(safePath, "utf-8");
       } else if (stats.isDirectory()) {
         // Read multiple files from directory
-        const files = fs.readdirSync(targetPath);
+        const files = fs.readdirSync(safePath);
         let content = "";
 
         for (const file of files.slice(0, 10)) {
           // Limit to first 10 files
-          const filePath = path.join(targetPath, file);
+          const filePath = path.join(safePath, file);
           const fileStats = fs.statSync(filePath);
 
           if (

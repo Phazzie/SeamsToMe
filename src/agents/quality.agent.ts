@@ -36,7 +36,7 @@ export class QualityAgent extends BaseAgent implements QualityAgentContract {
     const validation = this.validateFields(
       {
         targetPath: { value: request.targetPath, type: "nonEmpty" },
-        checkTypes: { value: request.checkTypes, type: "array" },
+        checkTypes: { value: request.checkTypes, type: "nonEmptyArray" },
       },
       request.requestingAgentId
     );

@@ -170,9 +170,10 @@ export class OrchestratorAgent extends BaseAgent implements OrchestratorContract
     taskId: TaskId
   ): Promise<ContractResult<TaskStatus>> {
     return this.withErrorHandling(async () => {
-      const validation = this.validateNonEmpty(taskId, "taskId");
-      if (!validation.success) {
-        return validation;
+      if (!this.validateNonEmpty(taskId, "taskId")) {
+        return failure(
+          this.createValidationError("taskId", "taskId cannot be empty")
+        );
       }
 
       const task = this.tasks.get(taskId);
@@ -203,7 +204,7 @@ export class OrchestratorAgent extends BaseAgent implements OrchestratorContract
     return this.withErrorHandling(async () => {
       const validation = this.validateFields({
         agentId: { value: agentId, type: "nonEmpty" },
-        capabilities: { value: capabilities, type: "array" },
+        capabilities: { value: capabilities, type: "nonEmptyArray" },
       });
 
       if (!validation.success) {
@@ -227,9 +228,10 @@ export class OrchestratorAgent extends BaseAgent implements OrchestratorContract
    */
   async deregisterAgent(agentId: AgentId): Promise<ContractResult<boolean>> {
     return this.withErrorHandling(async () => {
-      const validation = this.validateNonEmpty(agentId, "agentId");
-      if (!validation.success) {
-        return validation;
+      if (!this.validateNonEmpty(agentId, "agentId")) {
+        return failure(
+          this.createValidationError("agentId", "agentId cannot be empty")
+        );
       }
 
       const removed = this.registry.unregister(agentId);
@@ -257,9 +259,10 @@ export class OrchestratorAgent extends BaseAgent implements OrchestratorContract
     agentId: AgentId
   ): Promise<ContractResult<string[]>> {
     return this.withErrorHandling(async () => {
-      const validation = this.validateNonEmpty(agentId, "agentId");
-      if (!validation.success) {
-        return validation;
+      if (!this.validateNonEmpty(agentId, "agentId")) {
+        return failure(
+          this.createValidationError("agentId", "agentId cannot be empty")
+        );
       }
 
       const registration = this.registry.get(agentId);

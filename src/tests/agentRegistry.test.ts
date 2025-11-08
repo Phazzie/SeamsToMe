@@ -10,7 +10,12 @@
  * SDD: SEAM TEST for AgentRegistry pattern
  */
 
-import { AgentRegistry, AgentRegistration } from "../patterns/agentRegistry";
+import {
+  AgentRegistry,
+  AgentRegistration,
+  IAgent,
+} from "../patterns/agentRegistry";
+import { success, ContractResult } from "../contracts/types";
 
 describe("AgentRegistry", () => {
   let registry: AgentRegistry;
@@ -762,6 +767,116 @@ describe("AgentRegistry", () => {
       expect(registry.getByCapability("retrieve")).toHaveLength(0);
       expect(registry.getByCapability("store")).toHaveLength(0);
       expect(registry.getByCapability("search")).toHaveLength(0);
+    });
+  });
+
+  describe("type safety", () => {
+    test("should maintain type safety with generic interface", () => {
+      interface TestAgent extends IAgent {
+        testMethod: () => Promise<ContractResult<string>>;
+      }
+
+      const testAgent: TestAgent = {
+        testMethod: async () => success("result"),
+      };
+
+      const typedRegistry = new AgentRegistry<TestAgent>();
+
+      typedRegistry.register({
+        agentId: "test",
+        instance: testAgent,
+        capabilities: ["test"],
+      });
+
+      const retrieved = typedRegistry.get("test");
+      expect(retrieved?.instance.testMethod).toBeDefined();
+    });
+
+    test("should use type guard instead of non-null assertion", () => {
+      const mockAgent = {
+        action: async () => success("result"),
+      };
+
+      // Register multiple agents
+      const agents = [
+        {
+          agentId: "agent1",
+          instance: mockAgent,
+          capabilities: ["cap1"],
+        },
+        {
+          agentId: "agent2",
+          instance: mockAgent,
+          capabilities: ["cap1", "cap2"],
+        },
+      ];
+
+      agents.forEach((a) => registry.register(a));
+
+      // Get agents by capability
+      const result = registry.getByCapability("cap1");
+
+      // Verify no undefined values (type guard worked)
+      expect(result.length).toBe(2);
+      result.forEach((reg) => {
+        expect(reg).toBeDefined();
+        expect(reg.instance).toBeDefined();
+      });
+    });
+
+    test("should work with IAgent base interface", () => {
+      const genericAgent: IAgent = {
+        someMethod: async () => success({ data: "test" }),
+        anotherMethod: async () => success({ result: 123 }),
+      };
+
+      registry.register({
+        agentId: "generic-agent",
+        instance: genericAgent,
+        capabilities: ["someMethod", "anotherMethod"],
+      });
+
+      const retrieved = registry.get("generic-agent");
+      expect(retrieved?.instance).toBeDefined();
+      expect(typeof retrieved?.instance.someMethod).toBe("function");
+      expect(typeof retrieved?.instance.anotherMethod).toBe("function");
+    });
+
+    test("should support multiple typed agents in same registry", () => {
+      interface AgentA extends IAgent {
+        methodA: () => Promise<ContractResult<string>>;
+      }
+
+      interface AgentB extends IAgent {
+        methodB: () => Promise<ContractResult<number>>;
+      }
+
+      const agentA: AgentA = {
+        methodA: async () => success("A result"),
+      };
+
+      const agentB: AgentB = {
+        methodB: async () => success(42),
+      };
+
+      // Using generic registry with IAgent base allows mixed types
+      const mixedRegistry = new AgentRegistry<IAgent>();
+
+      mixedRegistry.register({
+        agentId: "agent-a",
+        instance: agentA,
+        capabilities: ["methodA"],
+      });
+
+      mixedRegistry.register({
+        agentId: "agent-b",
+        instance: agentB,
+        capabilities: ["methodB"],
+      });
+
+      expect(mixedRegistry.count()).toBe(2);
+      expect(mixedRegistry.get("agent-a")?.instance).toBeDefined();
+      expect(mixedRegistry.get("agent-b")?.instance).toBeDefined();
     });
   });
 });

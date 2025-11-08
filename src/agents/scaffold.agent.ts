@@ -37,8 +37,12 @@ export class ScaffoldAgent extends BaseAgent implements IScaffoldAgent {
     // Use BaseAgent's withErrorHandling and validateFields - replaces 50+ lines
     return this.withErrorHandling(async () => {
       // Validate request
-      const requestValidation = this.validateRequest(request);
-      if (!requestValidation.success) return requestValidation;
+      const agentId = request?.requestingAgentId;
+      if (!this.validateRequest(request, agentId)) {
+        return failure(
+          this.createValidationError("request", "Request is required", agentId)
+        );
+      }
 
       // Validate fields
       const fieldsValidation = this.validateFields(
@@ -67,16 +71,19 @@ export class ScaffoldAgent extends BaseAgent implements IScaffoldAgent {
     // Use BaseAgent's withErrorHandling - replaces 40+ lines
     return this.withErrorHandling(async () => {
       // Validate request
-      const requestValidation = this.validateRequest(request);
-      if (!requestValidation.success) return requestValidation;
+      const agentId = request?.requestingAgentId;
+      if (!this.validateRequest(request, agentId)) {
+        return failure(
+          this.createValidationError("request", "Request is required", agentId)
+        );
+      }
 
       // Validate files array
-      const filesValidation = this.validateNonEmptyArray(
-        request.files,
-        "files",
-        request.requestingAgentId
-      );
-      if (!filesValidation.success) return filesValidation;
+      if (!this.validateNonEmptyArray(request.files, "files", request.requestingAgentId)) {
+        return failure(
+          this.createValidationError("files", "files must be a non-empty array", request.requestingAgentId)
+        );
+      }
 
       // Validate the stub files
       const issues = this.validateStubFiles(request.files);

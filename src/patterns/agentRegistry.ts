@@ -7,16 +7,25 @@
  */
 
 import { AgentId } from "../contracts/types";
+import { ContractResult } from "../contracts/types";
+
+/**
+ * Base interface that all agents must implement
+ * Ensures type safety for dynamic method invocation
+ */
+export interface IAgent {
+  [key: string]: ((...args: any[]) => Promise<ContractResult<any>>) | any;
+}
 
 /**
  * Agent registration metadata
  */
-export interface AgentRegistration {
+export interface AgentRegistration<T extends IAgent = IAgent> {
   /** Unique agent identifier */
   agentId: AgentId;
 
   /** Agent instance implementing its contract */
-  instance: any;
+  instance: T;
 
   /** Capabilities/actions this agent supports */
   capabilities: string[];
@@ -53,8 +62,8 @@ export interface AgentRegistration {
  * const agents = registry.getByCapability("retrieveKnowledge");
  * ```
  */
-export class AgentRegistry {
-  private agents = new Map<AgentId, AgentRegistration>();
+export class AgentRegistry<T extends IAgent = IAgent> {
+  private agents = new Map<AgentId, AgentRegistration<T>>();
   private capabilityIndex = new Map<string, AgentId[]>();
 
   /**
@@ -63,7 +72,7 @@ export class AgentRegistry {
    * @param registration Agent registration metadata
    * @throws Error if agent with same ID already registered
    */
-  register(registration: AgentRegistration): void {
+  register(registration: AgentRegistration<T>): void {
     if (this.agents.has(registration.agentId)) {
       throw new Error(
         `Agent with ID '${registration.agentId}' is already registered`
@@ -87,7 +96,7 @@ export class AgentRegistry {
    * @param agentId Agent identifier
    * @returns Agent registration or undefined if not found
    */
-  get(agentId: AgentId): AgentRegistration | undefined {
+  get(agentId: AgentId): AgentRegistration<T> | undefined {
     return this.agents.get(agentId);
   }
 
@@ -98,12 +107,12 @@ export class AgentRegistry {
    * @param capability Capability/action name
    * @returns Array of agent registrations supporting this capability
    */
-  getByCapability(capability: string): AgentRegistration[] {
+  getByCapability(capability: string): AgentRegistration<T>[] {
     const agentIds = this.capabilityIndex.get(capability) || [];
 
     return agentIds
-      .map((id) => this.agents.get(id)!)
-      .filter((reg) => reg !== undefined)
+      .map((id) => this.agents.get(id))
+      .filter((reg): reg is AgentRegistration<T> => reg !== undefined)
       .sort((a, b) => (b.priority || 0) - (a.priority || 0));
   }
 
@@ -121,7 +130,7 @@ export class AgentRegistry {
    *
    * @returns Array of all agent registrations
    */
-  getAllRegistrations(): AgentRegistration[] {
+  getAllRegistrations(): AgentRegistration<T>[] {
     return Array.from(this.agents.values());
   }
 

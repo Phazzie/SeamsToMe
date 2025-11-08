@@ -9,6 +9,7 @@ import {
 } from "../contracts/mvpSddScaffolder.contract";
 import { AgentError, ContractResult, ErrorCategory, failure, success } from "../contracts/types";
 import { BaseAgent } from "./base.agent";
+import { safePathJoin, validateComponentName } from "../utils/pathValidation";
 
 /**
  * MVPSddScaffolderAgent
@@ -21,19 +22,17 @@ export class MVPSddScaffolderAgent extends BaseAgent implements IMVPSddScaffolde
   ): Promise<ContractResult<MVPSddScaffoldOutput, AgentError>> {
     return this.withErrorHandling(async () => {
       // Validate required fields
-      const componentNameValidation = this.validateNonEmpty(
-        request.componentName,
-        "Component name",
-        request.requestingAgentId
-      );
-      if (!componentNameValidation.success) return componentNameValidation;
+      if (!this.validateNonEmpty(request.componentName, "Component name", request.requestingAgentId)) {
+        return failure(
+          this.createValidationError("Component name", "Component name cannot be empty", request.requestingAgentId)
+        );
+      }
 
-      const targetDirValidation = this.validateNonEmpty(
-        request.targetDirectory,
-        "Target directory",
-        request.requestingAgentId
-      );
-      if (!targetDirValidation.success) return targetDirValidation;
+      if (!this.validateNonEmpty(request.targetDirectory, "Target directory", request.requestingAgentId)) {
+        return failure(
+          this.createValidationError("Target directory", "Target directory cannot be empty", request.requestingAgentId)
+        );
+      }
 
       // Validate component type
       const validTypes = Object.values(SddComponentType);
@@ -48,11 +47,12 @@ export class MVPSddScaffolderAgent extends BaseAgent implements IMVPSddScaffolde
         );
       }
 
-      // Build file paths exactly as tests expect
-      const componentDir = path.join(
-        request.targetDirectory,
-        request.componentName.toLowerCase()
-      );
+      // Validate inputs for security - prevent path traversal attacks
+      const pathResult = safePathJoin(request.targetDirectory, request.componentName);
+      if (!pathResult.success) {
+        return failure(pathResult.error);
+      }
+      const componentDir = pathResult.result;
 
       const generatedFiles: string[] = [];
       const generatedFileContents: Array<{
@@ -119,13 +119,20 @@ export class MVPSddScaffolderAgent extends BaseAgent implements IMVPSddScaffolde
     request: MVPSddScaffoldRequest,
     componentDir: string
   ): Promise<ContractResult<{ files: string[]; contents: Array<{ filePath: string; content: string }> }>> {
+    // Validate component name for security
+    const nameValidation = validateComponentName(request.componentName);
+    if (!nameValidation.success) {
+      return failure(nameValidation.error);
+    }
+    const safeName = nameValidation.result;
+
     const agentFilePath = path.join(
       componentDir,
-      `${request.componentName}.agent.ts`
+      `${safeName}.agent.ts`
     );
     const contractFilePath = path.join(
       componentDir,
-      `${request.componentName}.contract.ts`
+      `${safeName}.contract.ts`
     );
 
     const overwritePolicy = request.overwritePolicy || OverwritePolicy.ERROR_IF_EXISTS;
@@ -140,7 +147,7 @@ export class {{componentName}}Agent {
   // Placeholder for {{componentName}}Agent
   // Custom: {{customVar}}Custom
 }`,
-      request.componentName,
+      safeName,
       request.templateVariables
     );
 
@@ -153,7 +160,7 @@ export interface I{{componentName}}Agent {
   // Contract for {{componentName}}
   // Custom: {{customVar}}Custom
 }`,
-      request.componentName,
+      safeName,
       request.templateVariables
     );
 
@@ -217,17 +224,24 @@ export interface I{{componentName}}Agent {
     request: MVPSddScaffoldRequest,
     componentDir: string
   ): Promise<ContractResult<{ files: string[]; contents: Array<{ filePath: string; content: string }> }>> {
+    // Validate component name for security
+    const nameValidation = validateComponentName(request.componentName);
+    if (!nameValidation.success) {
+      return failure(nameValidation.error);
+    }
+    const safeName = nameValidation.result;
+
     const agentFilePath = path.join(
       componentDir,
-      `${request.componentName}.agent.ts`
+      `${safeName}.agent.ts`
     );
     const contractFilePath = path.join(
       componentDir,
-      `${request.componentName}.contract.ts`
+      `${safeName}.contract.ts`
     );
     const testFilePath = path.join(
       componentDir,
-      `${request.componentName}.contract.test.ts`
+      `${safeName}.contract.test.ts`
     );
 
     // Check for existing files if overwrite policy is ERROR_IF_EXISTS
@@ -251,7 +265,7 @@ export class {{componentName}}Agent {
   // Placeholder for {{componentName}}Agent
   // Custom: {{customVar}}Custom
 }`,
-      request.componentName,
+      safeName,
       request.templateVariables
     );
 
@@ -264,7 +278,7 @@ export interface I{{componentName}}Agent {
   // Contract for {{componentName}}
   // Custom: {{customVar}}Custom
 }`,
-      request.componentName,
+      safeName,
       request.templateVariables
     );
 
@@ -277,7 +291,7 @@ describe("{{componentName}}Agent Contract Tests", () => {
   // Contract test for {{componentName}}
   // Custom: {{customVar}}Custom
 });`,
-      request.componentName,
+      safeName,
       request.templateVariables
     );
 
@@ -311,9 +325,16 @@ describe("{{componentName}}Agent Contract Tests", () => {
     request: MVPSddScaffoldRequest,
     componentDir: string
   ): Promise<ContractResult<{ files: string[]; contents: Array<{ filePath: string; content: string }> }>> {
+    // Validate component name for security
+    const nameValidation = validateComponentName(request.componentName);
+    if (!nameValidation.success) {
+      return failure(nameValidation.error);
+    }
+    const safeName = nameValidation.result;
+
     const contractFilePath = path.join(
       componentDir,
-      `${request.componentName}.contract.ts`
+      `${safeName}.contract.ts`
     );
 
     // Check for existing files if overwrite policy is ERROR_IF_EXISTS
@@ -332,7 +353,7 @@ export interface I{{componentName}}Agent {
   // Contract for {{componentName}}
   // Custom: {{customVar}}Custom
 }`,
-      request.componentName,
+      safeName,
       request.templateVariables
     );
 
@@ -360,9 +381,16 @@ export interface I{{componentName}}Agent {
     request: MVPSddScaffoldRequest,
     componentDir: string
   ): Promise<ContractResult<{ files: string[]; contents: Array<{ filePath: string; content: string }> }>> {
+    // Validate component name for security
+    const nameValidation = validateComponentName(request.componentName);
+    if (!nameValidation.success) {
+      return failure(nameValidation.error);
+    }
+    const safeName = nameValidation.result;
+
     const testFilePath = path.join(
       componentDir,
-      `${request.componentName}.contract.test.ts`
+      `${safeName}.contract.test.ts`
     );
 
     // Check for existing files if overwrite policy is ERROR_IF_EXISTS
@@ -381,7 +409,7 @@ describe("{{componentName}}Agent Contract Tests", () => {
   // Contract test for {{componentName}}
   // Custom: {{customVar}}Custom
 });`,
-      request.componentName,
+      safeName,
       request.templateVariables
     );
 

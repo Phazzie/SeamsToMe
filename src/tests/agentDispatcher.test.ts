@@ -199,8 +199,8 @@ describe("AgentDispatcher", () => {
 
         expect(result.success).toBe(false);
         expect(result.error!.details).toBeDefined();
-        expect(result.error!.details.agentId).toBe("non-existent-agent");
-        expect(result.error!.details.availableAgents).toEqual(["mock-agent"]);
+        expect(result.error!.details?.agentId).toBe("non-existent-agent");
+        expect(result.error!.details?.availableAgents).toEqual(["mock-agent"]);
         expect(result.error!.requestingAgentId).toBe("test-agent");
       });
     });
@@ -250,9 +250,9 @@ describe("AgentDispatcher", () => {
 
         expect(result.success).toBe(false);
         expect(result.error!.details).toBeDefined();
-        expect(result.error!.details.agentId).toBe("mock-agent");
-        expect(result.error!.details.action).toBe("invalidAction");
-        expect(result.error!.details.availableCapabilities).toEqual([
+        expect(result.error!.details?.agentId).toBe("mock-agent");
+        expect(result.error!.details?.action).toBe("invalidAction");
+        expect(result.error!.details?.availableCapabilities).toEqual([
           "testAction",
           "failingAction",
           "throwingAction",
@@ -352,10 +352,10 @@ describe("AgentDispatcher", () => {
 
         expect(result.success).toBe(false);
         expect(result.error!.details).toBeDefined();
-        expect(result.error!.details.agentId).toBe("mock-agent");
-        expect(result.error!.details.action).toBe("throwingAction");
-        expect(result.error!.details.originalError).toBe("Unexpected error in action");
-        expect(result.error!.details.stack).toBeDefined();
+        expect(result.error!.details?.agentId).toBe("mock-agent");
+        expect(result.error!.details?.action).toBe("throwingAction");
+        expect(result.error!.details?.originalError).toBe("Unexpected error in action");
+        expect(result.error!.details?.stack).toBeDefined();
         expect(result.error!.requestingAgentId).toBe("test-agent");
       });
     });
@@ -551,6 +551,162 @@ describe("AgentDispatcher", () => {
 
       expect(result.success).toBe(false);
       expect(result.error!.category).toBe(ErrorCategory.INVALID_REQUEST);
+    });
+  });
+
+  describe("type safety with generics", () => {
+    test("should support generic payload types", async () => {
+      interface TestPayload {
+        name: string;
+        value: number;
+      }
+
+      interface TestResult {
+        processed: boolean;
+      }
+
+      const testAgent = {
+        process: async (
+          payload: TestPayload
+        ): Promise<ContractResult<TestResult>> => {
+          return success({ processed: true });
+        },
+      };
+
+      registry.register({
+        agentId: "test-agent",
+        instance: testAgent,
+        capabilities: ["process"],
+      });
+
+      const result = await dispatcher.dispatch<TestResult, TestPayload>({
+        agentId: "test-agent",
+        action: "process",
+        payload: { name: "test", value: 123 },
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result.processed).toBe(true);
+      }
+    });
+
+    test("should handle complex payload and result types", async () => {
+      interface ComplexPayload {
+        data: string[];
+        options: {
+          format: "json" | "xml";
+          compress: boolean;
+        };
+      }
+
+      interface ComplexResult {
+        output: string;
+        size: number;
+        format: string;
+      }
+
+      const complexAgent = {
+        transform: async (
+          payload: ComplexPayload
+        ): Promise<ContractResult<ComplexResult>> => {
+          return success({
+            output: JSON.stringify(payload.data),
+            size: payload.data.length,
+            format: payload.options.format,
+          });
+        },
+      };
+
+      registry.register({
+        agentId: "complex-agent",
+        instance: complexAgent,
+        capabilities: ["transform"],
+      });
+
+      const result = await dispatcher.dispatch<ComplexResult, ComplexPayload>({
+        agentId: "complex-agent",
+        action: "transform",
+        payload: {
+          data: ["item1", "item2", "item3"],
+          options: { format: "json", compress: false },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result.size).toBe(3);
+        expect(result.result.format).toBe("json");
+        expect(result.result.output).toContain("item1");
+      }
+    });
+
+    test("should work with unknown types as default", async () => {
+      const genericAgent = {
+        genericAction: async (payload: unknown): Promise<ContractResult<unknown>> => {
+          return success({ received: payload });
+        },
+      };
+
+      registry.register({
+        agentId: "generic-agent",
+        instance: genericAgent,
+        capabilities: ["genericAction"],
+      });
+
+      // No type parameters - should use unknown as default
+      const result = await dispatcher.dispatch({
+        agentId: "generic-agent",
+        action: "genericAction",
+        payload: { any: "data" },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    test("should handle typed arrays in payload", async () => {
+      interface ArrayPayload {
+        items: Array<{ id: number; name: string }>;
+      }
+
+      interface ArrayResult {
+        count: number;
+        ids: number[];
+      }
+
+      const arrayAgent = {
+        processArray: async (
+          payload: ArrayPayload
+        ): Promise<ContractResult<ArrayResult>> => {
+          return success({
+            count: payload.items.length,
+            ids: payload.items.map((item) => item.id),
+          });
+        },
+      };
+
+      registry.register({
+        agentId: "array-agent",
+        instance: arrayAgent,
+        capabilities: ["processArray"],
+      });
+
+      const result = await dispatcher.dispatch<ArrayResult, ArrayPayload>({
+        agentId: "array-agent",
+        action: "processArray",
+        payload: {
+          items: [
+            { id: 1, name: "first" },
+            { id: 2, name: "second" },
+          ],
+        },
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result.count).toBe(2);
+        expect(result.result.ids).toEqual([1, 2]);
+      }
     });
   });
 });

@@ -152,7 +152,7 @@ export class OrchestratorAgent implements OrchestratorContract {
           ErrorCategory.AGENT_UNAVAILABLE,
           "AgentNotRegisteredError",
           undefined,
-          `Agent ID ${request.agentId} not found in registered agents list.`
+          { message: `Agent ID ${request.agentId} not found in registered agents list.` }
         )
       );
     }
@@ -355,7 +355,7 @@ export class OrchestratorAgent implements OrchestratorContract {
             ErrorCategory.INVALID_REQUEST,
             "UnhandledActionError",
             undefined,
-            `Ensure the agent is configured to handle this action and the contract method was called.`
+            { suggestion: `Ensure the agent is configured to handle this action and the contract method was called.` }
           )
         );
       }
